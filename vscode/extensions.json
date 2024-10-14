@@ -1,0 +1,911 @@
+[
+  {
+    "identifier": {
+      "id": "ritwickdey.liveserver",
+      "uuid": "b63c44fd-0457-4696-99e9-dbfdf70d77de"
+    },
+    "version": "5.7.9",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/ritwickdey.liveserver-5.7.9",
+      "scheme": "file"
+    },
+    "relativeLocation": "ritwickdey.liveserver-5.7.9",
+    "metadata": {
+      "id": "b63c44fd-0457-4696-99e9-dbfdf70d77de",
+      "publisherId": "17fd9a78-e430-4a78-add2-ade4a8830352",
+      "publisherDisplayName": "Ritwick Dey",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694378634250,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "wayou.vscode-todo-highlight",
+      "uuid": "97a08c5f-6667-4242-a5c5-045dfb6bd4b9"
+    },
+    "version": "1.0.5",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/wayou.vscode-todo-highlight-1.0.5",
+      "scheme": "file"
+    },
+    "relativeLocation": "wayou.vscode-todo-highlight-1.0.5",
+    "metadata": {
+      "id": "97a08c5f-6667-4242-a5c5-045dfb6bd4b9",
+      "publisherId": "47daa402-5396-4346-b7bd-62494d6d63ec",
+      "publisherDisplayName": "Wayou Liu",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694385011607,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "pivaszbs.svelte-autoimport",
+      "uuid": "905ce110-dab5-4222-946d-b79642fcdec5"
+    },
+    "version": "1.0.4",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/pivaszbs.svelte-autoimport-1.0.4",
+      "scheme": "file"
+    },
+    "relativeLocation": "pivaszbs.svelte-autoimport-1.0.4",
+    "metadata": {
+      "id": "905ce110-dab5-4222-946d-b79642fcdec5",
+      "publisherId": "d850e511-e4da-4bef-8e9a-db56539c81c3",
+      "publisherDisplayName": "pivaszbs",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694385012901,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "akamud.vscode-javascript-snippet-pack",
+      "uuid": "510e1d4e-1f9e-4910-8dbd-627c6f8a9791"
+    },
+    "version": "0.1.6",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/akamud.vscode-javascript-snippet-pack-0.1.6",
+      "scheme": "file"
+    },
+    "relativeLocation": "akamud.vscode-javascript-snippet-pack-0.1.6",
+    "metadata": {
+      "id": "510e1d4e-1f9e-4910-8dbd-627c6f8a9791",
+      "publisherId": "1a680e61-b64e-4eff-bbbb-2085b0618f52",
+      "publisherDisplayName": "Mahmoud Ali",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694385431098,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "xabikos.javascriptsnippets",
+      "uuid": "a2cec723-5349-460d-9de9-0fd1f8d3456f"
+    },
+    "version": "1.8.0",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/xabikos.javascriptsnippets-1.8.0",
+      "scheme": "file"
+    },
+    "relativeLocation": "xabikos.javascriptsnippets-1.8.0",
+    "metadata": {
+      "id": "a2cec723-5349-460d-9de9-0fd1f8d3456f",
+      "publisherId": "8961c3fe-3ec6-429d-886a-50b5af362a88",
+      "publisherDisplayName": "charalampos karypidis",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694385646471,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "andischerer.theme-atom-one-dark",
+      "uuid": "b5eaebe8-c8c7-495a-80c5-3ba4a7a91c35"
+    },
+    "version": "0.0.1",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/andischerer.theme-atom-one-dark-0.0.1",
+      "scheme": "file"
+    },
+    "relativeLocation": "andischerer.theme-atom-one-dark-0.0.1",
+    "metadata": {
+      "id": "b5eaebe8-c8c7-495a-80c5-3ba4a7a91c35",
+      "publisherId": "51a8b293-5242-4daa-ab76-10bc6b89cf4c",
+      "publisherDisplayName": "Andreas Scherer",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694395974506,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "whizkydee.material-palenight-theme",
+      "uuid": "7f147721-ec06-4043-9e37-c9ffbecbccd1"
+    },
+    "version": "2.0.3",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/whizkydee.material-palenight-theme-2.0.3",
+      "scheme": "file"
+    },
+    "relativeLocation": "whizkydee.material-palenight-theme-2.0.3",
+    "metadata": {
+      "id": "7f147721-ec06-4043-9e37-c9ffbecbccd1",
+      "publisherId": "942a68c7-9bce-4e1c-9bb0-828710897a61",
+      "publisherDisplayName": "Olaolu Olawuyi",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694396109967,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "robbowen.synthwave-vscode",
+      "uuid": "e5fd2b56-1637-4d4f-8252-6c9d416f9a28"
+    },
+    "version": "0.1.15",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/robbowen.synthwave-vscode-0.1.15",
+      "scheme": "file"
+    },
+    "relativeLocation": "robbowen.synthwave-vscode-0.1.15",
+    "metadata": {
+      "id": "e5fd2b56-1637-4d4f-8252-6c9d416f9a28",
+      "publisherId": "561257c5-26a1-41f1-944f-17639b7b9c87",
+      "publisherDisplayName": "Robb Owen",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694396134328,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "streetsidesoftware.code-spell-checker",
+      "uuid": "f6dbd813-b0a0-42c1-90ea-10dde9d925a7"
+    },
+    "version": "3.0.1",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/streetsidesoftware.code-spell-checker-3.0.1",
+      "scheme": "file"
+    },
+    "relativeLocation": "streetsidesoftware.code-spell-checker-3.0.1",
+    "metadata": {
+      "id": "f6dbd813-b0a0-42c1-90ea-10dde9d925a7",
+      "publisherId": "67600ca7-88fb-4104-9f7e-dd51c00facf2",
+      "publisherDisplayName": "Street Side Software",
+      "targetPlatform": "undefined",
+      "isApplicationScoped": false,
+      "updated": true,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694445512003,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "formulahendry.auto-rename-tag",
+      "uuid": "6e440e71-8ed9-4f25-bb78-4b13096b8a03"
+    },
+    "version": "0.1.10",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/formulahendry.auto-rename-tag-0.1.10",
+      "scheme": "file"
+    },
+    "relativeLocation": "formulahendry.auto-rename-tag-0.1.10",
+    "metadata": {
+      "id": "6e440e71-8ed9-4f25-bb78-4b13096b8a03",
+      "publisherId": "38bbe3f0-5204-4170-845e-c2f966d979b8",
+      "publisherDisplayName": "Jun Han",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694446980538,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "azemoh.theme-onedark",
+      "uuid": "cc1b9e15-8d4e-43ed-8a31-b81683af6bc4"
+    },
+    "version": "0.6.0",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/azemoh.theme-onedark-0.6.0",
+      "scheme": "file"
+    },
+    "relativeLocation": "azemoh.theme-onedark-0.6.0",
+    "metadata": {
+      "id": "cc1b9e15-8d4e-43ed-8a31-b81683af6bc4",
+      "publisherId": "25cdca6a-b422-4806-9041-a44a52d1a7d5",
+      "publisherDisplayName": "Joshua Azemoh",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694465319886,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "codestackr.codestackr-theme",
+      "uuid": "0e84b054-8d35-40d2-b892-f40fa2fd78d9"
+    },
+    "version": "0.0.9",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/codestackr.codestackr-theme-0.0.9",
+      "scheme": "file"
+    },
+    "relativeLocation": "codestackr.codestackr-theme-0.0.9",
+    "metadata": {
+      "id": "0e84b054-8d35-40d2-b892-f40fa2fd78d9",
+      "publisherId": "cdf00c2a-5c74-49e8-94ca-e0900245e54c",
+      "publisherDisplayName": "codestackr",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694500534536,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "pawelborkar.jellyfish",
+      "uuid": "865f89be-46b5-42c5-94c7-1f7c8aca2bbc"
+    },
+    "version": "0.0.4",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/pawelborkar.jellyfish-0.0.4",
+      "scheme": "file"
+    },
+    "relativeLocation": "pawelborkar.jellyfish-0.0.4",
+    "metadata": {
+      "id": "865f89be-46b5-42c5-94c7-1f7c8aca2bbc",
+      "publisherId": "fb804388-53a8-4995-b454-3ae168e27904",
+      "publisherDisplayName": "Pawel Borkar",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694500857606,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "savioserra.theme-switcher",
+      "uuid": "a7848537-c0f4-4932-972a-d7dbf4fe5122"
+    },
+    "version": "2.0.2",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/savioserra.theme-switcher-2.0.2",
+      "scheme": "file"
+    },
+    "relativeLocation": "savioserra.theme-switcher-2.0.2",
+    "metadata": {
+      "id": "a7848537-c0f4-4932-972a-d7dbf4fe5122",
+      "publisherId": "cc876150-3e1f-4d07-9e21-cbc5cbe0fa29",
+      "publisherDisplayName": "Sávio Santos Serra",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694501401039,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "sleistner.vscode-fileutils",
+      "uuid": "d637104e-1fd7-4063-98fc-8afe46012c9b"
+    },
+    "version": "3.10.3",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/sleistner.vscode-fileutils-3.10.3",
+      "scheme": "file"
+    },
+    "relativeLocation": "sleistner.vscode-fileutils-3.10.3",
+    "metadata": {
+      "id": "d637104e-1fd7-4063-98fc-8afe46012c9b",
+      "publisherId": "99ce6203-6065-4d93-983f-c3a097ebbfe2",
+      "publisherDisplayName": "Steffen Leistner",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694726539931,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "stordahl.sveltekit-snippets",
+      "uuid": "affa3701-adc1-496e-9b1a-1d81c734f165"
+    },
+    "version": "1.2.0",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/stordahl.sveltekit-snippets-1.2.0",
+      "scheme": "file"
+    },
+    "relativeLocation": "stordahl.sveltekit-snippets-1.2.0",
+    "metadata": {
+      "id": "affa3701-adc1-496e-9b1a-1d81c734f165",
+      "publisherId": "6e96e5b9-917b-4aee-b684-a121147facb2",
+      "publisherDisplayName": "Jacob Stordahl",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1694757796442,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "meganrogge.template-string-converter",
+      "uuid": "e56ae0dc-ddd7-462a-872d-6d14ea27f737"
+    },
+    "version": "0.6.1",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/meganrogge.template-string-converter-0.6.1",
+      "scheme": "file"
+    },
+    "relativeLocation": "meganrogge.template-string-converter-0.6.1",
+    "metadata": {
+      "id": "e56ae0dc-ddd7-462a-872d-6d14ea27f737",
+      "publisherId": "50b8f3e2-af1c-4060-9399-1b2edd6a2822",
+      "publisherDisplayName": "meganrogge",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1695009217878,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "adpyke.codesnap",
+      "uuid": "8c1fc960-44b1-45e8-89b5-85f982fdaf27"
+    },
+    "version": "1.3.4",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/adpyke.codesnap-1.3.4",
+      "scheme": "file"
+    },
+    "relativeLocation": "adpyke.codesnap-1.3.4",
+    "metadata": {
+      "id": "8c1fc960-44b1-45e8-89b5-85f982fdaf27",
+      "publisherId": "8d7f2028-26ae-4724-8306-a1c8bb6c6794",
+      "publisherDisplayName": "adpyke",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "installedTimestamp": 1699814198405,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "rvest.vs-code-prettier-eslint",
+      "uuid": "d4b06bd6-36a0-469f-be55-c0a73413b688"
+    },
+    "version": "6.0.0",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/rvest.vs-code-prettier-eslint-6.0.0",
+      "scheme": "file"
+    },
+    "relativeLocation": "rvest.vs-code-prettier-eslint-6.0.0",
+    "metadata": {
+      "id": "d4b06bd6-36a0-469f-be55-c0a73413b688",
+      "publisherId": "b95e678b-a11b-44b4-b281-6b521c2005bc",
+      "publisherDisplayName": "Rebecca Vest",
+      "targetPlatform": "undefined",
+      "isApplicationScoped": false,
+      "updated": true,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "installedTimestamp": 1707256960336,
+      "pinned": false,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "mikecann.ts-namespace-imports",
+      "uuid": "18159ffc-56f7-4113-a5f8-e3d49deb6658"
+    },
+    "version": "0.0.4",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/mikecann.ts-namespace-imports-0.0.4",
+      "scheme": "file"
+    },
+    "relativeLocation": "mikecann.ts-namespace-imports-0.0.4",
+    "metadata": {
+      "id": "18159ffc-56f7-4113-a5f8-e3d49deb6658",
+      "publisherId": "a5b20329-40bc-44d2-9b27-0026ca04dd0e",
+      "publisherDisplayName": "MikeCann",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "installedTimestamp": 1708750290791,
+      "pinned": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "monish.regexsnippets",
+      "uuid": "3dfcb6b3-065e-4177-89c2-4b9315a36b51"
+    },
+    "version": "1.0.2",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/monish.regexsnippets-1.0.2",
+      "scheme": "file"
+    },
+    "relativeLocation": "monish.regexsnippets-1.0.2",
+    "metadata": {
+      "id": "3dfcb6b3-065e-4177-89c2-4b9315a36b51",
+      "publisherId": "d3606f83-aca1-4a37-90db-c5bff77c02b3",
+      "publisherDisplayName": "Monish Basaniwal",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "installedTimestamp": 1710252770464,
+      "pinned": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "visualstudioexptteam.vscodeintellicode-completions",
+      "uuid": "b8febe71-368d-482e-96f5-6f53d03e640b"
+    },
+    "version": "2.0.0",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/visualstudioexptteam.vscodeintellicode-completions-2.0.0",
+      "scheme": "file"
+    },
+    "relativeLocation": "visualstudioexptteam.vscodeintellicode-completions-2.0.0",
+    "metadata": {
+      "id": "b8febe71-368d-482e-96f5-6f53d03e640b",
+      "publisherId": "e8db1608-52e8-4d8d-92a6-779c5db302a9",
+      "publisherDisplayName": "Microsoft",
+      "targetPlatform": "undefined",
+      "isApplicationScoped": false,
+      "updated": true,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "installedTimestamp": 1712263672019,
+      "pinned": false,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "fivethree.vscode-svelte-snippets",
+      "uuid": "a42d3dd1-f528-407c-a110-d5e35c7ca4c2"
+    },
+    "version": "0.5.0",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/fivethree.vscode-svelte-snippets-0.5.0",
+      "scheme": "file"
+    },
+    "relativeLocation": "fivethree.vscode-svelte-snippets-0.5.0",
+    "metadata": {
+      "id": "a42d3dd1-f528-407c-a110-d5e35c7ca4c2",
+      "publisherId": "d1465e65-aaae-4386-b4ad-ec7ba6abf1f0",
+      "publisherDisplayName": "fivethree",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "installedTimestamp": 1712877748883,
+      "pinned": false,
+      "source": "gallery"
+    }
+  },
+  {
+    "identifier": {
+      "id": "lorenzopirro.zig-snippets",
+      "uuid": "74f5279e-8f5a-4381-ab42-5dcbd2cb6d99"
+    },
+    "version": "3.0.3",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/lorenzopirro.zig-snippets-3.0.3",
+      "scheme": "file"
+    },
+    "relativeLocation": "lorenzopirro.zig-snippets-3.0.3",
+    "metadata": {
+      "id": "74f5279e-8f5a-4381-ab42-5dcbd2cb6d99",
+      "publisherId": "0a6d8547-be6a-4620-8c72-e3d2712900e2",
+      "publisherDisplayName": "lorenzo pirro",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "installedTimestamp": 1715385577928,
+      "pinned": false,
+      "source": "gallery"
+    }
+  },
+  {
+    "identifier": {
+      "id": "christian-kohler.path-intellisense",
+      "uuid": "a41c1549-4053-44d4-bf30-60fc809b4a86"
+    },
+    "version": "2.9.0",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/christian-kohler.path-intellisense-2.9.0",
+      "scheme": "file"
+    },
+    "relativeLocation": "christian-kohler.path-intellisense-2.9.0",
+    "metadata": {
+      "id": "a41c1549-4053-44d4-bf30-60fc809b4a86",
+      "publisherId": "a892fb38-060b-475f-9e73-2e06a8a17a68",
+      "publisherDisplayName": "Christian Kohler",
+      "targetPlatform": "undefined",
+      "isApplicationScoped": false,
+      "updated": true,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "installedTimestamp": 1717532684802,
+      "pinned": false,
+      "preRelease": false,
+      "source": "gallery"
+    }
+  },
+  {
+    "identifier": {
+      "id": "pranaygp.vscode-css-peek",
+      "uuid": "0b8f8d63-11a2-4194-969c-ca7488b3413a"
+    },
+    "version": "4.4.1",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/pranaygp.vscode-css-peek-4.4.1",
+      "scheme": "file"
+    },
+    "relativeLocation": "pranaygp.vscode-css-peek-4.4.1",
+    "metadata": {
+      "installedTimestamp": 1717737204476,
+      "pinned": false,
+      "source": "gallery",
+      "id": "0b8f8d63-11a2-4194-969c-ca7488b3413a",
+      "publisherId": "3975bc66-f8bb-46a9-b8b6-430f013e4fa5",
+      "publisherDisplayName": "Pranay Prakash",
+      "targetPlatform": "undefined",
+      "updated": false,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "dbaeumer.vscode-eslint",
+      "uuid": "583b2b34-2c1e-4634-8c0b-0b82e283ea3a"
+    },
+    "version": "3.0.10",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/dbaeumer.vscode-eslint-3.0.10",
+      "scheme": "file"
+    },
+    "relativeLocation": "dbaeumer.vscode-eslint-3.0.10",
+    "metadata": {
+      "isApplicationScoped": false,
+      "isMachineScoped": false,
+      "isBuiltin": false,
+      "installedTimestamp": 1718829413769,
+      "pinned": false,
+      "source": "gallery",
+      "id": "583b2b34-2c1e-4634-8c0b-0b82e283ea3a",
+      "publisherId": "29859a75-d81b-4f0e-8578-2c80ecee6f99",
+      "publisherDisplayName": "Microsoft",
+      "targetPlatform": "undefined",
+      "updated": true,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "xshrim.txt-syntax",
+      "uuid": "c5900888-28e9-40d6-84d0-d1645e62f4cc"
+    },
+    "version": "0.2.4",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/xshrim.txt-syntax-0.2.4",
+      "scheme": "file"
+    },
+    "relativeLocation": "xshrim.txt-syntax-0.2.4",
+    "metadata": {
+      "isApplicationScoped": false,
+      "isMachineScoped": false,
+      "isBuiltin": false,
+      "installedTimestamp": 1721763577146,
+      "pinned": false,
+      "source": "gallery",
+      "id": "c5900888-28e9-40d6-84d0-d1645e62f4cc",
+      "publisherId": "9c1536ad-79f2-4254-9362-84cb06f98797",
+      "publisherDisplayName": "xshrim",
+      "targetPlatform": "undefined",
+      "updated": true,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "esbenp.prettier-vscode",
+      "uuid": "96fa4707-6983-4489-b7c5-d5ffdfdcce90"
+    },
+    "version": "11.0.0",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/esbenp.prettier-vscode-11.0.0",
+      "scheme": "file"
+    },
+    "relativeLocation": "esbenp.prettier-vscode-11.0.0",
+    "metadata": {
+      "isApplicationScoped": false,
+      "isMachineScoped": false,
+      "isBuiltin": false,
+      "installedTimestamp": 1723926810791,
+      "pinned": false,
+      "source": "gallery",
+      "id": "96fa4707-6983-4489-b7c5-d5ffdfdcce90",
+      "publisherId": "d16f4e39-2ffb-44e3-9c0d-79d873570e3a",
+      "publisherDisplayName": "Prettier",
+      "targetPlatform": "undefined",
+      "updated": true,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "ziglang.vscode-zig",
+      "uuid": "9f528315-746c-44d9-97ba-d4d505cca308"
+    },
+    "version": "0.5.9",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/ziglang.vscode-zig-0.5.9",
+      "scheme": "file"
+    },
+    "relativeLocation": "ziglang.vscode-zig-0.5.9",
+    "metadata": {
+      "isApplicationScoped": false,
+      "isMachineScoped": false,
+      "isBuiltin": false,
+      "installedTimestamp": 1725308239112,
+      "pinned": false,
+      "source": "gallery",
+      "id": "9f528315-746c-44d9-97ba-d4d505cca308",
+      "publisherId": "cefd71b0-991b-4e5d-bcad-e691066ed199",
+      "publisherDisplayName": "ziglang",
+      "targetPlatform": "undefined",
+      "updated": true,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "golang.go",
+      "uuid": "d6f6cfea-4b6f-41f4-b571-6ad2ab7918da"
+    },
+    "version": "0.42.1",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/golang.go-0.42.1",
+      "scheme": "file"
+    },
+    "relativeLocation": "golang.go-0.42.1",
+    "metadata": {
+      "isApplicationScoped": false,
+      "isMachineScoped": false,
+      "isBuiltin": false,
+      "installedTimestamp": 1725985384562,
+      "pinned": false,
+      "source": "gallery",
+      "id": "d6f6cfea-4b6f-41f4-b571-6ad2ab7918da",
+      "publisherId": "dbf6ae0a-da75-4167-ac8b-75b4512f2153",
+      "publisherDisplayName": "Go Team at Google",
+      "targetPlatform": "undefined",
+      "updated": true,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "asvetliakov.vscode-neovim",
+      "uuid": "caf8995c-5426-4bf7-9d01-f7968ebd49bb"
+    },
+    "version": "1.18.12",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/asvetliakov.vscode-neovim-1.18.12",
+      "scheme": "file"
+    },
+    "relativeLocation": "asvetliakov.vscode-neovim-1.18.12",
+    "metadata": {
+      "isApplicationScoped": false,
+      "isMachineScoped": false,
+      "isBuiltin": false,
+      "installedTimestamp": 1726940067616,
+      "pinned": false,
+      "source": "gallery",
+      "id": "caf8995c-5426-4bf7-9d01-f7968ebd49bb",
+      "publisherId": "ce6190db-6762-4c9c-99c7-1717b9504159",
+      "publisherDisplayName": "Alexey Svetliakov",
+      "targetPlatform": "undefined",
+      "updated": true,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "pkief.material-icon-theme",
+      "uuid": "5db78037-f674-459f-a236-db622c427c5b"
+    },
+    "version": "5.11.1",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/pkief.material-icon-theme-5.11.1",
+      "scheme": "file"
+    },
+    "relativeLocation": "pkief.material-icon-theme-5.11.1",
+    "metadata": {
+      "isApplicationScoped": false,
+      "isMachineScoped": false,
+      "isBuiltin": false,
+      "installedTimestamp": 1726940067616,
+      "pinned": false,
+      "source": "gallery",
+      "id": "5db78037-f674-459f-a236-db622c427c5b",
+      "publisherId": "f9e5bc2f-fea1-4075-917f-d83e01e69f56",
+      "publisherDisplayName": "Philipp Kief",
+      "targetPlatform": "undefined",
+      "updated": true,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "vscode-icons-team.vscode-icons",
+      "uuid": "9ccc1dd7-7ec4-4a46-bd4f-7d7b8b9d322a"
+    },
+    "version": "12.9.0",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/vscode-icons-team.vscode-icons-12.9.0",
+      "scheme": "file"
+    },
+    "relativeLocation": "vscode-icons-team.vscode-icons-12.9.0",
+    "metadata": {
+      "isApplicationScoped": false,
+      "isMachineScoped": false,
+      "isBuiltin": false,
+      "installedTimestamp": 1726940067600,
+      "pinned": false,
+      "source": "gallery",
+      "id": "9ccc1dd7-7ec4-4a46-bd4f-7d7b8b9d322a",
+      "publisherId": "652ad61d-3a6a-48ca-ab1a-80dc8953b2b6",
+      "publisherDisplayName": "VSCode Icons Team",
+      "targetPlatform": "undefined",
+      "updated": true,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "svelte.svelte-vscode",
+      "uuid": "c5463f77-75d9-4a25-8cc4-d8541a461285"
+    },
+    "version": "109.0.1",
+    "location": {
+      "$mid": 1,
+      "path": "/Users/brightowl/.vscode/extensions/svelte.svelte-vscode-109.0.1",
+      "scheme": "file"
+    },
+    "relativeLocation": "svelte.svelte-vscode-109.0.1",
+    "metadata": {
+      "isApplicationScoped": false,
+      "isMachineScoped": false,
+      "isBuiltin": false,
+      "installedTimestamp": 1726940067599,
+      "pinned": false,
+      "source": "gallery",
+      "id": "c5463f77-75d9-4a25-8cc4-d8541a461285",
+      "publisherId": "c3bf51ad-baaa-466c-952c-9c3ca9bfabed",
+      "publisherDisplayName": "Svelte",
+      "targetPlatform": "undefined",
+      "updated": true,
+      "isPreReleaseVersion": false,
+      "hasPreReleaseVersion": false,
+      "preRelease": false
+    }
+  },
+  {
+    "identifier": {
+      "id": "bradlc.vscode-tailwindcss",
+      "uuid": "4db62a7c-7d70-419c-96d2-6c3a4dc77ea5"
+    },
+    "version": "0.13.39",
+    "location": {
+      "$mid": 1,
+      "fsPath": "/Users/brightowl/.vscode/extensions/bradlc.vscode-tailwindcss-0.13.39",
+      "external": "file:///Users/brightowl/.vscode/extensions/bradlc.vscode-tailwindcss-0.13.39",
+      "path": "/Users/brightowl/.vscode/extensions/bradlc.vscode-tailwindcss-0.13.39",
+      "scheme": "file"
+    },
+    "relativeLocation": "bradlc.vscode-tailwindcss-0.13.39",
+    "metadata": {
+      "isApplicationScoped": false,
+      "isMachineScoped": false,
+      "isBuiltin": false,
+      "installedTimestamp": 1727120417778,
+      "pinned": false,
+      "source": "gallery",
+      "id": "4db62a7c-7d70-419c-96d2-6c3a4dc77ea5",
+      "publisherId": "84722833-669b-4c7d-920e-b60e43fae19a",
+      "publisherDisplayName": "Tailwind Labs",
+      "targetPlatform": "undefined",
+      "updated": true,
+      "isPreReleaseVersion": true,
+      "hasPreReleaseVersion": true,
+      "preRelease": true
+    }
+  }
+]

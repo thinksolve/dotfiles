@@ -1,0 +1,83 @@
+{
+  "terminal.external.osxExec": "iTerm.app",
+  "terminal.explorerKind": "external",
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  // "editor.lineDecorationsWidth":0,
+  // "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "workbench.editor.customLabels.patterns": {
+    // found in discord
+    "**/routes/**/{+server,+layout,+page,+error}.{svelte,ts,server.ts,js,server.js}": "/${dirname} (${filename})"
+  },
+  "editor.fontSize": 12,
+  "debug.console.fontSize": 12,
+  "terminal.integrated.fontSize": 12,
+  "terminal.integrated.fontFamily": "MesloLGS NF",
+  "chat.editor.fontSize": 12,
+  "tailwindCSS.rootFontSize": 16,
+  "svelte.enable-ts-plugin": true,
+  "vs-code-prettier-eslint.prettierLast": false,
+  "[svelte]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "prettier.singleQuote": true,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "editor.minimap.enabled": false,
+  "themeswitcher.utcOffset": -1,
+  // "themeswitcher.mappings": [
+
+  //     {
+  //         "time": "06:00",
+  //         "theme":"Palenight Theme",
+  //     },
+  //     {
+  //         "time": "14:00",
+  //         "theme": "SynthWave '84",
+  //     },
+  //     {
+  //         "time": "21:00",
+  //         "theme":"JellyFish",
+  //     },
+
+  // ],
+
+  "workbench.colorTheme": "SynthWave '84",
+  // "workbench.colorTheme": "JellyFish",
+  // "workbench.colorTheme": "Palenight Theme",
+  // "workbench.colorTheme": "Atom One Dark",
+
+  "workbench.iconTheme": "material-icon-theme",
+  // "workbench.iconTheme": "vscode-icons",
+  "vsicons.presets.hideExplorerArrows": true,
+  "material-icon-theme.hidesExplorerArrows": true,
+  "emmet.includeLanguages": {
+    "markdown": "html",
+    "javascript": "javascriptreact",
+    "postcss": "css"
+  },
+  "vsicons.dontShowNewVersionMessage": true,
+  "workbench.activityBar.location": "top",
+  "explorer.compactFolders": false,
+  "workbench.layoutControl.enabled": false,
+  "javascript.preferences.importModuleSpecifierEnding": "js",
+  "svelte.plugin.svelte.defaultScriptLanguage": "ts",
+  "editor.formatOnSave": true,
+  "zig.initialSetupDone": true,
+  "zig.path": "zig",
+  "zig.zls.path": "/opt/homebrew/Cellar/zig/0.12.0/bin/zig",
+  "extensions.experimental.affinity": {
+    "asvetliakov.vscode-neovim": 1
+  }
+}

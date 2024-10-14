@@ -1,0 +1,29 @@
+// Place your key bindings in this file to override the defaults
+[
+    {
+        "key": "shift+space a",
+        "command": "editor.action.insertSnippet",
+        "args": {
+            "snippet": "($1)=>{$2}"
+          }
+    },
+    {
+        "key": "ctrl+shift+cmd+right",
+        "command": "editor.action.smartSelect.grow"
+    },
+    {
+        "key": "ctrl+shift+cmd+right",
+        "command": "-editor.action.smartSelect.expand",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "shift+space p",
+        "command": "svelte.kit.generatePage"
+    },
+    {
+        "key": "alt+shift+b",
+        "command": "simpleBrowser.show",
+        "args": "http://localhost:5173/"
+    },
+    
+]
