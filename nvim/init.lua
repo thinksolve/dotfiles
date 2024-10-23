@@ -97,6 +97,8 @@ vim.g.have_nerd_font = false
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
 --  For more options, you can see `:help option-list`
+--
+-- vim.o.termguicolors = true
 
 -- Make line numbers default
 vim.opt.number = true
@@ -117,6 +119,8 @@ vim.opt.showmode = false
 vim.schedule(function()
 	vim.opt.clipboard = "unnamedplus"
 end)
+
+vim.opt.clipboard:append("unnamedplus") -- needed to add after enabling vi-mode in zshrc
 
 -- Enable break indent
 vim.opt.breakindent = true
@@ -273,6 +277,21 @@ end
 
 require("lazy").setup({
 	{
+		"axelvc/template-string.nvim",
+		ft = { "svelte", "javascript", "typescript", "javascriptreact", "typescriptreact" },
+		config = function(plugin)
+			require("template-string").setup({
+				filetypes = plugin.ft,
+				jsx_brackets = true,
+				remove_template_string = false,
+				restore_quotes = {
+					normal = [[']']],
+					jsx = [[']']],
+				},
+			})
+		end,
+	},
+	{
 		"sindrets/diffview.nvim",
 		cmd = "InitDiffviewOpen",
 		init = function(plugin)
@@ -285,8 +304,14 @@ require("lazy").setup({
 			-- set_up_cmd(plugin, function() vim.cmd("DiffviewOpen") end)
 		end,
 	},
-	-- 'jose-elias-alvarez/null-ls.nvim',
 	lazy_themes({
+		{
+			"neanias/everforest-nvim",
+			config = function()
+				vim.cmd.colorscheme("everforest")
+			end,
+		},
+
 		{
 			"samharju/serene.nvim",
 			config = function()
@@ -864,6 +889,7 @@ require("lazy").setup({
 			--  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
 			--  - settings (table): Override the default settings passed when initializing the server.
 			--        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
+
 			local servers = {
 				-- clangd = {},
 				-- gopls = {},
@@ -886,8 +912,7 @@ require("lazy").setup({
 							completion = {
 								callSnippet = "Replace",
 							},
-							-- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-							-- diagnostics = { disable = { 'missing-fields' } },
+							-- moved ALL hammersppon config to ~/.hammerspoon/.luarc.json
 						},
 					},
 				},
@@ -958,6 +983,7 @@ require("lazy").setup({
 				}
 			end,
 			formatters_by_ft = {
+				nix = { "nixfmt" }, -- pkgs.nixfmt-rfc-style in flake.nix (nix-darwin)
 				json = { "prettier" },
 				lua = { "stylua" },
 				html = { "prettier" }, -- NOTE: custom:added

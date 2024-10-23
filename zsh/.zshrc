@@ -1,7 +1,16 @@
-source "$HOME"/.shell_functions.sh
-# source .shell_functions.sh
+setopt HIST_IGNORE_ALL_DUPS 
 
-alias fastfetch='nix-shell -p fastfetch --run fastfetch'
+export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
+
+
+# found out the hard way that plugins (vi-mode) affect bindkeys, so bindkeys should be placed BELOW plugins
+plugins=(git vi-mode zsh-autosuggestions zsh-syntax-highlighting)
+export ZSH=$HOME/.oh-my-zsh
+source "$ZSH"/oh-my-zsh.sh
+
+
+source "$HOME"/.shell_functions.sh
+
 alias gitignore_test='git rm -r --cached -f . && git add . && git ls-files | wc -l'
 alias BRAVE='cd ${HOME}/Library/Application\ Support/BraveSoftware/Brave-Browser/afalakplffnnnlkncjhbmahjfjhmlkal/1.0.904/1/'
 # alias BRAVE='/Users/brightowl/Library/Application\ Support/BraveSoftware/Brave-Browser/afalakplffnnnlkncjhbmahjfjhmlkal/1.0.904/1/'
@@ -64,15 +73,16 @@ alias find_dirs_root='fd . "$HOME" -t d'
 alias find_dirs_fuzzy_reduced='find_dirs_root -E "node_modules" | fzf --prompt="Find Dir from $HOME (reduced): "'
 alias find_dirs_fuzzy_full='find_dirs_root -H | fzf --prompt="Find Dir from $HOME (full): "'
 
+
+
 bindkey -s '^D' 'cd "$(find_dirs_fuzzy_reduced)"\n'
 bindkey -s '^[^D' 'cd "$(find_dirs_fuzzy_full)"\n'
 
 bindkey -s '^F' 'echo "$(find_files_fuzzy_reduced)" | tr -d "\n" | pbcopy\n'
 bindkey -s '^[^F' 'echo "$(find_files_fuzzy_full)" | tr -d "\n" | pbcopy\n'
 
-
 bindkey -s '^Y' 'yazi . \n'
-bindkey -s '^N' 'nvim . \n'
+
 
 
 
@@ -226,8 +236,6 @@ export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 
 # Path to your oh-my-zsh installation.
-# export ZSH="/Users/brightowl/.oh-my-zsh"
-export ZSH=$HOME/.oh-my-zsh
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -306,11 +314,9 @@ prompt pure
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-# plugins=(git)
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting web-search)
 
 
-source "$ZSH"/oh-my-zsh.sh
+
 
 # User configuration
 
@@ -388,3 +394,5 @@ export VISUAL=nvim
 
 
 #export LSCOLORS=gxBxhxDxfxhxhxhxhxcxcx
+bindkey -s '^N' 'nvim . \n'
+

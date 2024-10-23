@@ -1,5 +1,177 @@
 #!/bin/bash
 
+function remove_h_old() {
+    if [ -z "$1" ]; then
+        echo "Usage: remove_from_history 'command to remove'"
+        return 1
+    fi
+
+    local command_to_remove="$1"
+    local histfile="${HISTFILE:-$HOME/.zsh_history}"
+    local tempfile="${histfile}.tmp"
+
+    # Escape special characters in the command
+    local escaped_command=$(printf '%q' "$command_to_remove")
+
+    # Count instances before removal
+    local before_count=$(grep -c ": [0-9]*:[0-9];$escaped_command$" "$histfile")
+
+    # Remove from file, accounting for Zsh history format
+    sed -E "/^: [0-9]+:[0-9];$escaped_command$/d" "$histfile" >"$tempfile" && mv "$tempfile" "$histfile"
+
+    # Count instances after removal
+    local after_count=$(grep -c ": [0-9]*:[0-9];$escaped_command$" "$histfile")
+
+    # Calculate number of removed instances
+    local removed_count=$((before_count - after_count))
+
+    # Clear the current session's history
+    fc -p
+
+    # Reload history from file
+    fc -R "$histfile"
+
+    echo "Removed $removed_count instance(s) of '$command_to_remove' from history."
+}
+
+remove_from_history() {
+    if [ -z "$1" ]; then
+        echo "Usage: remove_from_history 'command to remove'"
+        return 1
+    fi
+
+    local command_to_remove="$1"
+    local histfile="${HISTFILE:-$HOME/.zsh_history}"
+    local tempfile="${histfile}.tmp"
+
+    # Escape special characters for sed
+    local escaped_command=$(printf '%s\n' "$command_to_remove" | sed -e 's/[]\/$*.^[]/\\&/g')
+
+    # Count instances before removal
+    local before_count=$(grep -c ": [0-9]*:[0-9];$escaped_command$" "$histfile")
+
+    # Remove the specified command and the 'remove_from_history' command
+    sed -E "/^: [0-9]+:[0-9];($escaped_command|remove_from_history .*)$/d" "$histfile" >"$tempfile" && mv "$tempfile" "$histfile"
+
+    # Count instances after removal
+    local after_count=$(grep -c ": [0-9]*:[0-9];$escaped_command$" "$histfile")
+
+    # Calculate number of removed instances
+    local removed_count=$((before_count - after_count))
+
+    # Clear the current session's history
+    fc -p
+
+    # Reload history from file
+    fc -R "$histfile"
+
+    echo "Removed $removed_count instance(s) of '$command_to_remove' from history."
+    echo "Also removed the 'remove_from_history' command itself."
+}
+
+function app_to_space() {
+    # Get current space count
+    space_count=$(defaults read com.apple.spaces | sed -n '/Spaces =/,/)/p' | grep -c 'ManagedSpaceID =')
+    my_app=${1:-'iTerm2'}
+
+    #exit early if $my_app open
+    if pgrep -f $my_app >/dev/null; then
+        osascript <<EOF
+        tell application "System Events"
+            tell process "$my_app"
+                set frontmost to true
+                perform action "AXRaise" of first window
+            end tell
+            return
+        end tell
+EOF
+
+        return 0 #exit?
+    fi
+
+    # Create new space and move to it
+    osascript <<EOF
+    tell application "System Events"
+        set numberKeyCodes to {18, 19, 20, 21, 23, 22, 26, 28, 25}
+
+        -- Open Mission Control
+        key code 160
+
+        tell process "Dock"
+            -- Add new space
+            click button 1 of group 2 of group 1 of group 1
+            delay 0.25
+
+            -- Navigate to the new space
+            key code (item $((space_count + 1)) of numberKeyCodes ) using {control down}
+            delay 0.25
+
+            -- tell application "$my_app" to activate -- this doesnt work
+            do shell script "open -a '$my_app'"
+            delay 0.25
+
+            -- Esc
+            key code 53
+        end tell
+    end tell
+EOF
+}
+
+# im noticing that applescript control flow breaks a lot ...
+function app_to_space_broken() {
+    # Get current space count
+    space_count=$(defaults read com.apple.spaces | sed -n '/Spaces =/,/)/p' | grep -c 'ManagedSpaceID =')
+    my_app=${1:-'iTerm2'}
+    # my_app='Google Chrome'
+
+    osascript <<EOF
+    tell application "System Events"
+        -- Define the key code mapping for numbers 1-9
+        set numberKeyCodes to {18, 19, 20, 21, 23, 22, 26, 28, 25}
+
+     
+        -- -- Check if app is running, navigate to (?) and early return
+        if (name of processes) contains "$my_app" then
+
+
+           tell process "$my_app"
+                set frontmost to true
+                perform action "AXRaise" of first window
+                   
+                -- set appWindow to first window
+                -- set {x, y} to position of appWindow
+                -- tell application "System Events" to click at {x + 10, y + 10}
+            end tell
+
+            return
+        end if
+
+
+        -- -- If app not open then open and navigate to that space (i.e. last space)
+        -- Open Mission Control
+        key code 160
+
+        tell process "Dock"
+            -- Add new space
+            click button 1 of group 2 of group 1 of group 1
+            delay 1
+
+            -- Navigate to the new space
+            key code (item $((space_count + 1)) of numberKeyCodes) using {control down}
+            delay 0.6
+
+            -- Open the terminal app
+            -- tell application "$my_app" to activate -- this has a timing issue with GUI apps
+            do shell script "open -a '$my_app'"
+
+            -- Esc
+            key code 53
+        end tell
+    end tell
+EOF
+}
+
+# And so on up to 9
 alias removeUnsupportedSimulatorDevices='xcrun simctl delete unavailable'
 
 # NOTE: this file exists since formatting is unsupported in zsh files;
@@ -13,7 +185,9 @@ function archiver() {
 
 # NOTE: backup utility
 function backup_nvim() {
-    backup_from_to "$HOME/.config/nvim" "$HOME/.config/nvim_backup"
+    # backup_from_to "$HOME/.config/nvim" "$HOME/.config/nvim_backup"
+    local NVIM_REAL_PATH=$(realpath "$HOME/.config/nvim")
+    backup_from_to "$NVIM_REAL_PATH" "$HOME/.config/nvim_backup"
 }
 
 function backup_from_to() {
@@ -47,7 +221,8 @@ function backup_from_to() {
     fi
 
     # Perform the backup
-    if rsync -a --delete "$SOURCE_DIR/" "$BACKUP_DIR"; then
+    if rsync -avL --delete "$SOURCE_DIR/" "$BACKUP_DIR"; then
+        # if rsync -a --delete "$SOURCE_DIR/" "$BACKUP_DIR"; then
         echo "Backup completed successfully ($BACKUP_DIR)"
     else
         echo "Error: Backup failed."
