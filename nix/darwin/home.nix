@@ -18,6 +18,7 @@ in
   home.stateVersion = "23.11";
 
   home.file = {
+    ".hammerspoon".source = link_dotfiles "/hammerspoon";
     ".zshrc".source = link_dotfiles "/zsh/.zshrc";
     ".shell_functions.sh".source = link_dotfiles "/zsh/.shell_functions.sh";
     ".config/nvim".source = link_dotfiles "/nvim";

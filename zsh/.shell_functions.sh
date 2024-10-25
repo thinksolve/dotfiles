@@ -184,6 +184,11 @@ function archiver() {
 }
 
 # NOTE: backup utility
+function backup_hammerspoon() {
+    local REAL_PATH=$(realpath "$HOME/.hammerspoon/")
+    backup_from_to "$REAL_PATH" "$HOME/.hammerspoon_backup"
+}
+
 function backup_nvim() {
     # backup_from_to "$HOME/.config/nvim" "$HOME/.config/nvim_backup"
     local NVIM_REAL_PATH=$(realpath "$HOME/.config/nvim")

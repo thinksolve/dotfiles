@@ -58,7 +58,6 @@
             pkgs.nmap
             pkgs.pandoc
             pkgs.poppler
-            pkgs.poppler_utils
             pkgs.rename
             pkgs.ripgrep # rg
             pkgs.rsync
@@ -68,6 +67,7 @@
             pkgs.wget
             pkgs.yazi
             pkgs.zig
+            # pkgs.poppler_utils
             # pkgs.yq
             # pkgs.tesseract
             # pkgs.unbound
@@ -78,11 +78,13 @@
             enable = true;
             casks = [
               "brave-browser"
+              "discord"
               "firefox"
               "gimp"
               "google-chrome"
               "hammerspoon"
               "iina"
+              "imageoptim"
               "keka"
               "krita"
               "shottr"

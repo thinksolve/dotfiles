@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
+  "runtime": {
+    "version": "LuaJIT"
+  },
+  "workspace": {
+    "library": [
+      "${3rd}/luassert/library",
+      "${3rd}/busted/library",
+      "~/.hammerspoon/Spoons/EmmyLua.spoon/annotations",
+      "/Applications/Hammerspoon.app/Contents/Resources/extensions/"
+    ],
+    "checkThirdParty": false
+  },
+  "diagnostics": {
+    "globals": ["hs"]
+  }
+}
