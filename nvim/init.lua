@@ -278,7 +278,7 @@ end
 require("lazy").setup({
 	{
 		"axelvc/template-string.nvim",
-		ft = { "svelte", "javascript", "typescript", "javascriptreact", "typescriptreact" },
+		ft = { "astro", "svelte", "javascript", "typescript", "javascriptreact", "typescriptreact" },
 		config = function(plugin)
 			require("template-string").setup({
 				filetypes = plugin.ft,
@@ -901,7 +901,8 @@ require("lazy").setup({
 				--    https://github.com/pmizio/typescript-tools.nvim
 				--
 				-- But for many setups, the LSP (`ts_ls`) will work just fine
-				-- ts_ls = {},
+				ts_ls = {},
+				astro = {},
 				svelte = {},
 				lua_ls = {
 					-- cmd = {...},
@@ -978,7 +979,7 @@ require("lazy").setup({
 				end
 				return {
 					-- timeout_ms = 500,
-					timeout_ms = 1000, -- NOTE: custom:changed
+					timeout_ms = 5000, -- NOTE: custom:changed
 					lsp_format = lsp_format_opt,
 				}
 			end,
@@ -986,13 +987,14 @@ require("lazy").setup({
 				nix = { "nixfmt" }, -- pkgs.nixfmt-rfc-style in flake.nix (nix-darwin)
 				json = { "prettier" },
 				lua = { "stylua" },
-				html = { "prettier" }, -- NOTE: custom:added
+				html = { "prettierd", "prettier", stop_after_first = true }, -- NOTE: custom:added
 				-- Conform can also run multiple formatters sequentially
 				-- python = { "isort", "black" },
 				--
 				-- You can use 'stop_after_first' to run the first available formatter from the list
 				javascript = { "prettierd", "prettier", stop_after_first = true },
 				typescript = { "prettierd", "prettier", stop_after_first = true },
+				css = { "prettier" }, -- Add this line for CSS formatting
 			},
 		},
 	},
@@ -1166,6 +1168,7 @@ require("lazy").setup({
 		-- [[ Configure Treesitter ]] See `:help nvim-treesitter`
 		opts = {
 			ensure_installed = {
+				"astro", -- NOTE: custom: added
 				"svelte", -- NOTE: custom: added
 				"css", -- NOTE: custom: added
 				"javascript", -- NOTE: custom: added
@@ -1441,7 +1444,13 @@ vim.g.netrw_keepdir = 0
 --   end,
 -- }
 -- NOTE: Old ideas.
---
+vim.api.nvim_create_autocmd("BufWritePre", {
+	pattern = "*.js",
+	callback = function()
+		print("Attempting to format JavaScript file...")
+		require("conform").format({ async = false })
+	end,
+})
 --
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et

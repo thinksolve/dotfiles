@@ -104,6 +104,7 @@
               HiddenBar = 1452453066;
               Notability = 360593530;
               OneThing = 1604176982;
+              PerplexityAI = 6714467650;
               SystemColorPicker = 1545870783;
             };
 

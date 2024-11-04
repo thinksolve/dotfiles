@@ -1,5 +1,11 @@
 #!/bin/bash
 
+function p() {
+
+    #this function requires hammerspoon to init the cli tool in hammerspoon/init.lua file
+    hs -c "openAndTypeInPerplexity('$1')"
+}
+
 function remove_h_old() {
     if [ -z "$1" ]; then
         echo "Usage: remove_from_history 'command to remove'"

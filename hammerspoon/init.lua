@@ -1,3 +1,4 @@
+hs.ipc.cliInstall()
 hs.loadSpoon("EmmyLua")
 -- require("submodules")
 -- -- for some reason even the presence of this custom file fixes intellisense on 'hs.'
@@ -9,6 +10,33 @@ end)
 hs.hotkey.bind({ "ctrl" }, "s", function()
 	app_to_space_using_sleep("Spotify")
 end)
+
+hs.hotkey.bind({ "ctrl" }, "d", function()
+	app_to_space_using_sleep("Discord")
+end)
+hs.hotkey.bind({ "ctrl" }, "p", function()
+	openAndTypeInPerplexity()
+	-- later use early return logic in 'openAndTypeInPerplexity' when no query passed
+end)
+function openAndTypeInPerplexity(query)
+	app_to_space_using_sleep("Perplexity")
+
+	hs.timer.doAfter(0.5, function()
+		--app fillscreen
+		hs.eventtap.keyStroke({ "ctrl", "fn" }, "f")
+	end)
+
+	-- early return if no argument passed
+	if not query or query == "" then
+		return
+	end
+
+	-- Type the query into the app and hit enter
+	hs.eventtap.keyStrokes(query)
+	hs.timer.doAfter(0.5, function()
+		hs.eventtap.keyStroke({}, "return")
+	end)
+end
 
 function app_to_space_using_sleep(app_name)
 	local app = hs.application.get(app_name)
@@ -39,7 +67,7 @@ function app_to_space_using_sleep(app_name)
 		local app_window = hs.window.focusedWindow()
 		if app_window then
 			spaces.moveWindowToSpace(app_window, new_space)
-			spaces.gotoSpace(current_space)
+			-- spaces.gotoSpace(current_space)
 		end
 	else
 		print("Failed to create or identify new space")
@@ -167,7 +195,7 @@ function app_to_space_coroutine_wrap(app_name)
 			local new_app = hs.application.get(app_name)
 			if new_app then
 				local win = new_app:mainWindow()
-				spaces.gotoSpace(current_space) -- Return to original space; previously below moveWindowToSpace
+				-- spaces.gotoSpace(current_space) -- Return to original space; previously below moveWindowToSpace
 				if win then
 					spaces.moveWindowToSpace(win, new_space)
 				end

@@ -2,15 +2,19 @@ setopt HIST_IGNORE_ALL_DUPS
 
 export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
 
+fpath+=($HOME/.zsh/pure)
+autoload -U promptinit; promptinit
+prompt pure
 
 # found out the hard way that plugins (vi-mode) affect bindkeys, so bindkeys should be placed BELOW plugins
 plugins=(git vi-mode zsh-autosuggestions zsh-syntax-highlighting)
 export ZSH=$HOME/.oh-my-zsh
 source "$ZSH"/oh-my-zsh.sh
-
+# ZSH_THEME="robbyrussell"
+# ZSH_THEME="powerlevel10k/powerlevel10k"
 
 source "$HOME"/.shell_functions.sh
-
+alias zshrc='nvim ~/.zshrc'
 alias gitignore_test='git rm -r --cached -f . && git add . && git ls-files | wc -l'
 alias BRAVE='cd ${HOME}/Library/Application\ Support/BraveSoftware/Brave-Browser/afalakplffnnnlkncjhbmahjfjhmlkal/1.0.904/1/'
 # alias BRAVE='/Users/brightowl/Library/Application\ Support/BraveSoftware/Brave-Browser/afalakplffnnnlkncjhbmahjfjhmlkal/1.0.904/1/'
@@ -82,8 +86,7 @@ bindkey -s '^F' 'echo "$(find_files_fuzzy_reduced)" | tr -d "\n" | pbcopy\n'
 bindkey -s '^[^F' 'echo "$(find_files_fuzzy_full)" | tr -d "\n" | pbcopy\n'
 
 bindkey -s '^Y' 'yazi . \n'
-
-
+bindkey -s '^N' 'nvim . \n'
 
 
 
@@ -242,9 +245,7 @@ export PATH=$HOME/bin:/usr/local/bin:$PATH
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
 
-fpath+=($HOME/.zsh/pure)
-autoload -U promptinit; promptinit
-prompt pure
+
 
 # ZSH_THEME="robbyrussell"
 # ZSH_THEME="powerlevel10k/powerlevel10k"
@@ -367,7 +368,7 @@ fi
 unset __conda_setup
 # <<< conda initialize <<<
 
-alias zshrc='nvim ~/.zshrc'
+
 
 # pnpm
 export PNPM_HOME="/Users/brightowl/Library/pnpm"
@@ -390,9 +391,8 @@ export VISUAL=nvim
 . "$HOME/.cargo/env"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+# [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 
 #export LSCOLORS=gxBxhxDxfxhxhxhxhxcxcx
-bindkey -s '^N' 'nvim . \n'
 
