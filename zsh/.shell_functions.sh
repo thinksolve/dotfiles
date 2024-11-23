@@ -1,9 +1,11 @@
 #!/bin/bash
 
 function p() {
-
     #this function requires hammerspoon to init the cli tool in hammerspoon/init.lua file
-    hs -c "openAndTypeInPerplexity('$1')"
+    hs -c "openPerplexityAndPassArgument('$1')"
+}
+function pp() {
+    open -a 'Brave Browser' -n --args "https://www.perplexity.ai/?q=$1"
 }
 
 function remove_h_old() {

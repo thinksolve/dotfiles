@@ -276,21 +276,7 @@ local function set_up_cmd(plugin, callback)
 end
 
 require("lazy").setup({
-	{
-		"axelvc/template-string.nvim",
-		ft = { "astro", "svelte", "javascript", "typescript", "javascriptreact", "typescriptreact" },
-		config = function(plugin)
-			require("template-string").setup({
-				filetypes = plugin.ft,
-				jsx_brackets = true,
-				remove_template_string = false,
-				restore_quotes = {
-					normal = [[']']],
-					jsx = [[']']],
-				},
-			})
-		end,
-	},
+
 	{
 		"sindrets/diffview.nvim",
 		cmd = "InitDiffviewOpen",
@@ -400,45 +386,52 @@ require("lazy").setup({
 		--   end)
 		-- end,
 	},
-	-- NOTE: nvim-surround already can do this with 'cst' where 't' is for tag; rather than ciw here
-	-- {
-	--   'windwp/nvim-ts-autotag',
-	--   event = 'BufNewFile',
-	--   -- event = 'VeryLazy',
-	--   -- event = { 'BufReadPre', 'BufNewFile' },
-	--   ft = {
-	--     'html',
-	--     'svelte',
-	--     'astro',
-	--     'vue',
-	--     'javascript',
-	--     'javascriptreact',
-	--     'typescriptreact',
-	--     'tsx',
-	--     'jsx',
-	--     'glimmer',
-	--     'handlebars',
-	--     'php',
-	--     'rescript',
-	--     'twig',
-	--     'xml',
-	--   },
-	--   config = function()
-	--     require('nvim-ts-autotag').setup()
-	--   end,
-	-- },
 	{
 		"JoosepAlviste/nvim-ts-context-commentstring",
 		event = "VeryLazy",
 		build = ":TSUpdate",
+
 		-- config = function()
-		--   require('nvim-treesitter.configs').setup {
-		--     ensure_installed = { 'vim', 'lua', 'svelte', 'css', 'javascript' },
-		--     highlight = {
-		--       enable = true,
-		--     },
-		--   }
+		--
+		-- 		require("nvim-treesitter.configs").setup({
+		-- 			ensure_installed = {
+		-- 				"vim",
+		-- 				"lua",
+		-- 				"svelte",
+		-- 				"css",
+		-- 				"javascript",
+		-- 				"typescript",
+		-- 			},
+		-- 			highlight = {
+		-- 				enable = true,
+		-- 			},
+		-- 		})
 		-- end,
+	},
+	-- NOTE: ncessary to get commenting out in jsx/tsx
+	{
+		"numToStr/Comment.nvim",
+		ft = { "javascriptreact", "typescriptreact" },
+		dependencies = "JoosepAlviste/nvim-ts-context-commentstring",
+		config = function()
+			local prehook = require("ts_context_commentstring.integrations.comment_nvim").create_pre_hook()
+			require("Comment").setup({ pre_hook = prehook })
+		end,
+	},
+	{
+		"axelvc/template-string.nvim",
+		ft = { "astro", "svelte", "javascript", "typescript", "javascriptreact", "typescriptreact" },
+		config = function(plugin)
+			require("template-string").setup({
+				filetypes = plugin.ft,
+				jsx_brackets = true,
+				remove_template_string = false,
+				restore_quotes = {
+					normal = [[']']],
+					jsx = [[']']],
+				},
+			})
+		end,
 	},
 	{
 		"mg979/vim-visual-multi",
@@ -468,16 +461,6 @@ require("lazy").setup({
 	},
 	"tpope/vim-sleuth", -- Detect tabstop and shiftwidth automatically
 
-	-- NOTE: Plugins can also be added by using a table,
-	-- with the first argument being the link and the following
-	-- keys can be used to configure plugin behavior/loading/etc.
-	--  --
-
-	-- Here is a more advanced example where we pass configuration
-	-- options to `gitsigns.nvim`. This is equivalent to the following Lua:
-	--    require('gitsigns').setup({ ... })
-	--
-	-- See `:help gitsigns` to understand what the configuration keys do
 	{ -- Adds git related signs to the gutter, as well as utilities for managing changes
 		"lewis6991/gitsigns.nvim",
 		opts = {
@@ -490,21 +473,6 @@ require("lazy").setup({
 			},
 		},
 	},
-
-	-- NOTE: Plugins can also be configured to run Lua code when they are loaded.
-	--
-	-- This is often very useful to both group configuration, as well as handle
-	-- lazy loading plugins that don't need to be loaded immediately at startup.
-	--
-	-- For example, in the following configuration, we use:
-	--  event = 'VimEnter'
-	--
-	-- which loads which-key before all the UI elements are loaded. Events can be
-	-- normal autocommands events (`:help autocmd-events`).
-	--
-	-- Then, because we use the `config` key, the configuration only runs
-	-- after the plugin has been loaded:
-	--  config = function() ... end
 
 	{ -- Useful plugin to show you pending keybinds.
 		"folke/which-key.nvim",
@@ -560,13 +528,6 @@ require("lazy").setup({
 		},
 	},
 
-	-- NOTE: Plugins can specify dependencies.
-	--
-	-- The dependencies are proper plugin specifications as well - anything
-	-- you do for a plugin at the top level, you can do for a dependency.
-	--
-	-- Use the `dependencies` key to specify the dependencies of a particular plugin
-
 	{ -- Fuzzy Finder (files, lsp, etc)
 		"nvim-telescope/telescope.nvim",
 		event = "VimEnter",
@@ -592,24 +553,6 @@ require("lazy").setup({
 			{ "nvim-tree/nvim-web-devicons", enabled = true or vim.g.have_nerd_font },
 		},
 		config = function()
-			-- Telescope is a fuzzy finder that comes with a lot of different things that
-			-- it can fuzzy find! It's more than just a "file finder", it can search
-			-- many different aspects of Neovim, your workspace, LSP, and more!
-			--
-			-- The easiest way to use Telescope, is to start by doing something like:
-			--  :Telescope help_tags
-			--
-			-- After running this command, a window will open up and you're able to
-			-- type in the prompt window. You'll see a list of `help_tags` options and
-			-- a corresponding preview of the help.
-			--
-			-- Two important keymaps to use while in Telescope are:
-			--  - Insert mode: <c-/>
-			--  - Normal mode: ?
-			--
-			-- This opens a window that shows you all of the keymaps for the current
-			-- Telescope picker. This is really useful to discover what Telescope can
-			-- do as well as how to actually do it!
 			local builtin = require("telescope.builtin") -- NOTE: moved
 			local util = require("lspconfig.util")
 			local actions_state = require("telescope.actions.state")
@@ -745,35 +688,6 @@ require("lazy").setup({
 			"hrsh7th/cmp-nvim-lsp",
 		},
 		config = function()
-			-- Brief aside: **What is LSP?**
-			--
-			-- LSP is an initialism you've probably heard, but might not understand what it is.
-			--
-			-- LSP stands for Language Server Protocol. It's a protocol that helps editors
-			-- and language tooling communicate in a standardized fashion.
-			--
-			-- In general, you have a "server" which is some tool built to understand a particular
-			-- language (such as `gopls`, `lua_ls`, `rust_analyzer`, etc.). These Language Servers
-			-- (sometimes called LSP servers, but that's kind of like ATM Machine) are standalone
-			-- processes that communicate with some "client" - in this case, Neovim!
-			--
-			-- LSP provides Neovim with features like:
-			--  - Go to definition
-			--  - Find references
-			--  - Autocompletion
-			--  - Symbol Search
-			--  - and more!
-			--
-			-- Thus, Language Servers are external tools that must be installed separately from
-			-- Neovim. This is where `mason` and related plugins come into play.
-			--
-			-- If you're wondering about lsp vs treesitter, you can check out the wonderfully
-			-- and elegantly composed help section, `:help lsp-vs-treesitter`
-
-			--  This function gets run when an LSP attaches to a particular buffer.
-			--    That is to say, every time a new file is opened that is associated with
-			--    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`) this
-			--    function will be executed to configure the current buffer
 			vim.api.nvim_create_autocmd("LspAttach", {
 				group = vim.api.nvim_create_augroup("kickstart-lsp-attach", { clear = true }),
 				callback = function(event)
@@ -879,16 +793,6 @@ require("lazy").setup({
 			--  So, we create new capabilities with nvim cmp, and then broadcast that to the servers.
 			local capabilities = vim.lsp.protocol.make_client_capabilities()
 			capabilities = vim.tbl_deep_extend("force", capabilities, require("cmp_nvim_lsp").default_capabilities())
-
-			-- Enable the following language servers
-			--  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
-			--
-			--  Add any additional override configuration in the following tables. Available keys are:
-			--  - cmd (table): Override the default command used to start the server
-			--  - filetypes (table): Override the default list of associated filetypes for the server
-			--  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
-			--  - settings (table): Override the default settings passed when initializing the server.
-			--        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
 
 			local servers = {
 				-- clangd = {},
@@ -1019,13 +923,45 @@ require("lazy").setup({
 					-- `friendly-snippets` contains a variety of premade snippets.
 					--    See the README about individual language/framework/plugin snippets:
 					--    https://github.com/rafamadriz/friendly-snippets
-					-- {
-					--   'rafamadriz/friendly-snippets',
-					--   config = function()
-					--     require('luasnip.loaders.from_vscode').lazy_load()
-					--   end,
-					-- },
+					{
+						"rafamadriz/friendly-snippets",
+						config = function()
+							require("luasnip.loaders.from_vscode").lazy_load()
+						end,
+					},
 				},
+				config = function()
+					require("luasnip").setup({})
+
+					local luasnip = require("luasnip")
+					local s = luasnip.snippet
+					local t = luasnip.text_node
+					local i = luasnip.insert_node
+
+					local jsx_function_snippet = {
+						s("cmp", {
+							-- s("function", {
+							t("function "),
+							i(1, "name"),
+							t("("),
+							i(2, "props"),
+							t(") {"),
+							t({ "", "  " }),
+							t({ "", "  return (" }),
+							t({ "", "    <div>" }),
+							t({ "", "      " }),
+							i(3, ""),
+							t({ "", "    </div>" }),
+							t({ "", "  )" }),
+							t({ "", "}" }),
+						}),
+					}
+					luasnip.add_snippets("javascriptreact", jsx_function_snippet)
+					luasnip.add_snippets("typescriptreact", jsx_function_snippet)
+
+					luasnip.filetype_extend("javascriptreact", { "html" })
+					luasnip.filetype_extend("typescriptreact", { "html" }) -- If you also use TypeScript React
+				end,
 			},
 			"saadparwaiz1/cmp_luasnip",
 
@@ -1173,6 +1109,7 @@ require("lazy").setup({
 				"css", -- NOTE: custom: added
 				"javascript", -- NOTE: custom: added
 				"typescript", -- NOTE: custom: added
+				"tsx",
 				"bash",
 				"c",
 				"diff",

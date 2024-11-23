@@ -66,6 +66,8 @@
             pkgs.tree
             pkgs.wget
             pkgs.yazi
+            pkgs.yt-dlp
+            # pkgs.youtube-dl
             pkgs.zig
             # pkgs.poppler_utils
             # pkgs.yq

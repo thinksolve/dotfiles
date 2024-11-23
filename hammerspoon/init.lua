@@ -1,28 +1,82 @@
 hs.ipc.cliInstall()
 hs.loadSpoon("EmmyLua")
 -- require("submodules")
--- -- for some reason even the presence of this custom file fixes intellisense on 'hs.'
+
+-- close this space (using osascript for now)
+hs.hotkey.bind({ "ctrl" }, "-", function()
+	local success, output, descriptor = hs.osascript.applescript([[
+        tell application "Mission Control" to launch
+        delay 0.25
+        tell application "System Events"
+            tell list 1 of group 2 of group 1 of group 1 of process "Dock"
+                set countSpaces to count of buttons
+                if countSpaces is greater than 1 then
+                    perform action "AXRemoveDesktop" of button countSpaces
+                end if
+            end tell
+            keystroke (key code 53)
+        end tell
+    ]])
+	if success then
+		print("Successfully closed the current space")
+	else
+		print("Failed to close the current space: " .. descriptor)
+	end
+end)
+
+-- Bind a hotkey to 'q' with the 'fn' key as a modifier
+
+-- Close all spaces and leave 2
+hs.hotkey.bind({ "ctrl" }, "q", function()
+	local spaces = hs.spaces
+
+	-- Get the current spaces for each screen
+	for _, screen in pairs(hs.screen.allScreens()) do
+		local spaceIDs = spaces.spacesForScreen(screen)
+		if spaceIDs then
+			-- Close spaces starting from the third space onwards
+			for i = 2, #spaceIDs do
+				spaces.removeSpace(spaceIDs[i], true)
+			end
+		end
+	end
+end)
+
+hs.hotkey.bind({ "ctrl" }, "b", function()
+	app_to_space_using_sleep("Brave")
+end)
+
+hs.hotkey.bind({ "cmd", "option" }, "t", function()
+	hs.application.open("iterm2")
+end)
 
 hs.hotkey.bind({ "ctrl" }, "t", function()
-	app_to_space_using_sleep("iterm2")
+	app_to_space_using_sleep("iterm2")("iterm2")
 end)
 
 hs.hotkey.bind({ "ctrl" }, "s", function()
 	app_to_space_using_sleep("Spotify")
 end)
 
+-- hs.hotkey.bind({ "cmd", "alt" }, "d", function()
 hs.hotkey.bind({ "ctrl" }, "d", function()
 	app_to_space_using_sleep("Discord")
 end)
 hs.hotkey.bind({ "ctrl" }, "p", function()
-	openAndTypeInPerplexity()
-	-- later use early return logic in 'openAndTypeInPerplexity' when no query passed
+	-- app_to_space_using_sleep("Perplexity")
+	-- hs.timer.doAfter(0.25, function()
+	-- 	hs.eventtap.keyStroke({ "ctrl", "fn" }, "f")
+	-- end)
+
+	openPerplexityAndPassArgument()
 end)
-function openAndTypeInPerplexity(query)
+
+function openPerplexityAndPassArgument(query)
+	query = query or ""
 	app_to_space_using_sleep("Perplexity")
 
-	hs.timer.doAfter(0.5, function()
-		--app fillscreen
+	hs.timer.doAfter(0.25, function()
+		-- Tells perplexity to go "fill" screen
 		hs.eventtap.keyStroke({ "ctrl", "fn" }, "f")
 	end)
 
@@ -32,8 +86,11 @@ function openAndTypeInPerplexity(query)
 	end
 
 	-- Type the query into the app and hit enter
-	hs.eventtap.keyStrokes(query)
 	hs.timer.doAfter(0.5, function()
+		hs.eventtap.keyStrokes(query)
+		-- hs.eventtap.keyStroke({}, "return")
+	end)
+	hs.timer.doAfter(1.5, function()
 		hs.eventtap.keyStroke({}, "return")
 	end)
 end
@@ -48,7 +105,7 @@ function app_to_space_using_sleep(app_name)
 
 	local screen = hs.screen.mainScreen()
 	local spaces = require("hs.spaces")
-	local current_space = spaces.activeSpaceOnScreen(screen)
+	-- local current_space = spaces.activeSpaceOnScreen(screen)
 
 	spaces.addSpaceToScreen(screen)
 
@@ -56,7 +113,7 @@ function app_to_space_using_sleep(app_name)
 	hs.timer.usleep(delay_interval)
 
 	local new_spaces = spaces.spacesForScreen(screen)
-	local new_space = new_spaces[#new_spaces]
+	local new_space = new_spaces and new_spaces[#new_spaces]
 	if new_space then
 		spaces.gotoSpace(new_space)
 		hs.timer.usleep(delay_interval)

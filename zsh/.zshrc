@@ -16,6 +16,8 @@ source "$ZSH"/oh-my-zsh.sh
 source "$HOME"/.shell_functions.sh
 alias zshrc='nvim ~/.zshrc'
 alias gitignore_test='git rm -r --cached -f . && git add . && git ls-files | wc -l'
+
+alias SCREENSAVERS='cd "/Library/Application Support/com.apple.idleassetsd/Customer/4KSDR240FPS"'
 alias BRAVE='cd ${HOME}/Library/Application\ Support/BraveSoftware/Brave-Browser/afalakplffnnnlkncjhbmahjfjhmlkal/1.0.904/1/'
 # alias BRAVE='/Users/brightowl/Library/Application\ Support/BraveSoftware/Brave-Browser/afalakplffnnnlkncjhbmahjfjhmlkal/1.0.904/1/'
 
@@ -79,14 +81,14 @@ alias find_dirs_fuzzy_full='find_dirs_root -H | fzf --prompt="Find Dir from $HOM
 
 
 
-bindkey -s '^D' 'cd "$(find_dirs_fuzzy_reduced)"\n'
+# bindkey -s '^D' 'cd "$(find_dirs_fuzzy_reduced)"\n'
 bindkey -s '^[^D' 'cd "$(find_dirs_fuzzy_full)"\n'
 
-bindkey -s '^F' 'echo "$(find_files_fuzzy_reduced)" | tr -d "\n" | pbcopy\n'
+# bindkey -s '^F' 'echo "$(find_files_fuzzy_reduced)" | tr -d "\n" | pbcopy\n'
 bindkey -s '^[^F' 'echo "$(find_files_fuzzy_full)" | tr -d "\n" | pbcopy\n'
 
-bindkey -s '^Y' 'yazi . \n'
-bindkey -s '^N' 'nvim . \n'
+bindkey -s '^[^Y' 'yazi . \n'
+bindkey -s '^[^N' 'nvim . \n'
 
 
 
