@@ -1,0 +1,96 @@
+# home.nix
+# home-manager switch
+
+{
+  config,
+  pkgs,
+  username,
+  ...
+}:
+let
+  dotfiles_dir = "${config.home.homeDirectory}/.dotfiles";
+  link_dotfiles = path: config.lib.file.mkOutOfStoreSymlink "${dotfiles_dir}/${path}";
+in
+{
+  home.username = username;
+  home.homeDirectory = "/Users/${username}";
+  # home.homeDirectory = lib.mkForce "/Users/brightowl";
+  home.stateVersion = "23.11";
+
+  home.file = {
+    ".hammerspoon".source = link_dotfiles "/hammerspoon";
+    ".zshrc".source = link_dotfiles "/zsh/.zshrc";
+    ".tmux.conf".source = link_dotfiles "/tmux/.tmux.conf";
+    ".shell_functions.sh".source = link_dotfiles "/zsh/.shell_functions.sh";
+    ".config/nvim".source = link_dotfiles "/nvim";
+    ".config/iterm2".source = link_dotfiles "/iterm2";
+    ".config/yazi".source = link_dotfiles "/yazi";
+    ".config/nix".source = link_dotfiles "/nix";
+    ".config/nix-darwin".source = link_dotfiles "/nix/darwin";
+    # Add other dotfiles as needed
+  };
+
+  # packages that don't make sense system-wide
+  home.packages = [
+    # Ensure these are explicitly listed
+    pkgs.zsh-autosuggestions
+    pkgs.zsh-syntax-highlighting
+  ];
+  # home.packages =
+  #   [
+  #   ];
+  # #
+  # home.sessionVariables =
+  #   {
+  #   };
+  #
+  # home.sessionPath = [
+  #   "/run/current-system/sw/bin"
+  #   "$HOME/.nix-profile/bin"
+  # ];
+  programs.zsh = {
+    enable = true;
+    autosuggestion.enable = true;
+    syntaxHighlighting.enable = true;
+
+    initExtra = ''
+      # Explicit sourcing of plugins
+      source ${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+      source ${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+      echo "Home Manager ZSH Initialization WORKED"
+    '';
+
+    oh-my-zsh = {
+      enable = false; # Explicitly disable oh-my-zsh
+    };
+  };
+
+  # programs.home-manager.enable = true;
+
+  # programs.zsh = {
+  #   enable = true;
+  #   plugins = [
+  #     {
+  #       name = "zsh-autosuggestions";
+  #       src = pkgs.zsh-autosuggestions;
+  #       file = "share/zsh-autosuggestions/zsh-autosuggestions.zsh";
+  #     }
+  #     {
+  #       name = "zsh-syntax-highlighting";
+  #       src = pkgs.zsh-syntax-highlighting;
+  #       file = "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh";
+  #     }
+  #   ];
+  #   initExtra = ''
+  #     echo "tryna log something"
+  #     # Add any additional configurations here
+  #     export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
+  #     if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
+  #       . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+  #     fi
+  #     echo "tryna log another thing"
+  #   '';
+  # };
+
+}

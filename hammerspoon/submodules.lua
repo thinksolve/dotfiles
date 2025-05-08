@@ -1,6 +1,14 @@
 --- @class hs
 local hs = {}
 
+-- Define the hs.audiodevice class with its methods
+--- @class hs.audiodevice
+--- @field setMuted fun(self: hs.audiodevice, state: boolean): boolean
+--- @field muted fun(self: hs.audiodevice): boolean
+--- @field volume fun(self: hs.audiodevice): number
+--- @field setVolume fun(self: hs.audiodevice, value: number): boolean
+--- @field name fun(self: hs.audiodevice): string
+
 ---@type hs.application
 hs.application = require("hs.application")
 
@@ -13,7 +21,8 @@ hs.appfinder = require("hs.appfinder")
 ---@type hs.applescript
 hs.applescript = require("hs.applescript")
 
----@type hs.audiodevice
+-- ---@type hs.audiodevice
+--- @type {defaultOutputDevice: fun(): hs.audiodevice, allOutputDevices: fun(): hs.audiodevice[]}
 hs.audiodevice = require("hs.audiodevice")
 
 ---@type hs.axuielement

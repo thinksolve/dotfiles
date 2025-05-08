@@ -377,20 +377,6 @@ EOF
     #| tee "$tabs_dir/1.txt"
     #| tee "$tabs_dir/1.txt"
     #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
 
 }
 
@@ -616,38 +602,61 @@ function archiver() {
     open -a "Brave Browser" "https://archive.is/$1"
 }
 
-# WORK IN PROGRESS ..
+# WORK IN PROGRESS
 # function standard_backup() {
 #     local FROM_PATH=$(realpath "$1")
 #     local TO_PATH="${FROM_PATH}_backup"
 #     backup_from_to "$FROM_PATH" "$TO_PATH"
 # }
 #
+function standard_backup() {
+    local FROM_PATH=$(realpath "$1")
 
-function backup_dotfiles() {
-    # standard_backup "$HOME/.dotfiles"
-    standard_backup_dir "$HOME/.dotfiles"
+    # Check if the path is a file or directory
+    if [ -f "$FROM_PATH" ]; then
+        # For files, append _backup to the filename
+        local DIR_NAME=$(dirname "$FROM_PATH")
+        local FILE_NAME=$(basename "$FROM_PATH")
+        local TO_PATH="${DIR_NAME}/${FILE_NAME}_backup"
+    else
+        # For directories, append _backup to the directory path
+        local TO_PATH="${FROM_PATH}_backup"
+    fi
+
+    # If it's a file, we need to handle it differently
+    if [ -f "$FROM_PATH" ]; then
+        # Create parent directory if needed
+        mkdir -p "$(dirname "$TO_PATH")"
+        # Check if backup already exists
+        if [ -f "$TO_PATH" ]; then
+            read -q "REPLY?Backup file already exists. Do you want to overwrite? (y/n) "
+            echo # Move to a new line
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                echo "Backup cancelled."
+                return
+            fi
+        fi
+        # Copy the file
+        cp "$FROM_PATH" "$TO_PATH" && echo "Backup completed successfully ($TO_PATH)" || echo "Error: Backup failed."
+    else
+        # It's a directory, so use the existing backup_from_to function
+        backup_from_to "$FROM_PATH" "$TO_PATH"
+    fi
 }
 
 # NOTE: backup utility
 function backup_hammerspoon() {
-    # local REAL_PATH=$(realpath "$HOME/.hammerspoon/")
-    # backup_dirs_from_to "$REAL_PATH" "$HOME/.hammerspoon_backup"
-    standard_backup_dir "$HOME/.hammerspoon"
+    local REAL_PATH=$(realpath "$HOME/.hammerspoon/")
+    backup_from_to "$REAL_PATH" "$HOME/.hammerspoon_backup"
 }
 
 function backup_nvim() {
-    # local NVIM_REAL_PATH=$(realpath "$HOME/.config/nvim")
-    # backup_dirs_from_to "$NVIM_REAL_PATH" "$HOME/.config/nvim_backup"
-    standard_backup_dir "$HOME/.config/nvim"
+    # backup_from_to "$HOME/.config/nvim" "$HOME/.config/nvim_backup"
+    local NVIM_REAL_PATH=$(realpath "$HOME/.config/nvim")
+    backup_from_to "$NVIM_REAL_PATH" "$HOME/.config/nvim_backup"
 }
 
-function standard_backup_dir() {
-    local FROM="$1"
-    backup_dirs_from_to "$FROM" "${FROM}_backup"
-}
-
-function backup_dirs_from_to() {
+function backup_from_to() {
     if [ $# -ne 2 ]; then
         echo "Please pass 2 arguments (i.e. source directory followed by backup directory)."
         return
@@ -678,56 +687,13 @@ function backup_dirs_from_to() {
     fi
 
     # Perform the backup
-    if rsync -avL --delete --filter=":- .backupignore" "$SOURCE_DIR/" "$BACKUP_DIR"; then
-        # if rsync -avL --delete "$SOURCE_DIR/" "$BACKUP_DIR"; then
+    if rsync -avL --delete "$SOURCE_DIR/" "$BACKUP_DIR"; then
         # if rsync -a --delete "$SOURCE_DIR/" "$BACKUP_DIR"; then
         echo "Backup completed successfully ($BACKUP_DIR)"
     else
         echo "Error: Backup failed."
         return
         # exit 1
-    fi
-}
-
-# works for dirs and files more robustly
-function standard_backup() {
-    local FROM_PATH=$(realpath "$1")
-
-    if [ -f "$FROM_PATH" ]; then
-        local DIR_NAME=$(dirname "$FROM_PATH")
-        local FILE_NAME=$(basename "$FROM_PATH")
-
-        # Get filename without extension (handles hidden files and multiple dots)
-        local FILE_BASE="${FILE_NAME%.*}"
-        local FILE_EXT="${FILE_NAME##*.}"
-
-        # If the file has no extension, FILE_BASE==FILE_NAME
-        if [[ "$FILE_NAME" = "$FILE_EXT" ]]; then
-            # No extension
-            local TO_PATH="${DIR_NAME}/${FILE_NAME}_backup"
-        else
-            # Check if filename starts with a dot and has another dot (hidden multi-dot file)
-            if [[ "$FILE_NAME" = .*.* ]]; then
-                # Get everything except the last dot+extension
-                local FILE_BASE="${FILE_NAME:0:$((${#FILE_NAME} - ${#FILE_EXT} - 1))}"
-                local TO_PATH="${DIR_NAME}/${FILE_BASE}_backup.${FILE_EXT}"
-            else
-                local TO_PATH="${DIR_NAME}/${FILE_BASE}_backup.${FILE_EXT}"
-            fi
-        fi
-
-        if [ -f "$TO_PATH" ]; then
-            read -q "REPLY?Backup file already exists. Do you want to overwrite? (y/n) "
-            echo
-            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                echo "Backup cancelled."
-                return
-            fi
-        fi
-        cp "$FROM_PATH" "$TO_PATH" && echo "Backup completed successfully ($TO_PATH)" || echo "Error: Backup failed."
-    else
-        local TO_PATH="${FROM_PATH}_backup"
-        backup_dirs_from_to "$FROM_PATH" "$TO_PATH"
     fi
 }
 

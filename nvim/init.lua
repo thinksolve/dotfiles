@@ -276,18 +276,53 @@ local function set_up_cmd(plugin, callback)
 end
 
 require("lazy").setup({
-
 	{
-		"sindrets/diffview.nvim",
-		cmd = "InitDiffviewOpen",
+		"brianhuster/live-preview.nvim",
+		cmd = "LP", -- load plugin on this command; init function below also starts live preview server
+		-- ft = { "html", "markdown" },
+		opts = {
+			cmd = "LivePreview",
+			port = 5400,
+			autokill = false,
+			browser = "default",
+			dynamic_root = false,
+			sync_scroll = false,
+			picker = nil,
+		},
+		dependencies = {
+			-- Not required, but recomended for autosaving and sync scrolling
+			"brianhuster/autosave.nvim",
+			-- You can choose one of the following pickers
+			"nvim-telescope/telescope.nvim",
+			"ibhagwan/fzf-lua",
+			"echasnovski/mini.pick",
+		},
+
 		init = function(plugin)
 			vim.api.nvim_create_user_command(plugin.cmd, function()
 				require("lazy").load({ plugins = { plugin.name } })
 				vim.schedule(function()
+					vim.cmd("LivePreview start")
+				end)
+			end, {})
+
+			vim.api.nvim_create_user_command("LPx", function()
+				vim.cmd("LivePreview close")
+			end, {})
+		end,
+	},
+	{
+		"sindrets/diffview.nvim",
+		cmd = "InitDiffviewOpen",
+
+		init = function(plugin)
+			vim.api.nvim_create_user_command(plugin.cmd, function()
+				require("lazy").load({ plugins = { plugin.name } })
+
+				vim.schedule(function()
 					vim.cmd("DiffviewOpen")
 				end)
 			end, {})
-			-- set_up_cmd(plugin, function() vim.cmd("DiffviewOpen") end)
 		end,
 	},
 	lazy_themes({
@@ -360,8 +395,8 @@ require("lazy").setup({
 			end,
 		},
 	}),
-
-	-- NOTE: this taken from: https://codeberg.org/sheykail/my-lazyvim/src/branch/master/lua/plugins/fold.lua
+	-- NOTE: https://codeberg.org/sheykail/my-lazyvim/src/branch/master/lua/plugins/fold.lua
+	-- (nvim 0.11 will replace this?)
 	{
 		"kevinhwang91/nvim-ufo",
 		dependencies = { "kevinhwang91/promise-async" },
@@ -376,15 +411,6 @@ require("lazy").setup({
 			vim.o.foldenable = true
 			require("ufo").setup()
 		end,
-		-- init = function()
-		--   -- Using ufo provider need remap `zR` and `zM`. If Neovim is 0.6.1, remap yourself
-		--   vim.keymap.set('n', 'zR', function()
-		--     require('ufo').openAllFolds()
-		--   end)
-		--   vim.keymap.set('n', 'zM', function()
-		--     require('ufo').closeAllFolds()
-		--   end)
-		-- end,
 	},
 	{
 		"JoosepAlviste/nvim-ts-context-commentstring",
@@ -888,6 +914,7 @@ require("lazy").setup({
 				}
 			end,
 			formatters_by_ft = {
+				haskell = { "fourmolu" },
 				nix = { "nixfmt" }, -- pkgs.nixfmt-rfc-style in flake.nix (nix-darwin)
 				json = { "prettier" },
 				lua = { "stylua" },
@@ -1386,6 +1413,48 @@ vim.api.nvim_create_autocmd("BufWritePre", {
 	callback = function()
 		print("Attempting to format JavaScript file...")
 		require("conform").format({ async = false })
+	end,
+})
+
+vim.api.nvim_create_user_command("Replace", function(opts)
+	local old_str, new_str = opts.args:match("^(.-)/(.-)$")
+	if old_str and new_str then
+		vim.cmd(string.format("%%s/%s/%s/gc", old_str, new_str))
+	else
+		print("Invalid arguments! Usage: :replace oldstring/newstring")
+	end
+end, { nargs = 1 })
+
+--NOTE: banger! mimics yazi defaults in netrw view
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = "netrw",
+	callback = function()
+		local function netrw_bind(from, to)
+			return vim.keymap.set("n", to, from, { remap = true, buffer = true })
+		end
+
+		-- netrw_bind("%", "a") -- Create file
+		netrw_bind("D", "d") -- Delete
+		netrw_bind("R", "r") -- Rename
+		-- netrw_bind( "-", "h") -- Up directory
+		-- netrw_bind("<CR>", "l") -- Enter file/dir
+		netrw_bind("<C-w>v<CR>", "p") -- Open in vertical split
+		netrw_bind("<C-w>s<CR>", "P") -- Open in horizontal split
+
+		-- Create file in yazi manner (nested directories allowed!)
+		vim.keymap.set("n", "a", function()
+			local path = vim.fn.input("Create file (with path): ", "", "file")
+			if path == "" then
+				return
+			end
+
+			local dir = vim.fn.fnamemodify(path, ":h")
+			if dir ~= "." then
+				vim.fn.mkdir(dir, "p") -- 'p' creates intermediate dirs
+			end
+			vim.cmd("e " .. path)
+			vim.cmd("w") -- Save immediately to disk
+		end, { remap = true, buffer = true })
 	end,
 })
 --
