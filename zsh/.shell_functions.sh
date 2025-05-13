@@ -1,5 +1,40 @@
 #!/bin/bash
 
+function dedupe_history() {
+    local history="$HOME/.zsh_history"
+    # local backup="${history}.bak"
+    local backup="${history}.$(date +%Y%m%d).bak"
+    local deduped="${history}.deduped"
+
+    # Check if the history file exists and is readable
+    if [[ ! -f "$history" || ! -r "$history" ]]; then
+        echo "Error: '$history' does not exist or is not readable. Aborting." >&2
+        return 1
+    fi
+
+    # Create a backup
+    if ! cp "$history" "$backup"; then
+        echo "Error: Backup failed! Aborting." >&2
+        return 1
+    fi
+    echo "Backup created at $backup."
+
+    # Deduplicate, skipping malformed lines
+    if ! awk -F';' '$2 && !seen[$2]++' "$history" >"$deduped"; then
+        echo "Error: Deduplication (awk) failed! Your backup is safe at $backup." >&2
+        return 1
+    fi
+    echo "Deduplication step completed. Proceeding to update history file."
+
+    # Move the deduplicated file
+    if ! mv "$deduped" "$history"; then
+        echo "Error: Move failed! You can manually recover your history from $backup or $deduped." >&2
+        return 1
+    fi
+
+    echo "Deduplication complete. Backup remains at $backup."
+}
+
 function checkpath() {
     if [ -z "$1" ]; then
         echo "Usage: checkpath <path>"
@@ -348,51 +383,25 @@ function recent_edit() {
     fd . "$HOME" -H --changed-within "$within" --type f --exclude '.*' --exclude 'Library' -x ls -lh {}
 }
 
-function get_urls() {
-    local browser="${1:-brave}"
-    # local tabs_dir="$HOME/.brave_tabs"
-    # mkdir -p "$tabs_dir"
-
-    osascript <<EOF | tr ',' '\n' | sed 's/^[ \t]*//' #| tee "$tabs_dir/1.txt"
-    tell application "$browser"
-        set urlList to {}
-        repeat with w in windows
-            repeat with t in tabs of w
-                set end of urlList to URL of t
-            end repeat
-        end repeat
-        return urlList
-    end tell
-EOF
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-    #| tee "$tabs_dir/1.txt"
-
-}
+#NOTE: bug when i save file it adds weird 'tabs_dir' text
+# function get_urls() {
+#     local browser="${1:-brave}"
+#     # local tabs_dir="$HOME/.brave_tabs"
+#     # mkdir -p "$tabs_dir"
+#
+#     osascript <<EOF | tr ',' '\n' | sed 's/^[ \t]*//'
+#     tell application "$browser"
+#         set urlList to {}
+#         repeat with w in windows
+#             repeat with t in tabs of w
+#                 set end of urlList to URL of t
+#             end repeat
+#         end repeat
+#         return urlList
+#     end tell
+# EOF
+#
+# }
 
 function get_title_from_url() {
     local url="$1"
@@ -624,11 +633,6 @@ function archiver() {
 # }
 #
 
-function backup_dotfiles() {
-    # standard_backup "$HOME/.dotfiles"
-    standard_backup_dir "$HOME/.dotfiles"
-}
-
 # NOTE: backup utility
 function backup_hammerspoon() {
     # local REAL_PATH=$(realpath "$HOME/.hammerspoon/")
@@ -641,7 +645,10 @@ function backup_nvim() {
     # backup_dirs_from_to "$NVIM_REAL_PATH" "$HOME/.config/nvim_backup"
     standard_backup_dir "$HOME/.config/nvim"
 }
-
+function backup_dotfiles() {
+    # standard_backup "$HOME/.dotfiles"
+    standard_backup_dir "$HOME/.dotfiles"
+}
 function standard_backup_dir() {
     local FROM="$1"
     backup_dirs_from_to "$FROM" "${FROM}_backup"

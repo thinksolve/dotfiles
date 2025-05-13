@@ -17,6 +17,8 @@ source "$ZSH"/oh-my-zsh.sh
 
 source "$HOME"/.shell_functions.sh
 alias zshrc='nvim ~/.zshrc'
+alias hist='nvim ~/.zsh_history'
+alias shell_functions='nvim $HOME/.shell_functions.sh'
 # alias gitignore_test='git rm -r --cached -f . && git add . && git ls-files | wc -l'
 
 alias SCREENSAVERS='cd "/Library/Application Support/com.apple.idleassetsd/Customer/4KSDR240FPS"'
@@ -207,27 +209,30 @@ export PATH=$HOME/bin:/usr/local/bin:$PATH
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 
-source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
-source /opt/homebrew/opt/chruby/share/chruby/auto.sh
-chruby ruby-2.7.2
-source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
-source /opt/homebrew/opt/chruby/share/chruby/auto.sh
-chruby ruby-2.7.2
+# source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+# source /opt/homebrew/opt/chruby/share/chruby/auto.sh
+# chruby ruby-2.7.2
+# source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+# source /opt/homebrew/opt/chruby/share/chruby/auto.sh
+# chruby ruby-2.7.2
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/Users/brightowl/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/Users/brightowl/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/Users/brightowl/miniconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/Users/brightowl/miniconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
+
+# __conda_setup="$('/Users/brightowl/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+# if [ $? -eq 0 ]; then
+#     eval "$__conda_setup"
+# else
+#     if [ -f "/Users/brightowl/miniconda3/etc/profile.d/conda.sh" ]; then
+#         . "/Users/brightowl/miniconda3/etc/profile.d/conda.sh"
+#     else
+#         export PATH="/Users/brightowl/miniconda3/bin:$PATH"
+#     fi
+# fi
+# unset __conda_setup
+
 # <<< conda initialize <<<
+
 
 
 
@@ -246,10 +251,10 @@ export PATH=${PATH}:/usr/local/mysql/bin/
 export EDITOR=nvim
 export VISUAL=nvim
 # export EDITOR="code -w"
-. "$HOME/.cargo/env"
+# . "$HOME/.cargo/env"
 
 # previously in ~/.profile
-. "$HOME/.cargo/env"
+# . "$HOME/.cargo/env"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 # [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

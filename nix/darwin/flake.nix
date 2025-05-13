@@ -112,7 +112,7 @@
             enable = true;
             onActivation = {
               autoUpdate = false; # Avoid auto-updating during activation
-              # cleanup = "zap"; # Remove unlisted formulae/casks
+              cleanup = "zap"; # Remove unlisted formulae/casks
             };
             casks = [
               "ghostty@tip"
