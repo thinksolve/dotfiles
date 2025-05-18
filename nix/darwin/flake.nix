@@ -133,22 +133,24 @@
               # "rectangle"
               # "rectangle-pro"
               # "railwaycat/emacsmacport/emacs-mac"
-              "emacs"
+            ];
+            taps = [
+              "d12frosted/emacs-plus"
+              # "railwaycat/emacsmacport" # For macOS-optimized Emacs
             ];
 
-            # taps = [
-            #   ##NOTE: broken
-            #   "railwaycat/emacsmacport" # For macOS-optimized Emacs
-            # ];
             brews = [
               "mas"
-
-              # ##NOTE: broken
-              # {
-              #   name = "emacs-mac";
-              #   args = [ "with-modern-icon" ];
-              # } # macOS-optimized Emacs
+              {
+                name = "emacs-plus@29";
+                args = [
+                  "with-native-comp"
+                  "with-modern-doom3-icon"
+                ]; # Add desired options
+              }
+              "libgccjit" # Required for native compilation
             ];
+
             masApps = {
               AdvancedScreenShare = 1597458111;
               DemoPro = 1384206666;

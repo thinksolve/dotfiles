@@ -73,6 +73,11 @@ hs.hotkey.bind(goto_app_mod, "s", function()
 	window_management.goto_app("Spotify")
 end)
 
+hs.hotkey.bind(goto_app_mod, "e", function()
+	window_management.goto_app("Emacs.app")
+end)
+
+
 -- function runCommandInITermAndHitEnter(command, delay)
 -- 	delay = delay or 0.3
 --

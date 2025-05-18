@@ -26,11 +26,10 @@ in
     ".config/yazi".source = link_dotfiles "/yazi";
     ".config/nix".source = link_dotfiles "/nix";
     ".config/nix-darwin".source = link_dotfiles "/nix/darwin";
-    # Doom Emacs configs (symlinked to ~/.doom.d)
-    # - Depends on emacs-mac (flake.nix's homebrew.brews)
-    ".doom.d/init.el".source = link_dotfiles "/doom/init.el";
-    ".doom.d/config.el".source = link_dotfiles "/doom/config.el";
-    ".doom.d/packages.el".source = link_dotfiles "/doom/packages.el";
+    ".config/doom".source = link_dotfiles "/doom";
+    # ".doom.d/init.el".source = link_dotfiles "/doom/init.el";
+    # ".doom.d/config.el".source = link_dotfiles "/doom/config.el";
+    # ".doom.d/packages.el".source = link_dotfiles "/doom/packages.el";
   };
 
   # home.sessionVariables =
@@ -42,6 +41,16 @@ in
   #   "$HOME/.nix-profile/bin"
   # ];
 
+  programs.git = {
+    enable = true;
+    extraConfig = {
+      url = {
+        "ssh://git@github.com/" = {
+          insteadOf = "https://github.com/";
+        };
+      };
+    };
+  };
   #NOTE: testing
   programs.zsh = {
     enable = true;
@@ -77,7 +86,7 @@ in
 
       # From your .zshrc
       setopt HIST_IGNORE_ALL_DUPS
-      export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
+      export PATH=/run/current-system/sw/bin:$HOME/.emacs.d/bin:$HOME/.nix-profile/bin:$PATH
 
 
       # Configure pure prompt
@@ -88,30 +97,31 @@ in
 
   };
 
-  home.activation.emacsSetup = config.lib.dag.entryAfter [ "writeBoundary" ] ''
-    # Ensure SSH is available
-    export PATH=${pkgs.openssh}/bin:/opt/homebrew/bin:$PATH
-    # Backup non-Doom or invalid .emacs.d
-    if [ -e "$HOME/.emacs.d" ] && { [ ! -d "$HOME/.emacs.d/.git" ] || ! ${pkgs.git}/bin/git -C "$HOME/.emacs.d" rev-parse HEAD >/dev/null 2>&1; }; then
-      ${pkgs.coreutils}/bin/mv -f "$HOME/.emacs.d" "$HOME/.emacs.d.bak-$(date +%Y%m%d%H%M%S)"
-      echo "Backed up non-Doom or invalid .emacs.d to ~/.emacs.d.bak-$(date +%Y%m%d%H%M%S)"
-    fi
-    # Clone Doom Emacs if not present or invalid
-    if [ ! -d "$HOME/.emacs.d" ] || [ ! -d "$HOME/.emacs.d/.git" ] || ! ${pkgs.git}/bin/git -C "$HOME/.emacs.d" rev-parse HEAD >/dev/null 2>&1; then
-      ${pkgs.git}/bin/git clone --depth 1 git@github-thinksolve:doomemacs/doomemacs.git "$HOME/.emacs.d"
-      $HOME/.emacs.d/bin/doom install --no-config --no-fonts
-      echo "Installed Doom Emacs"
-    fi
-    # Sync Doom to apply configs
-    $HOME/.emacs.d/bin/doom sync
-    echo "Synced Doom Emacs configs"
-    # Alias Emacs.app to /Applications for GUI access
-    if [ -d "/opt/homebrew/opt/emacs-mac@29/Emacs.app" ] && [ ! -e "/Applications/Emacs.app" ]; then
-      ${pkgs.coreutils}/bin/ln -sf "/opt/homebrew/opt/emacs-mac@29/Emacs.app" "/Applications/Emacs.app"
-      echo "Aliased Emacs.app to /Applications"
-    fi
-  '';
-
+  # home.activation.emacsSetup = config.lib.dag.entryAfter [ "writeBoundary" ] ''
+  #   export PATH=${pkgs.openssh}/bin:${pkgs.git}/bin:/opt/homebrew/bin:$PATH
+  #   if [ -e "$HOME/.emacs.d" ] && { [ ! -d "$HOME/.emacs.d/.git" ] || ! ${pkgs.git}/bin/git -C "$HOME/.emacs.d" rev-parse HEAD >/dev/null 2>&1; }; then
+  #     ${pkgs.coreutils}/bin/mv -f "$HOME/.emacs.d" "$HOME/.emacs.d.bak-$(date +%Y%m%d%H%M%S)"
+  #     echo "Backed up non-Doom or invalid .emacs.d to ~/.emacs.d.bak-$(date +%Y%m%d%H%M%S)"
+  #   fi
+  #   if [ ! -d "$HOME/.emacs.d" ] || [ ! -d "$HOME/.emacs.d/.git" ] || ! ${pkgs.git}/bin/git -C "$HOME/.emacs.d" rev-parse HEAD >/dev/null 2>&1; then
+  #     ${pkgs.git}/bin/git clone --depth 1 git@github.com:doomemacs/doomemacs.git "$HOME/.emacs.d"
+  #     $HOME/.emacs.d/bin/doom install --no-config --no-fonts
+  #     echo "Installed Doom Emacs"
+  #   else
+  #     # Clean up straight.el if it exists but is corrupted
+  #     if [ -d "$HOME/.emacs.d/.local/straight/repos/straight.el" ] && [ ! -f "$HOME/.emacs.d/.local/straight/repos/straight.el/straight.el" ]; then
+  #       echo "Found corrupted straight.el directory, cleaning up..."
+  #       rm -rf "$HOME/.emacs.d/.local/straight/repos/straight.el"
+  #       rm -rf "$HOME/.emacs.d/.local/straight/build/straight" || true
+  #     fi
+  #   fi
+  #   $HOME/.emacs.d/bin/doom sync
+  #   echo "Synced Doom Emacs configs"
+  #   if [ -d "/opt/homebrew/opt/emacs-mac/Emacs.app" ] && [ ! -e "/Applications/Emacs.app" ]; then
+  #     ${pkgs.coreutils}/bin/ln -sf "/opt/homebrew/opt/emacs-mac/Emacs.app" "/Applications/Emacs.app"
+  #     echo "Aliased Emacs.app to /Applications"
+  #   fi
+  # '';
   programs.home-manager.enable = true;
 
 }

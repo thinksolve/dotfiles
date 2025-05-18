@@ -1,6 +1,6 @@
 
 setopt HIST_IGNORE_ALL_DUPS 
-
+export PATH="$HOME/.config/emacs/bin:$PATH"
 export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
 
 fpath+=($HOME/.zsh/pure)

@@ -1,5 +1,32 @@
 #!/bin/bash
 
+function rem() {
+    local comment_char="$1"
+    local file="$2"
+
+    # If stdin is a pipe (data being piped in)
+    if [[ -p /dev/stdin ]]; then
+        # Process data from stdin
+        sed "/^[[:blank:]]*${comment_char}/d; s/${comment_char}.*//"
+    elif [[ -n "$file" ]]; then
+        # Process data from file
+        sed "/^[[:blank:]]*${comment_char}/d; s/${comment_char}.*//" "$file"
+    else
+        echo "Error: No input provided. Usage: rem COMMENT_CHAR [FILE]" >&2
+        return 1
+    fi
+}
+
+# function get_doom_emacs() {
+#     local config_dir=$HOME/.config/emacs
+#
+#     if [! -d "$config_dir"]; then
+#         git clone --depth 1 git@github.com:doomemacs/doomemacs "$config_dir"
+#         "$config_dir/bin/doom" install
+#     fi
+#     doom doctor
+# }
+
 function dedupe_history() {
     local history="$HOME/.zsh_history"
     # local backup="${history}.bak"
