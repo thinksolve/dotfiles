@@ -914,6 +914,8 @@ require("lazy").setup({
 				}
 			end,
 			formatters_by_ft = {
+				sh = { "shfmt" },
+				bash = { "shfmt" },
 				haskell = { "fourmolu" },
 				nix = { "nixfmt" }, -- pkgs.nixfmt-rfc-style in flake.nix (nix-darwin)
 				json = { "prettier" },

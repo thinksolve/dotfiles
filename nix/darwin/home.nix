@@ -26,7 +26,11 @@ in
     ".config/yazi".source = link_dotfiles "/yazi";
     ".config/nix".source = link_dotfiles "/nix";
     ".config/nix-darwin".source = link_dotfiles "/nix/darwin";
-    # Add other dotfiles as needed
+    # Doom Emacs configs (symlinked to ~/.doom.d)
+    # - Depends on emacs-mac (flake.nix's homebrew.brews)
+    ".doom.d/init.el".source = link_dotfiles "/doom/init.el";
+    ".doom.d/config.el".source = link_dotfiles "/doom/config.el";
+    ".doom.d/packages.el".source = link_dotfiles "/doom/packages.el";
   };
 
   # home.sessionVariables =
@@ -83,6 +87,30 @@ in
     '';
 
   };
+
+  home.activation.emacsSetup = config.lib.dag.entryAfter [ "writeBoundary" ] ''
+    # Ensure SSH is available
+    export PATH=${pkgs.openssh}/bin:/opt/homebrew/bin:$PATH
+    # Backup non-Doom or invalid .emacs.d
+    if [ -e "$HOME/.emacs.d" ] && { [ ! -d "$HOME/.emacs.d/.git" ] || ! ${pkgs.git}/bin/git -C "$HOME/.emacs.d" rev-parse HEAD >/dev/null 2>&1; }; then
+      ${pkgs.coreutils}/bin/mv -f "$HOME/.emacs.d" "$HOME/.emacs.d.bak-$(date +%Y%m%d%H%M%S)"
+      echo "Backed up non-Doom or invalid .emacs.d to ~/.emacs.d.bak-$(date +%Y%m%d%H%M%S)"
+    fi
+    # Clone Doom Emacs if not present or invalid
+    if [ ! -d "$HOME/.emacs.d" ] || [ ! -d "$HOME/.emacs.d/.git" ] || ! ${pkgs.git}/bin/git -C "$HOME/.emacs.d" rev-parse HEAD >/dev/null 2>&1; then
+      ${pkgs.git}/bin/git clone --depth 1 git@github-thinksolve:doomemacs/doomemacs.git "$HOME/.emacs.d"
+      $HOME/.emacs.d/bin/doom install --no-config --no-fonts
+      echo "Installed Doom Emacs"
+    fi
+    # Sync Doom to apply configs
+    $HOME/.emacs.d/bin/doom sync
+    echo "Synced Doom Emacs configs"
+    # Alias Emacs.app to /Applications for GUI access
+    if [ -d "/opt/homebrew/opt/emacs-mac@29/Emacs.app" ] && [ ! -e "/Applications/Emacs.app" ]; then
+      ${pkgs.coreutils}/bin/ln -sf "/opt/homebrew/opt/emacs-mac@29/Emacs.app" "/Applications/Emacs.app"
+      echo "Aliased Emacs.app to /Applications"
+    fi
+  '';
 
   programs.home-manager.enable = true;
 

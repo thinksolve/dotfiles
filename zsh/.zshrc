@@ -51,6 +51,8 @@ alias lower="tr 'A-Z' 'a-z'"
 
 bindkey -s '^D' 'find_dir_from_cache\n'
 bindkey -s '^[^D' 'find_dir_then_cache\n'
+# bindkey -s '^D' 'fcd_cached\n'    #NOTE: somehow these disappeared in shell_functions.sh??
+# bindkey -s '^[^D' 'fcd\n'         #NOTE: somehow these disappeared in shell_functions.sh??
 bindkey -s '^F' 'find_file\n'
 bindkey -s '^[^Y' 'yazi . \n'
 bindkey -s '^[^N' 'nvim . \n'

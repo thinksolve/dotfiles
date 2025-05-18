@@ -104,18 +104,18 @@ function checkpath() {
     echo -e "\nrealpath: $(realpath "$1" 2>/dev/null || echo "no such file or directory")"
 }
 #
-# Hook: commands (functions) starting with zhide are suppressed from memory
+# Hook: commands (functions) starting with zh_ are suppressed from memory
 function zshaddhistory() {
     emulate -L zsh
     local cmd=${1%%$'\n'}
-    if [[ $cmd == zhide* ]]; then
+    if [[ $cmd == zh_* ]]; then
         return 1 # Suppress from history
     fi
     return 0
 }
 
 # starting index and optional range for second argumment passed
-function zhide_pi() {
+function zh_pi() {
     if [[ $# -lt 1 || $# -gt 2 || ! $1 =~ ^[0-9]+$ || ($# -eq 2 && ! $2 =~ ^[0-9]+$) ]]; then
         echo "Usage: pi_digits_start_range <start> [count]"
         return 1
@@ -224,27 +224,29 @@ function get_ocr() {
     # Pipe clipboard image through ImageMagick and Tesseract, strip ICC profile
     pngpaste - |
         # magick - -strip -grayscale Rec709Luma -normalize - |
-        tesseract stdin stdout --psm 3 | pbcopy
+        tesseract stdin stdout --psm 3 | tr -d '\n' | pbcopy
 }
 
-function get_ocr_images() {
-    # Take an interactive screenshot to the clipboard (area selection or window)
-    screencapture -i -c -x
-
-    # Wait briefly to ensure clipboard is populated
-    sleep 0.2
-
-    # Check if clipboard contains an image
-    if ! pngpaste - >/dev/null 2>&1; then
-        echo "Error: No image data found on the clipboard" >&2
-        return 1
-    fi
-
-    # Pipe clipboard image through ImageMagick and Tesseract
-    pngpaste - |
-        magick png:- -colorspace Gray -normalize -threshold 20% -sharpen 0x1.0 -morphology Open Square:1 -background black -alpha off -flatten png:- |
-        tesseract - stdout --psm 6 | pbcopy
-}
+##NOTE: WIP
+#
+# function get_ocr_images() {
+#     # Take an interactive screenshot to the clipboard (area selection or window)
+#     screencapture -i -c -x
+#
+#     # Wait briefly to ensure clipboard is populated
+#     sleep 0.2
+#
+#     # Check if clipboard contains an image
+#     if ! pngpaste - >/dev/null 2>&1; then
+#         echo "Error: No image data found on the clipboard" >&2
+#         return 1
+#     fi
+#
+#     # Pipe clipboard image through ImageMagick and Tesseract
+#     pngpaste - |
+#         magick png:- -colorspace Gray -normalize -threshold 20% -sharpen 0x1.0 -morphology Open Square:1 -background black -alpha off -flatten png:- |
+#         tesseract - stdout --psm 6 | pbcopy
+# }
 
 function get_ocr_old() {
     local root_dir="$HOME/screenshots"
@@ -270,9 +272,7 @@ function update_dir_cache() {
 }
 
 function find_dir_then_cache() {
-    local dir
-    # -E "node_modules" -E ".git" ...
-    dir=$(fd . "$HOME" --max-depth 5 -t d -H ${dir_exclusions[@]/#/-E} | fzf --prompt="Find Dir (fresh 5 levels): " --preview "tree -a -C -L 1 {}")
+    local dir=$(fd . "$HOME" --max-depth 5 -t d -H ${dir_exclusions[@]/#/-E} | fzf --prompt="Find Dir (fresh 5 levels): " --preview "tree -a -C -L 1 {}")
     if [[ -n "$dir" ]]; then
         # Update cache in the background
         (update_dir_cache) &
@@ -284,7 +284,7 @@ function find_dir_from_cache() {
     local dir
     # Generate cache in background if it doesn't exist, isn't readable, or is stale
     if [[ ! -f $home_dirs_cache || ! -r $home_dirs_cache || $(find $home_dirs_cache -mtime +15 2>/dev/null) ]]; then
-        fcd_old
+        find_dir_then_cache
     else
         dir=$(gunzip -c $home_dirs_cache | fzf --prompt="Find Dir (from cache): " --preview "tree -a -C -L 1 {}")
         # dir=$(fzf --prompt="Find Dir: " --preview "tree -C -L 1 {}" < $muh_cache)
@@ -384,10 +384,12 @@ function recent_edit() {
 }
 
 #NOTE: bug when i save file it adds weird 'tabs_dir' text
+
 # function get_urls() {
 #     local browser="${1:-brave}"
-#     # local tabs_dir="$HOME/.brave_tabs"
-#     # mkdir -p "$tabs_dir"
+#
+#     # tabs directory
+#     mkdir -p "$HOME/.brave_tabs"
 #
 #     osascript <<EOF | tr ',' '\n' | sed 's/^[ \t]*//'
 #     tell application "$browser"
@@ -400,7 +402,6 @@ function recent_edit() {
 #         return urlList
 #     end tell
 # EOF
-#
 # }
 
 function get_title_from_url() {

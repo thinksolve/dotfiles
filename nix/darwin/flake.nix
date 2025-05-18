@@ -132,11 +132,23 @@
               # "alfred@4"
               # "rectangle"
               # "rectangle-pro"
+              # "railwaycat/emacsmacport/emacs-mac"
+              "emacs"
             ];
-            # taps =
-            #   [
-            #   ];
-            brews = [ "mas" ];
+
+            # taps = [
+            #   ##NOTE: broken
+            #   "railwaycat/emacsmacport" # For macOS-optimized Emacs
+            # ];
+            brews = [
+              "mas"
+
+              # ##NOTE: broken
+              # {
+              #   name = "emacs-mac";
+              #   args = [ "with-modern-icon" ];
+              # } # macOS-optimized Emacs
+            ];
             masApps = {
               AdvancedScreenShare = 1597458111;
               DemoPro = 1384206666;
