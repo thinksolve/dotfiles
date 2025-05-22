@@ -61,22 +61,41 @@ end)
 
 local goto_app_mod = { "command", "option" }
 hs.hotkey.bind(goto_app_mod, "b", function()
-	window_management.goto_app("Brave Browser")
+	window_management.toggle_app("Brave Browser")
 end)
 
 local terminal_app = "ghostty"
 hs.hotkey.bind(goto_app_mod, "t", function()
-	window_management.goto_app(terminal_app)
+	window_management.toggle_app(terminal_app)
 end)
 
 hs.hotkey.bind(goto_app_mod, "s", function()
-	window_management.goto_app("Spotify")
+	window_management.toggle_app("Spotify")
 end)
 
-hs.hotkey.bind(goto_app_mod, "e", function()
-	window_management.goto_app("Emacs.app")
+hs.hotkey.bind(goto_app_mod, "m", function()
+	window_management.toggle_app("Messages")
 end)
 
+hs.hotkey.bind(goto_app_mod, "n", function()
+	window_management.toggle_app("Notes")
+end)
+
+hs.hotkey.bind(goto_app_mod, "l", function()
+	window_management.toggle_app("Mail")
+end)
+
+hs.hotkey.bind(goto_app_mod, "k", function()
+	window_management.toggle_app("Calendar")
+end)
+
+hs.hotkey.bind(goto_app_mod, "f", function()
+	window_management.goto_app("alfred 4.app")
+end)
+
+-- hs.hotkey.bind(goto_app_mod, "e", function()
+-- 	window_management.goto_app("Emacs.app")
+-- end)
 
 -- function runCommandInITermAndHitEnter(command, delay)
 -- 	delay = delay or 0.3
@@ -316,4 +335,53 @@ hs.hotkey.bind({ "ctrl", "option" }, "z", function()
 	-- runCommandInItermWithoutFocus("get_latex")
 	runCommandInTerminal("get_latex")
 	-- runCommandInGhostty("get_latex")
+end)
+
+local function start_emacs_client()
+	-- os.execute([[/bin/zsh -l -c "/opt/homebrew/bin/emacsclient -c -n" &]])
+	-- -- why not hs.execute?
+	-- -- why background process way with '&' problematic?
+	os.execute([[/bin/zsh -l -c "/opt/homebrew/bin/emacsclient -c -n -a '' "]])
+end
+local function get_emacs_app()
+	return hs.application.get("org.gnu.Emacs")
+end
+
+hs.hotkey.bind(goto_app_mod, "d", function()
+	-- Try to find if Emacs server is running; os.execute seems to be needed over hs.execute here
+	-- local serverRunning = os.execute("pgrep -f 'emacs.*daemon'" .. " > /dev/null 2>&1")
+	-- -- this pgrep way finds other emacs daemons not responsible for emacsclient; problematic
+
+	local serverRunning =
+		os.execute([[/bin/zsh -l -c "/opt/homebrew/bin/emacsclient -e '(server-running-p)' > /dev/null 2>&1"]])
+
+	if serverRunning then
+		-- Server is running, check if there are visible Emacs frames
+		-- "org.gnu.Emacs" seems to reliably get the emacsclient frame
+
+		local emacsApp = get_emacs_app()
+		-- appears if check not really needed if you start_emacs_client (which falls back to already started one if active?)
+		if emacsApp and #emacsApp:allWindows() > 0 then
+			-- Emacs application exists with visible windows, focus it
+			emacsApp:activate()
+		else
+			-- Server running but no visible windows, create a new client frame
+			start_emacs_client()
+			-- hs.timer.doAfter(0.1, function()
+			emacsApp:activate()
+
+			-- end)
+		end
+	else
+		-- Server not running, start server and create a frame
+		hs.alert.show("Starting Emacs server and creating frame")
+
+		-- -- Guess i dont need to explicitly start the daemon?
+		-- os.execute("/bin/zsh -l -c '/opt/homebrew/bin/emacs --daemon' ")
+
+		start_emacs_client()
+		-- hs.timer.doAfter(0.4, function()
+		get_emacs_app():activate()
+		-- end)
+	end
 end)

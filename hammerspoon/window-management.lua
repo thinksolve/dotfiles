@@ -223,6 +223,28 @@ function goto_app(app)
 	-- return app_to_space_using_sleep(app)
 end
 
+function toggle_app(app_name)
+	local app = hs.appfinder.appFromName(app_name)
+
+	if app and app:isFrontmost() then
+		app:hide()
+	else
+		hs.application.launchOrFocus(app_name)
+	end
+
+	-- -- alt, for more flexibility
+	-- if app then
+	-- 	local frontmost = app:isFrontmost()
+	-- 	if frontmost then
+	-- 		app:hide()
+	-- 	else
+	-- 		app:activate()
+	-- 	end
+	-- else
+	-- 	hs.application.launchOrFocus(app_name)
+	-- end
+end
+
 local window_management = {
 	LeftHalf = LeftHalf,
 	RightHalf = RightHalf,
@@ -231,6 +253,7 @@ local window_management = {
 	FullScreen = FullScreen,
 	cycleWindows = cycleWindows,
 	goto_app = goto_app,
+	toggle_app = toggle_app,
 }
 
 return window_management

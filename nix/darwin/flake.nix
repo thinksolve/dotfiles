@@ -142,10 +142,10 @@
             brews = [
               "mas"
               {
-                name = "emacs-plus@29";
+                name = "emacs-plus@30";
                 args = [
                   "with-native-comp"
-                  "with-modern-doom3-icon"
+                  # "with-modern-doom3-icon"
                 ]; # Add desired options
               }
               "libgccjit" # Required for native compilation

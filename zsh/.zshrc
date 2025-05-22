@@ -1,5 +1,8 @@
 
 setopt HIST_IGNORE_ALL_DUPS 
+
+export DOOMDIR="$HOME/.config/doom"
+
 export PATH="$HOME/.config/emacs/bin:$PATH"
 export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
 
@@ -16,6 +19,7 @@ source "$ZSH"/oh-my-zsh.sh
 # ZSH_THEME="powerlevel10k/powerlevel10k"
 
 source "$HOME"/.shell_functions.sh
+alias evim='emacs -nw'
 alias zshrc='nvim ~/.zshrc'
 alias hist='nvim ~/.zsh_history'
 alias shell_functions='nvim $HOME/.shell_functions.sh'
