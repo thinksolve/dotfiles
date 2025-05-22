@@ -93,6 +93,14 @@ hs.hotkey.bind(goto_app_mod, "f", function()
 	window_management.goto_app("alfred 4.app")
 end)
 
+-- NOTE: WIP: want to be able to use 'rem' (pbpaste | rem 'comment-out-character' filename.extension)
+-- hs.hotkey.bind({ "cmd", "option" }, "r", function()
+-- 	local ok, comment_out_character = hs.dialog.textPrompt("Main message.", "Supply comment out character:")
+-- 	if ok then
+-- 		hs.alert.show(comment_out_character)
+-- 	end
+-- end)
+
 -- hs.hotkey.bind(goto_app_mod, "e", function()
 -- 	window_management.goto_app("Emacs.app")
 -- end)

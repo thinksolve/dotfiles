@@ -112,7 +112,8 @@
             enable = true;
             onActivation = {
               autoUpdate = false; # Avoid auto-updating during activation
-              cleanup = "zap"; # Remove unlisted formulae/casks
+              # cleanup = "zap"; # Remove unlisted formulae/casks
+              cleanup = "uninstall"; # Remove unlisted formulae/casks
             };
             casks = [
               "ghostty@tip"
@@ -143,10 +144,11 @@
               "mas"
               {
                 name = "emacs-plus@30";
-                args = [
-                  "with-native-comp"
-                  # "with-modern-doom3-icon"
-                ]; # Add desired options
+                # name = "emacs-plus@29";
+                # args = [
+                #   "with-native-comp" #not valid in @30
+                #   "with-modern-doom3-icon"
+                # ];
               }
               "libgccjit" # Required for native compilation
             ];
