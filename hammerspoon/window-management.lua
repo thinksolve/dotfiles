@@ -226,23 +226,29 @@ end
 function toggle_app(app_name)
 	local app = hs.appfinder.appFromName(app_name)
 
-	if app and app:isFrontmost() then
-		app:hide()
+	-- alt, for more flexibility
+	if app then
+		local frontmost = app:isFrontmost()
+		if frontmost then
+			app:hide()
+		else
+			app:activate()
+		end
 	else
 		hs.application.launchOrFocus(app_name)
 	end
+end
 
-	-- -- alt, for more flexibility
-	-- if app then
-	-- 	local frontmost = app:isFrontmost()
-	-- 	if frontmost then
-	-- 		app:hide()
-	-- 	else
-	-- 		app:activate()
-	-- 	end
-	-- else
-	-- 	hs.application.launchOrFocus(app_name)
-	-- end
+-- more robost to use bundle id when app is closed/open
+function toggle_open_close_by_bundle_id(bundleID)
+	local app = hs.application.get(bundleID)
+	if app then
+		app:kill9()
+		-- used previously when had incorrect bundle id .. no longer needed
+		-- hs.osascript.applescript(string.format([[ tell application "%s" to quit ]], app:name()))
+	else
+		hs.application.launchOrFocusByBundleID(bundleID) -- Launch if not running
+	end
 end
 
 local window_management = {
@@ -254,6 +260,7 @@ local window_management = {
 	cycleWindows = cycleWindows,
 	goto_app = goto_app,
 	toggle_app = toggle_app,
+	toggle_open_close_by_bundle_id = toggle_open_close_by_bundle_id,
 }
 
 return window_management

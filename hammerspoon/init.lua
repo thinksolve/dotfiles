@@ -74,7 +74,8 @@ hs.hotkey.bind(goto_app_mod, "s", function()
 end)
 
 hs.hotkey.bind(goto_app_mod, "m", function()
-	window_management.toggle_app("Messages")
+	-- window_management.goto_app("messages.app")
+	window_management.toggle_open_close_by_bundle_id("com.apple.MobileSMS")
 end)
 
 hs.hotkey.bind(goto_app_mod, "n", function()
@@ -86,16 +87,23 @@ hs.hotkey.bind(goto_app_mod, "l", function()
 end)
 
 hs.hotkey.bind(goto_app_mod, "k", function()
-	window_management.toggle_app("Calendar")
+	-- window_management.toggle_app("Calendar")
+	--
+	-- quirk: app:kill nor app:kill9 works on it!
+	window_management.toggle_open_close_by_bundle_id("com.apple.iCal")
 end)
 
 hs.hotkey.bind(goto_app_mod, "f", function()
-	window_management.goto_app("alfred 4.app")
+	window_management.toggle_open_close_by_bundle_id("com.runningwithcrayons.Alfred")
+end)
+
+hs.hotkey.bind(goto_app_mod, "a", function()
+	window_management.toggle_open_close_by_bundle_id("com.apple.ActivityMonitor")
 end)
 
 -- NOTE: WIP: want to be able to use 'rem' (pbpaste | rem 'comment-out-character' filename.extension)
 -- hs.hotkey.bind({ "cmd", "option" }, "r", function()
--- 	local ok, comment_out_character = hs.dialog.textPrompt("Main message.", "Supply comment out character:")
+-- 	local ok, comment_out_character = hs.dialog.textPrompt("Main message.", "(WIP) Supply comment out character:")
 -- 	if ok then
 -- 		hs.alert.show(comment_out_character)
 -- 	end

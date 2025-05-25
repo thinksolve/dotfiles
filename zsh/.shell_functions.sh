@@ -1,5 +1,64 @@
 #!/bin/bash
 
+#useful for hammerspoon as bundleId string is more robust to identify apps
+
+function findBundleIdAndPath() {
+    local name="$1"
+    local app_path
+
+    # Find all .app bundles, then filter by name case-insensitively
+    app_path=$(mdfind 'kMDItemKind == "Application"' |
+        grep -i "/$name\.app" |
+        head -n 1)
+
+    if [[ -z "$app_path" ]]; then
+        echo "No app found matching: $name" >&2
+        return 1
+    fi
+
+    echo "path: $app_path"
+    echo "bundle id:" $(mdls -name kMDItemCFBundleIdentifier -raw "$app_path")
+}
+
+function getBundleId() {
+    defaults read "$1/Contents/Info" CFBundleIdentifier 2>/dev/null
+    # mdls -name kMDItemCFBundleIdentifier "$1" | cut -d '"' -f 2 #not as robust
+}
+
+# useful for creating custom new Emacs.icns (havented tested yet)
+function generate_icns() {
+    local png="$1"
+    local output_icns="$2"
+
+    if [ ! -f "$png" ]; then
+        echo "Error: PNG file $png not found"
+        exit 1
+    fi
+
+    echo "Generating .icns from $png"
+    mkdir -p "$ICONSET_DIR"
+
+    # Generate required icon sizes
+    sips -z 16 16 "$png" --out "$ICONSET_DIR/icon_16x16.png" >/dev/null
+    sips -z 32 32 "$png" --out "$ICONSET_DIR/icon_16x16@2x.png" >/dev/null
+    sips -z 32 32 "$png" --out "$ICONSET_DIR/icon_32x32.png" >/dev/null
+    sips -z 64 64 "$png" --out "$ICONSET_DIR/icon_32x32@2x.png" >/dev/null
+    sips -z 64 64 "$png" --out "$ICONSET_DIR/icon_64x64.png" >/dev/null
+    sips -z 128 128 "$png" --out "$ICONSET_DIR/icon_64x64@2x.png" >/dev/null
+    sips -z 128 128 "$png" --out "$ICONSET_DIR/icon_128x128.png" >/dev/null
+    sips -z 256 256 "$png" --out "$ICONSET_DIR/icon_128x128@2x.png" >/dev/null
+    sips -z 256 256 "$png" --out "$ICONSET_DIR/icon_256x256.png" >/dev/null
+    sips -z 512 512 "$png" --out "$ICONSET_DIR/icon_256x256@2x.png" >/dev/null
+    sips -z 512 512 "$png" --out "$ICONSET_DIR/icon_512x512.png" >/dev/null
+    sips -z 1024 1024 "$png" --out "$ICONSET_DIR/icon_512x512@2x.png" >/dev/null
+    sips -z 1024 1024 "$png" --out "$ICONSET_DIR/icon_1024x1024.png" >/dev/null
+
+    # Convert to .icns
+    iconutil -c icns "$ICONSET_DIR" -o "$output_icns"
+    rm -rf "$ICONSET_DIR"
+    echo "Created $output_icns"
+}
+
 function rem() {
     local comment_char="$1"
     local file="$2"

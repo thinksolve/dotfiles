@@ -1,8 +1,7 @@
-;; ;; Save and restore frames NOTE: didnt work
-;; (setq desktop-save t
-;;       desktop-restore-frames t
-;;       desktop-restore-in-current-display t)
-;; (desktop-save-mode 1)
+
+;; ;check condig directory (since symlink check with file-truename)
+;; (message doom-private-dir)
+;; (message (file-truename doom-private-dir))
 
 (setq doom-theme
       'doom-palenight)
