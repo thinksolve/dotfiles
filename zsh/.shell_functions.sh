@@ -1,28 +1,41 @@
 #!/bin/bash
 
 #useful for hammerspoon as bundleId string is more robust to identify apps
-
 function findBundleIdAndPath() {
     local name="$1"
     local app_path
 
-    # Find all .app bundles, then filter by name case-insensitively
+    # Try mdfind first
     app_path=$(mdfind 'kMDItemKind == "Application"' |
         grep -i "/$name\.app" |
         head -n 1)
 
-    if [[ -z "$app_path" ]]; then
-        echo "No app found matching: $name" >&2
-        return 1
+    # Fallback: search /Applications and /System/Applications directly
+    if [ -z "$app_path" ]; then
+        for dir in /Applications /System/Applications; do
+            found=$(find "$dir" -maxdepth 1 -iname "*$name*.app" 2>/dev/null | head -n 1)
+            if [ -n "$found" ]; then
+                app_path="$found"
+                break
+            fi
+        done
     fi
 
-    echo "path: $app_path"
-    echo "bundle id:" $(mdls -name kMDItemCFBundleIdentifier -raw "$app_path")
+    if [ -n "$app_path" ]; then
+        local real_path=$(realpath $app_path)
+        echo "path: $app_path"
+        [[ ! $real_path == $app_path ]] && echo "realpath: $real_path"
+        echo "bundle id: $(defaults read "$app_path/Contents/Info" CFBundleIdentifier 2>/dev/null)"
+        # echo "bundle id:" $(mdls -name kMDItemCFBundleIdentifier -raw "$app_path") # not robust enough
+    else
+        echo "App '$name' not found."
+    fi
 }
 
 function getBundleId() {
     defaults read "$1/Contents/Info" CFBundleIdentifier 2>/dev/null
     # mdls -name kMDItemCFBundleIdentifier "$1" | cut -d '"' -f 2 #not as robust
+    # mdls -name kMDItemCFBundleIdentifier -raw "$1" | cut -d '"' -f 2 #not as robust
 }
 
 # useful for creating custom new Emacs.icns (havented tested yet)

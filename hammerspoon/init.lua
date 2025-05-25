@@ -83,13 +83,12 @@ hs.hotkey.bind(goto_app_mod, "n", function()
 end)
 
 hs.hotkey.bind(goto_app_mod, "l", function()
-	window_management.toggle_app("Mail")
+	-- window_management.toggle_app("Mail")
+	window_management.toggle_open_close_by_bundle_id("com.apple.mail")
 end)
 
 hs.hotkey.bind(goto_app_mod, "k", function()
 	-- window_management.toggle_app("Calendar")
-	--
-	-- quirk: app:kill nor app:kill9 works on it!
 	window_management.toggle_open_close_by_bundle_id("com.apple.iCal")
 end)
 
