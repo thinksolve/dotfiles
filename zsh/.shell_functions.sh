@@ -1,8 +1,20 @@
 #!/bin/bash
 
+function kill_restart_emacs() {
+    emacsclient -e '(kill-emacs)'
+    emacs --daemon
+    emacsclient -n -c 'emacs'
+}
+
 #useful for hammerspoon as bundleId string is more robust to identify apps
 function findBundleIdAndPath() {
     local name="$1"
+    # Input validation: ensure name is non-empty and contains only safe characters
+    if [[ -z "$name" || "$name" =~ [^a-zA-Z0-9._-] ]]; then
+        echo "Error: Invalid application name. Use alphanumeric characters, dots, or hyphens only."
+        return 1
+    fi
+
     local app_path
 
     # Try mdfind first
@@ -401,6 +413,7 @@ function find_dir_then_cache() {
 }
 
 function find_dir_from_cache() {
+    local open_with=${1:-nvim}
     local dir
     # Generate cache in background if it doesn't exist, isn't readable, or is stale
     if [[ ! -f $home_dirs_cache || ! -r $home_dirs_cache || $(find $home_dirs_cache -mtime +15 2>/dev/null) ]]; then
@@ -408,9 +421,17 @@ function find_dir_from_cache() {
     else
         dir=$(gunzip -c $home_dirs_cache | fzf --prompt="Find Dir (from cache): " --preview "tree -a -C -L 1 {}")
         # dir=$(fzf --prompt="Find Dir: " --preview "tree -C -L 1 {}" < $muh_cache)
-        if [[ -n "$dir" ]]; then
-            cd "$dir" && nvim .
-        fi
+        # if [[ -n "$dir" ]]; then
+        #
+        #     if [[ $open_with == 'nvim' ]]; then
+        #         cd "$dir" && nvim .
+        #     else
+        #         emacsclient -c -n "$dir"
+        #     fi
+        # fi
+
+        #nice alternative!
+        [[ -n "$dir" ]] && open_with_editor "$open_with" "$dir"
     fi
 }
 
@@ -423,7 +444,8 @@ function find_file() {
         return 1
     fi
     if [[ -d "$dir_or_file" ]]; then
-        cd "$dir_or_file" && nvim .
+        # cd "$dir_or_file" && nvim .
+        emacsclient -c -n "$dir"
     else
         if [[ "$(file --mime-type -b "$dir_or_file")" =~ ^text/ ]]; then
             cd $(dirname $dir_or_file) && nvim "$dir_or_file"
@@ -431,6 +453,27 @@ function find_file() {
             open "$dir_or_file"
         fi
     fi
+}
+
+function open_with_editor() {
+    local editor="${1:-nvim}"
+    local dir="$2"
+
+    case "$editor" in
+    nvim) cd "$dir" && nvim . ;;
+    # emacs | emacsclient) emacsclient -c -n "$dir" ;;
+    emacs | emacsclient) emacsclient -c -n -e "(my/open-directory-in-vertico \"$dir\")" ;;
+    code) code "$dir" ;;       # VSCode
+    "") cd "$dir" && nvim . ;; # fallback
+    *)
+        if command -v "$editor" &>/dev/null; then
+            "$editor" "$dir"
+        else
+            echo "Unknown editor: $editor"
+            return 1
+        fi
+        ;;
+    esac
 }
 
 function clip_from_url() {

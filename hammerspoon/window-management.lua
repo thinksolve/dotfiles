@@ -239,6 +239,15 @@ function toggle_app(app_name)
 	end
 end
 
+function toggle_app_bundle_id(bundleID)
+	local app = hs.application.get(bundleID)
+	if app and app:isFrontmost() then
+		app:hide()
+	else
+		hs.application.launchOrFocusByBundleID(bundleID) -- Launch if not running
+	end
+end
+
 -- more robost to use bundle id when app is closed/open
 function toggle_open_close_by_bundle_id(bundleID)
 	local app = hs.application.get(bundleID)
@@ -261,6 +270,7 @@ local window_management = {
 	goto_app = goto_app,
 	toggle_app = toggle_app,
 	toggle_open_close_by_bundle_id = toggle_open_close_by_bundle_id,
+	toggle_app_bundle_id = toggle_app_bundle_id,
 }
 
 return window_management

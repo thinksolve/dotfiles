@@ -64,9 +64,12 @@ hs.hotkey.bind(goto_app_mod, "b", function()
 	window_management.toggle_app("Brave Browser")
 end)
 
+-- local terminal_app = "iterm2"
 local terminal_app = "ghostty"
+local terminal_app_id = "com.mitchellh.ghostty"
 hs.hotkey.bind(goto_app_mod, "t", function()
-	window_management.toggle_app(terminal_app)
+	window_management.toggle_app_bundle_id(terminal_app_id)
+	-- window_management.toggle_app(terminal_app)
 end)
 
 hs.hotkey.bind(goto_app_mod, "s", function()
@@ -189,8 +192,10 @@ hs.hotkey.bind({ "cmd" }, "/", function()
 	--
 	-- local command = 'cd "$(fd . "$HOME" --type d -H --max-depth 3 | fzf --prompt="Find Dir: ")" && nvim .'
 	-- local command = "fcd_1_level"
-
-	runCommandInItermAndHitEnter("find_dir_from_cache")
+	-- os.execute("cd ~ && find_dir_from_cache && exit")
+	runCommandInItermAndHitEnter("find_dir_from_cache 'emacs'")
+	-- runCommandInItermAndHitEnter("find_dir_from_cache 'emacs' && exit && killall ghostty")
+	-- runCommandInItermAndHitEnter(string.format("find_dir_from_cache 'emacs' && killall %s", terminal_app_id))
 end)
 
 hs.hotkey.bind({ "cmd", "option" }, "/", function()

@@ -1,4 +1,68 @@
 
+;; ==== Enhanced File Navigation ====
+;; Global dirvish previews + vertico arrow navigation
+(after! vertico
+  (define-key vertico-map (kbd "<right>") #'my/vertico-enter-directory)
+  (define-key vertico-map (kbd "<left>")  #'my/vertico-up-directory))
+
+(add-hook! 'doom-after-init-hook (dirvish-peek-mode 1))
+
+
+(defun my/vertico-enter-directory ()
+  "Enter directory or select file in Vertico."
+  (interactive)
+  (if (and minibuffer-completing-file-name
+           (vertico--candidate)
+           (file-directory-p (vertico--candidate)))
+      (vertico-directory-enter)
+    (vertico-exit)))
+
+(defun my/vertico-up-directory ()
+  "Go up one directory in Vertico file selection."
+  (interactive)
+  (when minibuffer-completing-file-name
+    (vertico-directory-up)))
+
+;; useful for shell scripting to get emacsclient to open a path within vertico (yazi-like)
+(defun my/open-directory-in-vertico (dir)
+  "Open DIR in Vertico's find-file minibuffer in the current frame."
+  (interactive "DDirectory: ")
+  (let ((default-directory (expand-file-name dir)))
+    (select-frame-set-input-focus (selected-frame))
+    (call-interactively #'find-file)))
+
+
+;; (defun my/vertico-enter-directory-old ()
+;;   "If candidate is a directory, enter it; otherwise, act as RET."
+;;   (interactive)
+;;   (when minibuffer-completing-file-name
+;;     (let* ((input (minibuffer-contents))
+;;            (cand (vertico--candidate)))
+;;       (cond
+;;        ((and cand (file-directory-p cand))
+;;         (delete-minibuffer-contents)
+;;         (insert (file-name-as-directory cand)))
+;;        (t
+;;         (vertico-exit))))))
+
+;; (defun my/vertico-up-directory-old ()
+;;   "Go up one directory in the minibuffer during file selection."
+;;   (interactive)
+;;   (when minibuffer-completing-file-name
+;;     (let* ((input (minibuffer-contents))
+;;            (dir (file-name-directory (directory-file-name (expand-file-name input)))))
+;;       (delete-minibuffer-contents)
+;;       (insert (file-name-as-directory dir)))))
+
+
+
+;; ;; Open Dirvish in your home directory on startup
+;; (add-hook! 'emacs-startup-hook
+;;   (lambda ()
+;;     (unless (or (doom-buffer-list) (minibufferp))
+;;       (dirvish "~/" nil))))
+
+
 ;; ;check condig directory (since symlink check with file-truename)
 ;; (message doom-private-dir)
 ;; (message (file-truename doom-private-dir))
