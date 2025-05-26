@@ -48,6 +48,8 @@
             # pkgs.haskellPackages.haskell-language-server
             # pkgs.haskellPackages.fourmolu
             # pkgs.cabal-install # haskell
+            pkgs.vips # for doom emacs viewer
+            pkgs.poppler_utils # for doom emacs viewer
             pkgs.bat
             pkgs.blueutil
             pkgs.curl

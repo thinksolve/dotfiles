@@ -1,11 +1,32 @@
 
+
 ;; ==== Enhanced File Navigation ====
 ;; Global dirvish previews + vertico arrow navigation
+
+(map! "s-<right>" #'my/open-file-in-default-viewer)
+
+
+  ;; (define-key vertico-map (kbd "SPC <right>") #'my/open-file-in-default-viewer))
+;; (with-eval-after-load 'dired
+;;   (define-key dired-mode-map (kbd "SPC <right>") #'my/open-file-in-default-viewer))
+
 (after! vertico
   (define-key vertico-map (kbd "<right>") #'my/vertico-enter-directory)
   (define-key vertico-map (kbd "<left>")  #'my/vertico-up-directory))
+  ;; (define-key vertico-map (kbd "s-<right>") #'my/open-file-in-default-viewer))
 
 (add-hook! 'doom-after-init-hook (dirvish-peek-mode 1))
+
+(defun my/open-file-in-default-viewer ()
+  "Open the current file in the system's default viewer."
+  (interactive)
+  (let ((file (if (eq major-mode 'dired-mode)
+                  (dired-get-file-for-visit)
+                (or (vertico--candidate)
+                    (buffer-file-name)))))
+    (when file
+      (start-process "open-default-viewer" nil "open" (expand-file-name file)))))
+
 
 
 (defun my/vertico-enter-directory ()
