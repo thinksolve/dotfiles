@@ -103,14 +103,6 @@ hs.hotkey.bind(goto_app_mod, "a", function()
 	window_management.toggle_open_close_by_bundle_id("com.apple.ActivityMonitor")
 end)
 
--- NOTE: WIP: want to be able to use 'rem' (pbpaste | rem 'comment-out-character' filename.extension)
--- hs.hotkey.bind({ "cmd", "option" }, "r", function()
--- 	local ok, comment_out_character = hs.dialog.textPrompt("Main message.", "(WIP) Supply comment out character:")
--- 	if ok then
--- 		hs.alert.show(comment_out_character)
--- 	end
--- end)
-
 -- hs.hotkey.bind(goto_app_mod, "e", function()
 -- 	window_management.goto_app("Emacs.app")
 -- end)
@@ -405,3 +397,46 @@ hs.hotkey.bind(goto_app_mod, "d", function()
 		-- end)
 	end
 end)
+
+-- NOTE: WIP below
+
+function prompt_with_callback(place_holder_text, call_back)
+	local chooser
+	chooser = hs.chooser.new(function(choice)
+		if not choice or not choice.text or choice.text == "" then
+			return
+		end
+		call_back(choice.text)
+	end)
+
+	chooser:choices({ { ["text"] = "" } })
+	chooser:queryChangedCallback(function(query)
+		chooser:choices({ { ["text"] = query } })
+	end)
+	chooser:placeholderText(place_holder_text)
+	chooser:width(30)
+	chooser:rows(1)
+	chooser:show()
+end
+
+hs.hotkey.bind({ "cmd", "option" }, "r", function()
+	prompt_with_callback("Enter comment character (e.g. #)", function(comment_char)
+		-- local script =
+		-- 	string.format("/bin/zsh -c 'source ~/.zshrc 2>/dev/null; pbpaste | rem %q | pbcopy &'", comment_char)
+		-- -- hs.execute(script .. " &") --  sub-shell truncates output!
+		-- hs.execute(script)
+
+		local script = string.format("source ~/.zshrc 2>/dev/null; pbpaste | rem %q | pbcopy", comment_char)
+		hs.task
+			.new("/bin/zsh", function(exitCode, stdOut, stdErr)
+				if exitCode == 0 then
+					hs.alert.show("Result copied to clipboard!")
+				else
+					hs.alert.show("Error: " .. (stdErr or "Unknown error"))
+				end
+			end, { "-c", script })
+			:start()
+		hs.alert.show("Result copied to clipboard!")
+	end)
+end)
+--

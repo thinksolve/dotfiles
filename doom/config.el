@@ -1,21 +1,115 @@
 
+;; Easily view images, pdfs and return with <left>
+(cl-loop for (module . map) in '((doc-view . doc-view-mode-map)
+                                 (image . image-mode-map)
+                                 (pdf-tools . pdf-view-mode-map)
+                                 (archive-mode . archive-mode-map))
+         ;; NOTE below: eval-wrapped 'map!' macro needed since loop/dolist evaluates at runtime; macros
+         ;; run at macro-time (build time) so cannot interpret _variable_ arguments properly.
+         ;; I.e., eval pushes map! to evaluate at runtime.
+
+         do (eval `(map! :after ,module
+                         :map ,map
+                         :n "<left>" (lambda () (interactive) (kill-current-buffer))))
+                         ;; :n "<left>" #'my/kill-and-switch-to-previous-buffer ))
+                         ;; :n "<left>" #'my/switch-to-previous-buffer))
+)
+
+;; (defun my/kill-and-switch-to-previous-buffer ()
+;;   "Kill the current buffer and switch to the most sensible previous buffer."
+;;   (interactive)
+;;   (let ((prev (other-buffer (current-buffer) t)))
+;;     (kill-buffer (current-buffer))
+;;     (when (buffer-live-p prev)
+;;       (switch-to-buffer prev))))
+
+;; (defun my/switch-to-previous-buffer ()
+;;   "Switch to the previous buffer."
+;;   (interactive)
+;;   (switch-to-buffer (other-buffer (current-buffer) t)))
+
+;; (dolist (pair '((image      . image-mode-map)
+;;                 (pdf-tools  . pdf-view-mode-map)
+;;                 (doc-view   . doc-view-mode-map))
+;;                 (archive-mode . archive-mode-map))
+;;    ;; (let ((module (car pair)) (map (cdr pair))) ;; weird old syntax
+;;   (cl-destructuring-bind (module . map) pair
+;;     (eval
+;;      `(map! :after ,module
+;;             :map ,map
+;;             :n "<left>" #'my/switch-to-previous-buffer))))
+
+
+
+;;(use-package! pdf-tools
+;;   :defer t
+;;   :config
+;;   (pdf-tools-install)) ;; Will build epdfinfo automatically
+
+;; custom package config (downloaded in package.el)
+(use-package! drag-stuff
+  :config
+  (drag-stuff-global-mode 1)
+  (drag-stuff-define-keys))  ;; This sets up M-<up>, M-<down>, etc.
+
+
+;; set transparency
+;; (set-frame-parameter (selected-frame) 'alpha '(95 95))
+;; (add-to-list 'default-frame-alist '(alpha 95 95))
+
+;;Lazy-load heavy packages
+(use-package lsp-mode
+  :defer t
+  :hook ((lua-mode nix-mode) . lsp)) ; Load LSP for specific modes
+
+(use-package magit
+  :defer t
+  :commands (magit-status magit-blame)) ; Load on specific commands
+
+(use-package org
+  :defer t
+  :commands (org-mode org-agenda)) ; Load when entering Org files or agenda
+
+(use-package vertico
+  :defer t
+  :init
+  (vertico-mode 1) ; Enable Vertico when needed
+  :config
+  :defer t
+  :init
+  :config
+  (setq dirvish-attributes '(file-size git-msg))) ; Optimize attributes
+
+(use-package corfu
+  :defer t
+  :init
+  (global-corfu-mode 1)) ; Enable Corfu when needed
+
+(use-package orderless
+  :defer t
+  :init
+  (setq completion-styles '(orderless basic))) ; Enable Orderless for completion
+
+;; Performance tweaks
+(setq inhibit-compacting-font-caches t) ; Speed up font rendering
+(menu-bar-mode -1)                     ; Disable menu bar
 
 ;; ==== Enhanced File Navigation ====
 ;; Global dirvish previews + vertico arrow navigation
 
+;; much needed to open a file in default app (like Preview for a pdf ... if i want)
 (map! "s-<right>" #'my/open-file-in-default-viewer)
 
+;; allows dirvish file previews in (vertico?) minibuffers
+(add-hook! 'doom-after-init-hook (dirvish-peek-mode 1))
 
-  ;; (define-key vertico-map (kbd "SPC <right>") #'my/open-file-in-default-viewer))
-;; (with-eval-after-load 'dired
-;;   (define-key dired-mode-map (kbd "SPC <right>") #'my/open-file-in-default-viewer))
 
+;; allows dirvish like navigation within (vertico) minibuffers
 (after! vertico
   (define-key vertico-map (kbd "<right>") #'my/vertico-enter-directory)
   (define-key vertico-map (kbd "<left>")  #'my/vertico-up-directory))
   ;; (define-key vertico-map (kbd "s-<right>") #'my/open-file-in-default-viewer))
 
-(add-hook! 'doom-after-init-hook (dirvish-peek-mode 1))
 
 (defun my/open-file-in-default-viewer ()
   "Open the current file in the system's default viewer."
@@ -53,54 +147,26 @@
     (call-interactively #'find-file)))
 
 
-;; (defun my/vertico-enter-directory-old ()
-;;   "If candidate is a directory, enter it; otherwise, act as RET."
-;;   (interactive)
-;;   (when minibuffer-completing-file-name
-;;     (let* ((input (minibuffer-contents))
-;;            (cand (vertico--candidate)))
-;;       (cond
-;;        ((and cand (file-directory-p cand))
-;;         (delete-minibuffer-contents)
-;;         (insert (file-name-as-directory cand)))
-;;        (t
-;;         (vertico-exit))))))
-
-;; (defun my/vertico-up-directory-old ()
-;;   "Go up one directory in the minibuffer during file selection."
-;;   (interactive)
-;;   (when minibuffer-completing-file-name
-;;     (let* ((input (minibuffer-contents))
-;;            (dir (file-name-directory (directory-file-name (expand-file-name input)))))
-;;       (delete-minibuffer-contents)
-;;       (insert (file-name-as-directory dir)))))
-
-
-
-;; ;; Open Dirvish in your home directory on startup
-;; (add-hook! 'emacs-startup-hook
-;;   (lambda ()
-;;     (unless (or (doom-buffer-list) (minibufferp))
-;;       (dirvish "~/" nil))))
-
-
-;; ;check condig directory (since symlink check with file-truename)
+;; ;; check config directory (since symlink check with file-truename)
 ;; (message doom-private-dir)
 ;; (message (file-truename doom-private-dir))
 
+;; (setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'thin))
+(setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'light))
+
 (setq doom-theme
-      'doom-palenight)
+      'doom-tokyo-night)
+      ;; 'doom-henna)
+      ;; 'doom-palenight)
       ;; 'doom-moonlight)
       ;; 'doom-city-lights)
       ;; 'doom-one) ;;default
 
-;; (window-divider-mode -1) ;; no longer needed to remove dividing line
 
+;; s- is the Cmd key in Doom's keymap; this mimics custom OS window switching for emac frames
+(map! "s-." #'other-frame)
 
-(map! "s-." #'other-frame)  ;; s- is the Cmd key in Doom's keymap
 ;; Maximize window when opened normal way (icon click or open command in terminal)
-
-
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
 ;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
@@ -109,16 +175,6 @@
           (lambda (frame)
             (select-frame frame)
             (toggle-frame-maximized)))
-
-;; (setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'thin))
-(setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'light))
-
-;; (message "Current font: %s" (face-attribute 'default :font))
-
-
-;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
-;; (setq doom-font (font-spec :size 16)
-
 
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
@@ -186,7 +242,6 @@
 ;; - `after!' for running code after a package has loaded
 ;; - `add-load-path!' for adding directories to the `load-path', relative to
 ;;   this file. Emacs searches the `load-path' when you load packages with
-;;   `require' or `use-package'.
 ;; - `map!' for binding new keys
 ;;
 ;; To get information about any of these functions/macros, move the cursor over
@@ -198,7 +253,7 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
-
+;; _soft_ word wrapping (i.e. no new lines inserted)
 (global-visual-line-mode 1)
 
 
