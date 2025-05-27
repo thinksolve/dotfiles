@@ -19,7 +19,8 @@ source "$ZSH"/oh-my-zsh.sh
 # ZSH_THEME="powerlevel10k/powerlevel10k"
 
 source "$HOME"/.shell_functions.sh
-alias evim='emacs -nw'
+alias config='cd ~/.dotfiles/ && yazi .'
+alias evim='emacs -nw' # not really useful now that im using emacsclient
 alias zshrc='nvim ~/.zshrc'
 alias hist='nvim ~/.zsh_history'
 alias shell_functions='nvim $HOME/.shell_functions.sh'

@@ -49,3 +49,5 @@
 ;; (unpin! t)
 
 (package! drag-stuff)
+(package! ultra-scroll
+  :recipe (:host github :repo "jdtsmith/ultra-scroll"))

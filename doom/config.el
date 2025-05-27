@@ -39,14 +39,20 @@
 ;;             :map ,map
 ;;             :n "<left>" #'my/switch-to-previous-buffer))))
 
-
+;; smooth scrolling custom package(.el)
+(use-package! ultra-scroll
+  :init
+  (setq scroll-conservatively 101
+        scroll-margin 0)
+  :config
+  (ultra-scroll-mode 1))
 
 ;;(use-package! pdf-tools
 ;;   :defer t
 ;;   :config
 ;;   (pdf-tools-install)) ;; Will build epdfinfo automatically
 
-;; custom package config (downloaded in package.el)
+;; custom package(.el)
 (use-package! drag-stuff
   :config
   (drag-stuff-global-mode 1)
