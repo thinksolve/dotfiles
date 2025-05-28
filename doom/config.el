@@ -1,5 +1,4 @@
 
-;; Easily view images, pdfs and return with <left>
 (cl-loop for (module . map) in '((doc-view . doc-view-mode-map)
                                  (image . image-mode-map)
                                  (pdf-tools . pdf-view-mode-map)
@@ -161,12 +160,14 @@
 (setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'light))
 
 (setq doom-theme
-      'doom-tokyo-night)
-      ;; 'doom-henna)
-      ;; 'doom-palenight)
-      ;; 'doom-moonlight)
-      ;; 'doom-city-lights)
-      ;; 'doom-one) ;;default
+      'doom-moonlight
+      ;; 'doom-palenight
+      ;; 'doom-tokyo-night
+      ;; 'doom-henna
+      ;; 'doom-moonlight
+      ;; 'doom-city-lights
+      ;; 'doom-one ;;default
+)
 
 
 ;; s- is the Cmd key in Doom's keymap; this mimics custom OS window switching for emac frames

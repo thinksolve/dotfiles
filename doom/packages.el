@@ -49,5 +49,6 @@
 ;; (unpin! t)
 
 (package! drag-stuff)
-(package! ultra-scroll
-  :recipe (:host github :repo "jdtsmith/ultra-scroll"))
+
+;; note needed since 'scrolling' is in init.el, originally commented out
+;; (package! ultra-scroll :recipe (:host github :repo "jdtsmith/ultra-scroll"))

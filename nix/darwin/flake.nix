@@ -43,32 +43,78 @@
           # users.knownUsers = [ username ]; NOTE: was supposed to delete
           environment.systemPackages = [
 
+            # ---- CLI Utilities ----
+            pkgs.bat
+            pkgs.fd
+            pkgs.fzf
+            pkgs.rename
+            pkgs.ripgrep
+            pkgs.tree
             (unbreak pkgs.jp2a)
+            # pkgs.jq
+            # pkgs.yq
+
+            # ---- Networking ----
+            pkgs.curl
+            pkgs.htop
+            pkgs.nghttp2
+            pkgs.nmap
+            pkgs.wget
+
+            # ---- Media Tools ----
+            pkgs.ffmpeg
+            pkgs.ffmpegthumbnailer
+            pkgs.imagemagick
+            pkgs.pngpaste
+            pkgs.tesseract
+            pkgs.vips
+            pkgs.yt-dlp
+
+            # ---- Development Tools ----
+            pkgs.git
+            pkgs.gh
+            pkgs.neovim
+            pkgs.nixd
+            pkgs.nixfmt-rfc-style
+            pkgs.shellcheck
+            pkgs.shfmt
+            pkgs.pandoc
+            pkgs.htmlq
+            # pkgs.helix
+            (pkgs.python3.withPackages (
+              ps: with ps; [
+                fastapi
+                sacremoses
+                sentencepiece
+                torch
+                transformers
+                uvicorn
+              ]
+            ))
+
+            # ---- PDF and Document Processing ----
+            pkgs.poppler
+            pkgs.poppler_utils
+
+            # ---- Terminal and Shell Enhancements ----
+            pkgs.fastfetch
+            pkgs.iterm2
+            pkgs.pure-prompt
+            pkgs.yazi
+            # pkgs.tmux
+
+            # ---- System Utilities ----
+            pkgs.blueutil
+            pkgs.hello
+            pkgs.rsync
+
+            # pkgs.ghostscript # gs
             # pkgs.haskellPackages.cabal-install
             # pkgs.haskellPackages.haskell-language-server
             # pkgs.haskellPackages.fourmolu
             # pkgs.cabal-install # haskell
-            pkgs.vips # for doom emacs viewer
-            pkgs.poppler_utils # for doom emacs viewer
-            pkgs.bat
-            pkgs.blueutil
-            pkgs.curl
-            pkgs.fastfetch
-            pkgs.fd
-            pkgs.ffmpeg
-            pkgs.ffmpegthumbnailer
-            pkgs.fzf
-            pkgs.gh
             # pkgs.ghc # haskell
-            pkgs.ghostscript # gs
-            pkgs.git
-            pkgs.hello
-            pkgs.htmlq
-            # pkgs.helix
-            pkgs.htop
-            pkgs.imagemagick # magick (convert, identify)
-            pkgs.iterm2
-            # pkgs.jq
+
             # (pkgs.neovim.overrideAttrs (oldAttrs: {
             #   version = "0.11.0-dev-1265+g6cdcac4492";
             #   src = pkgs.fetchFromGitHub {
@@ -78,36 +124,13 @@
             #     sha256 = "0m8fki6mv71gzq14xx8h41cgs1kbr7vws523p59nszfc52sshps3"; # The new hash you obtained
             #   };
             # }))
-            pkgs.neovim # nvim
-            pkgs.nghttp2
-            pkgs.nixd
-            pkgs.nixfmt-rfc-style
-            pkgs.nmap
+            # pkgs.glib
             # pkgs.oh-my-zsh
-            pkgs.pure-prompt
-            pkgs.pngpaste
-            pkgs.pandoc
-            pkgs.poppler
-            pkgs.rename
-            pkgs.ripgrep # rg
-            pkgs.rsync
-            pkgs.shellcheck
-            pkgs.shfmt
-            # pkgs.tmux
-            pkgs.tree
-            pkgs.tesseract
-            pkgs.wget
-            pkgs.yazi
-            pkgs.yt-dlp
+            # pkgs.parallel
+            # pkgs.unbound
             # pkgs.zig
             # pkgs.zsh-autosuggestions
             # pkgs.zsh-syntax-highlighting
-            # pkgs.parallel
-            # pkgs.poppler_utils
-            # pkgs.yq
-            # pkgs.tesseract
-            # pkgs.unbound
-            # pkgs.glib
           ];
 
           homebrew = {

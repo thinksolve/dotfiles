@@ -1,5 +1,76 @@
 #!/bin/bash
 
+readonly translate_host="127.0.0.1"
+readonly translate_port="8000"
+
+# old; works with old model: ~/translate-romance-languages/translate_server.py.bak
+# function translate_text() {
+#     local text="$1"
+#     local lang="${2:-es}"
+#
+#     # Check if server is running (port open and responding)
+#     if ! lsof -i :"${translate_port}" | grep -q LISTEN; then
+#         echo "🚀 Translator server not running. Starting now..."
+#         start_translator_daemon
+#         sleep 3 # Wait a bit for the server to fully start
+#     fi
+#
+#     local response=$(curl -s -X POST "http://${translate_host}:${translate_port}/translate/" \
+#         -H "Content-Type: application/json" \
+#         -d "{\"text\": \"${text}\", \"target_lang\": \"${lang}\"}")
+#
+#     if command -v jq &>/dev/null; then
+#         echo "$response" | jq -r '.translation'
+#     else
+#         echo "$response"
+#     fi
+# }
+
+## works with ~/translate-romance-languages/translate_server.py
+function translate_between() {
+    local src_lang="$1"
+    local tgt_lang="$2"
+    local text="$3"
+
+    # Check if server is running; if not, start it (optional)
+    if ! lsof -i :8000 | grep -q LISTEN; then
+        echo "🚀 Translator server not running. Starting now..."
+        # Adjust this to your actual start command, and working dir if needed
+        (cd ~/translate-romance-languages && nohup uvicorn translate_server:app --host 127.0.0.1 --port 8000 >~/translate-server.log 2>&1 &)
+        sleep 4
+    fi
+
+    # Make the API call
+    curl -s -X POST http://127.0.0.1:8000/translate/ \
+        -H "Content-Type: application/json" \
+        -d "{\"text\": \"$text\", \"source_lang\": \"$src_lang\", \"target_lang\": \"$tgt_lang\"}" |
+        jq -r '.translation'
+}
+
+function start_translator_daemon() {
+    (
+        cd ~/translate-romance-languages || exit
+        nohup uvicorn translate_server:app --host "${translate_host}" --port "${translate_port}" >~/translate-server.log 2>&1 &
+    )
+    echo "✅ Translator server started. Logs: ~/translate-server.log"
+}
+
+function stop_translator_daemon() {
+    local pids
+    # get all matching PIDs, one per line
+    pids=$(pgrep -f "translate_server:app")
+
+    if [[ -n "$pids" ]]; then
+        # kill each pid on its own line
+        echo "$pids" | while read -r pid; do
+            kill "$pid"
+            echo "🛑 Translator server (PID $pid) stopped."
+        done
+    else
+        echo "⚠<fe0f> Translator server is not running."
+    fi
+}
+
 function kill_restart_emacs() {
     emacsclient -e '(kill-emacs)'
     emacs --daemon
