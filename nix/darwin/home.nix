@@ -27,6 +27,7 @@ in
     ".config/nix".source = link_dotfiles "/nix";
     ".config/nix-darwin".source = link_dotfiles "/nix/darwin";
     ".config/doom".source = link_dotfiles "/doom";
+    "translate-romance-languages".source = link_dotfiles "/misc_projects/translate-romance-languages";
     # ".doom.d/init.el".source = link_dotfiles "/doom/init.el";
     # ".doom.d/config.el".source = link_dotfiles "/doom/config.el";
     # ".doom.d/packages.el".source = link_dotfiles "/doom/packages.el";

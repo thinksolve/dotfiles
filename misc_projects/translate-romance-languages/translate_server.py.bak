@@ -1,0 +1,27 @@
+from fastapi import FastAPI
+from transformers import MarianMTModel, MarianTokenizer
+from pydantic import BaseModel
+
+app = FastAPI()
+
+# Load model and tokenizer once, at server startup
+model_name = "Helsinki-NLP/opus-mt-en-ROMANCE"
+tokenizer = MarianTokenizer.from_pretrained(model_name)
+model = MarianMTModel.from_pretrained(model_name)
+
+# Input model class
+class TranslationRequest(BaseModel):
+    text: str
+    target_lang: str
+
+@app.post("/translate/")
+async def translate(request: TranslationRequest):
+    src_text = [f">>{request.target_lang}<< {request.text}"]
+    
+    # Tokenize and translate
+    inputs = tokenizer(src_text, return_tensors="pt", padding=True)
+    translated = model.generate(**inputs)
+    
+    translation = tokenizer.decode(translated[0], skip_special_tokens=True)
+    return {"translation": translation}
+
