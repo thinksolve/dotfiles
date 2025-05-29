@@ -27,10 +27,10 @@ readonly translate_port="8000"
 # }
 
 ## works with ~/translate-romance-languages/translate_server.py
-function translate_between() {
-    local src_lang="$1"
-    local tgt_lang="$2"
-    local text="$3"
+function translate_from_to() {
+    local text="$1"
+    local src_lang="${2:-en}"
+    local tgt_lang="${3:-es}"
 
     # Check if server is running; if not, start it (optional)
     if ! lsof -i :8000 | grep -q LISTEN; then
