@@ -1,4 +1,4 @@
-
+# Alias for convenience
 setopt HIST_IGNORE_ALL_DUPS 
 
 # export DOOMDIR="$HOME/.config/doom"

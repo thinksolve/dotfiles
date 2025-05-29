@@ -26,27 +26,98 @@ readonly translate_port="8000"
 #     fi
 # }
 
-## works with ~/translate-romance-languages/translate_server.py
+function en_to_romance() {
+    local en_phrase="${1:-I like to eat ice cream}"
+    translate_from_to "$en_phrase" en es
+    translate_from_to "$en_phrase" en it
+    translate_from_to "$en_phrase" en fr
+}
+
 function translate_from_to() {
     local text="$1"
     local src_lang="${2:-en}"
     local tgt_lang="${3:-es}"
+    local check_interval_sec=0.25
+    local check_total_time_sec=10
+    local check_steps=$(echo "$check_total_time_sec / $check_interval_sec" | bc)
 
-    # Check if server is running; if not, start it (optional)
-    if ! lsof -i :8000 | grep -q LISTEN; then
+    # Handle piped input only if no argument provided
+    if [ -z "$text" ] && [ -p /dev/stdin ]; then
+        text=$(cat)
+    fi
+
+    # If no input at all, exit
+    if [ -z "$text" ]; then
+        echo "Error: No text provided" >&2
+        return 1
+    fi
+
+    # Check if text contains language direction pattern /xxxx
+    if [[ "$text" =~ '(.+) /([a-z]{2})([a-z]{2})$' ]]; then
+        text="${match[1]}"
+        src_lang="${match[2]}"
+        tgt_lang="${match[3]}"
+    fi
+
+    # Check if server is running; if not, start it
+    if ! lsof -i :$translate_port | grep -q LISTEN; then
         echo "🚀 Translator server not running. Starting now..."
-        # Adjust this to your actual start command, and working dir if needed
-        (cd ~/translate-romance-languages && nohup uvicorn translate_server:app --host 127.0.0.1 --port 8000 >~/translate-server.log 2>&1 &)
-        sleep 4
+        (cd ~/translate-romance-languages && nohup uvicorn translate_server:app --host "${translate_host}" --port "${translate_port}" >~/translate-server.log 2>&1 &)
+        # Wait for server to listen on port
+        for i in {1..$check_steps}; do
+            if lsof -i :$translate_port | grep -q LISTEN; then
+                break
+            fi
+            sleep $check_interval_sec
+        done
     fi
 
     # Make the API call
-    curl -s -X POST http://127.0.0.1:8000/translate/ \
+    curl -s -X POST http://$translate_host:$translate_port/translate/ \
         -H "Content-Type: application/json" \
         -d "{\"text\": \"$text\", \"source_lang\": \"$src_lang\", \"target_lang\": \"$tgt_lang\"}" |
         jq -r '.translation'
 }
 
+## works with ~/translate-romance-languages/translate_server.py
+# function translate_from_to_old() {
+#     local text="$1"
+#     local src_lang="${2:-en}"
+#     local tgt_lang="${3:-es}"
+#     if [ -z "$text" ] && [ ! -t 0 ]; then
+#         text=$(cat)
+#     fi
+#     if [ -z "$text" ]; then
+#         echo "Usage: translate_from_to 'text' [source_lang] [target_lang]" >&2
+#         echo "   or: echo 'text' | translate_from_to [source_lang] [target_lang]" >&2
+#         return 1
+#     fi
+#
+#     local check_interval_sec=0.25
+#     local check_total_time_sec=10
+#     local check_steps=$(echo "$check_total_time_sec / $check_interval_sec" | bc) # Integer division floor
+#
+#     # Check if server is running; if not, start it
+#     if ! lsof -i :$translate_port | grep -q LISTEN; then
+#         echo "🚀 Translator server not running. Starting now..."
+#         (cd ~/translate-romance-languages && nohup uvicorn translate_server:app --host "${translate_host}" --port "${translate_port}" >~/translate-server.log 2>&1 &)
+#
+#         # Wait for server to listen on port 8000, up to 10 seconds
+#         for i in {1..$check_steps}; do
+#             if lsof -i :$translate_port | grep -q LISTEN; then
+#                 break
+#             fi
+#             sleep $check_interval_sec
+#         done
+#     fi
+#
+#     # Make the API call
+#     curl -s -X POST http://$translate_host:$translate_port/translate/ \
+#         -H "Content-Type: application/json" \
+#         -d "{\"text\": \"$text\", \"source_lang\": \"$src_lang\", \"target_lang\": \"$tgt_lang\"}" |
+#         jq -r '.translation'
+# }
+#
 function start_translator_daemon() {
     (
         cd ~/translate-romance-languages || exit

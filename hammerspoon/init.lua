@@ -439,4 +439,165 @@ hs.hotkey.bind({ "cmd", "option" }, "r", function()
 		hs.alert.show("Result copied to clipboard!")
 	end)
 end)
+
+-- -- Interactive translation with UI prompt (doesn't auto-copy)
+-- hs.hotkey.bind({ "cmd", "option", "shift" }, "x", function()
+-- 	prompt_with_callback("Enter text to translate", function(text)
+-- 		local script = string.format(
+-- 			[[
+--             export LANG=en_US.UTF-8
+--             export LC_ALL=en_US.UTF-8
+--             cd ~
+--             source .zshrc
+--             translate_from_to %q en es
+--         ]],
+-- 			text
+-- 		)
 --
+-- 		hs.task
+-- 			.new("/bin/zsh", function(exitCode, stdOut, stdErr)
+-- 				if exitCode == 0 and stdOut and stdOut ~= "" then
+-- 					local translation = stdOut:gsub("%s+$", "")
+-- 					-- Show translation in a dialog instead of auto-copying
+-- 					show_translation_result(text, translation)
+-- 				else
+-- 					hs.alert.show("Translation error: " .. (stdErr or "Unknown error"))
+-- 				end
+-- 			end, { "-c", script })
+-- 			:start()
+-- 	end)
+-- end)
+
+-- Function to show translation result with copy option
+function show_translation_result(original, translation)
+	local dialog = hs.dialog.blockAlert(
+		"Translation Result",
+		string.format("Original: %s\n\nTranslation: %s", original, translation),
+		"Copy to Clipboard",
+		"Close"
+	)
+
+	if dialog == "Copy to Clipboard" then
+		hs.pasteboard.setContents(translation)
+		hs.alert.show("Translation copied!")
+	end
+end
+
+-- Interactive translation with real-time results in chooser
+hs.hotkey.bind({ "ctrl", "option", "command" }, "t", function()
+	translate_prompt_with_realtime()
+end)
+
+function translate_prompt_with_realtime()
+	local chooser
+	local debounceTimer = nil
+	local lastTranslation = ""
+
+	chooser = hs.chooser.new(function(choice)
+		if not choice then
+			return
+		end
+
+		-- If they selected the translation result, copy it
+		if choice.translation then
+			hs.pasteboard.setContents(choice.translation)
+			hs.alert.show("Translation copied!")
+			return
+		end
+
+		-- If they pressed enter on input, copy the translation if available
+		if lastTranslation ~= "" then
+			hs.pasteboard.setContents(lastTranslation)
+			hs.alert.show("Translation copied!")
+		end
+	end)
+
+	-- Function to perform translation
+	local function performTranslation(query)
+		if query == "" then
+			chooser:choices({ { ["text"] = query } })
+			return
+		end
+
+		local script = string.format(
+			[[
+            export LANG=en_US.UTF-8
+            export LC_ALL=en_US.UTF-8
+            cd ~
+            source .zshrc
+            translate_from_to %q
+        ]],
+			query
+		)
+
+		hs.task
+			.new("/bin/zsh", function(exitCode, stdOut, stdErr)
+				if exitCode == 0 and stdOut and stdOut ~= "" then
+					local translation = stdOut:gsub("%s+$", "")
+					lastTranslation = translation
+
+					-- Update chooser with input and translation
+					chooser:choices({
+						{
+							["text"] = query,
+							["subText"] = "Input (press Enter to copy translation)",
+						},
+						{
+							["text"] = "→ " .. translation,
+							["subText"] = "Translation (click to copy)",
+							["translation"] = translation,
+						},
+					})
+				else
+					chooser:choices({
+						{
+							["text"] = query,
+							["subText"] = "Input",
+						},
+						{
+							["text"] = "❌ Translation failed",
+							["subText"] = stdErr or "Unknown error",
+						},
+					})
+				end
+			end, { "-c", script })
+			:start()
+	end
+
+	chooser:queryChangedCallback(function(query)
+		-- Cancel previous timer
+		if debounceTimer then
+			debounceTimer:stop()
+		end
+
+		-- Set up debounced translation (500ms delay)
+		debounceTimer = hs.timer.doAfter(0.5, function()
+			performTranslation(query)
+		end)
+
+		-- Show input immediately
+		chooser:choices({ { ["text"] = query, ["subText"] = "Translating..." } })
+	end)
+
+	chooser:placeholderText("Enter text to translate (EN→ES)")
+	chooser:width(50)
+	chooser:rows(2)
+	chooser:show()
+end
+
+local clipboardActive = false
+hs.hotkey.bind({ "option", "cmd", "shift" }, "v", function()
+	if clipboardActive then
+		-- spoon.ClipboardTool.stop()
+		-- NOTE: LOL no stop() method so grok hack:
+		spoon.ClipboardTool.shouldBeStored = function()
+			return false
+		end
+		clipboardActive = false
+		hs.alert.show("ClipboardTool Disabled")
+	else
+		spoon.ClipboardTool:start()
+		clipboardActive = true
+		hs.alert.show("ClipboardTool Enabled")
+	end
+end)
