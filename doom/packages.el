@@ -52,3 +52,23 @@
 
 ;; note needed since 'scrolling' is in init.el, originally commented out
 ;; (package! ultra-scroll :recipe (:host github :repo "jdtsmith/ultra-scroll"))
+
+;; (package! ef-themes
+;;   :recipe (:host github :repo "protesilaos/ef-themes" :branch "main"))
+
+;; used to produce an HTTP server within emacs for live viewing html files (converted from org mode)
+(package! impatient-mode)
+
+;; (package! org-preview-html)
+(package! org-fragtog)
+
+(package! org-preview-html
+  :recipe (:host github :repo "jakebox/org-preview-html"))
+
+;; (package! math-preview
+;;   :recipe (:host github :repo "emacsmirror/math-preview"))
+
+(package! math-preview
+  :recipe (:host gitlab
+           :repo "matsievskiysv/math-preview"
+           :files ("*.el" "bin")))

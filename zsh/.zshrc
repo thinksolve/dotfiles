@@ -1,3 +1,8 @@
+
+export PATH="$HOME/.npm-global/bin:$PATH" ## changed npm prefix (npm get prefix) from readonly nix location '/nix/store/2ribxb3gi87gj4331m6k0ydn0z90zfi7-nodejs-22.14.0' to a custom writable location '~/.npm-global' .. to allow global npm installs 
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
 # Alias for convenience
 setopt HIST_IGNORE_ALL_DUPS 
 

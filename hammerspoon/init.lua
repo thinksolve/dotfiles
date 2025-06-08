@@ -468,20 +468,20 @@ end)
 -- 	end)
 -- end)
 
--- Function to show translation result with copy option
-function show_translation_result(original, translation)
-	local dialog = hs.dialog.blockAlert(
-		"Translation Result",
-		string.format("Original: %s\n\nTranslation: %s", original, translation),
-		"Copy to Clipboard",
-		"Close"
-	)
+-- -- Function to show translation result with copy option
+-- function show_translation_result(original, translation)
+-- 	local dialog = hs.dialog.blockAlert(
+-- 		"Translation Result",
+-- 		string.format("Original: %s\n\nTranslation: %s", original, translation),
+-- 		"Copy to Clipboard",
+-- 		"Close"
+-- 	)
 
-	if dialog == "Copy to Clipboard" then
-		hs.pasteboard.setContents(translation)
-		hs.alert.show("Translation copied!")
-	end
-end
+-- 	if dialog == "Copy to Clipboard" then
+-- 		hs.pasteboard.setContents(translation)
+-- 		hs.alert.show("Translation copied!")
+-- 	end
+-- end
 
 -- Interactive translation with real-time results in chooser
 hs.hotkey.bind({ "ctrl", "option", "command" }, "t", function()
@@ -513,6 +513,7 @@ function translate_prompt_with_realtime()
 	end)
 
 	-- Function to perform translation
+	-- NOTE: WIP: query edges cases like containing `" "` marks
 	local function performTranslation(query)
 		if query == "" then
 			chooser:choices({ { ["text"] = query } })
@@ -521,12 +522,15 @@ function translate_prompt_with_realtime()
 
 		local script = string.format(
 			[[
-            export LANG=en_US.UTF-8
-            export LC_ALL=en_US.UTF-8
-            cd ~
-            source .zshrc
-            translate_from_to %q
-        ]],
+			export lang=en_us.utf-8
+			export lc_all=en_us.utf-8
+			cd ~
+			source .zshrc
+			translate=%q
+			command -v $translate >/dev/null 2>&1 || { echo "error: $translate not found"; exit 1; }
+			$translate %q
+		    ]],
+			"translate_from_to",
 			query
 		)
 
@@ -539,12 +543,8 @@ function translate_prompt_with_realtime()
 					-- Update chooser with input and translation
 					chooser:choices({
 						{
-							["text"] = query,
-							["subText"] = "Input (press Enter to copy translation)",
-						},
-						{
 							["text"] = "→ " .. translation,
-							["subText"] = "Translation (click to copy)",
+							["subText"] = "Translation (select to copy)",
 							["translation"] = translation,
 						},
 					})

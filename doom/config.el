@@ -1,3 +1,194 @@
+(use-package! math-preview)
+(after! org
+  (add-hook 'org-mode-hook #'math-preview-all)
+
+  ;; Manual keybindings
+  (map! :map org-mode-map
+        :localleader
+        "a" #'math-preview-all           ;; Re-render all LaTeX
+        "p" #'math-preview-at-point      ;; Render just at point
+        "d" #'math-preview-clear-all     ;; Clear all previews
+        )
+)
+
+
+
+;; (use-package! math-preview
+;;   :custom
+;;   (math-preview-command "math-preview")
+;;   :hook
+;;   (org-mode . (lambda () (when (derived-mode-p 'org-mode) (math-preview-all))))
+;;   :config
+;;   (defun my/math-preview-rerender-on-move ()
+;;     "Re-render LaTeX fragment at point if it was unrendered."
+;;     (when (and (derived-mode-p 'org-mode)
+;;                (org-inside-LaTeX-fragment-p))
+;;       (math-preview-region)))
+;;   :hook
+;;   (post-command-hook . my/math-preview-rerender-on-move))
+
+;; auto-toggle latex fragments with fragtog
+;; (after! org
+;;   (add-hook 'org-mode-hook #'org-fragtog-mode)
+;;   (setq org-latex-create-formula-image-program 'dvisvgm) ; Ensure SVG output
+;;   (setq org-image-actual-width nil) ; Allow images to scale with buffer
+;;   (plist-put org-format-latex-options :scale 1.8) ; Adjust for visibility
+
+;; )
+
+;; NOTE: if not mistaken this is not needed
+;; (defun my/org-mode-smart-tab ()
+;;   "Expand snippet or cycle org outline or indent."
+;;   (interactive)
+;;   (cond
+;;    ((and (bound-and-true-p yas-minor-mode)
+;;          (yas-expand))
+;;     ;; snippet expanded
+;;     )
+;;    ((org-at-table-p) (org-cycle))  ;; tables behave specially
+;;    (t (org-cycle))))
+
+;; (add-hook 'org-mode-hook
+;;           (lambda ()
+;;             (local-set-key (kbd "TAB") #'my/org-mode-smart-tab)))
+
+;; NOTE: rebuild emacs with xwidget support!
+(setq org-preview-html-viewer 'xwidget) ; or 'eww
+
+
+(use-package! org-preview-html
+  :after org
+  :commands (org-preview-html-mode)
+  :config
+  ;; Use external browser (not eww or xwidget)
+
+  ;; Prevent config reloading (optional perf boost)
+  (setq org-preview-html-refresh-configuration-p nil))
+
+(setq org-html-mathjax-template
+      "<script src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>")
+
+
+;;suppress message when using latex in scratch buffer
+(setq warning-suppress-types '((org-element org-element-parser)))
+
+
+
+
+
+;; WIP .. likely delete
+;; (use-package! impatient-mode
+;;   :after org
+;;   :config
+;;   (defun org-html-export-string ()
+;;     (org-export-as 'html nil nil t nil))
+;;   (defun org-impatient-mode-setup ()
+;;     (imp-set-user-filter 'org-html-export-string)
+;;     (impatient-mode 1))
+;;   (add-hook 'org-mode-hook #'org-impatient-mode-setup)
+;;   (defun org-to-html-string (buffer)
+;;   "Export Org BUFFER to HTML and send to browser."
+;;   (with-current-buffer buffer
+;;     (princ (org-export-as 'html nil nil t nil) (current-buffer))))
+
+
+;;   )
+
+
+
+;; (setq org-startup-with-latex-preview t)
+(use-package! org
+  :config
+  ;; (setq org-startup-with-latex-preview t)
+  (setq org-export-with-latex ''dvisvgm))
+;;;; (setq org-export-with-latex 'dvipng)) ;; or 'imagemagick
+
+;; Alternative approach with more direct control
+(defun my/org-preview-html-show ()
+  "Always show org HTML preview in a regular buffer."
+  (interactive)
+  (require 'org-preview-html)
+
+  ;; Kill existing preview buffer if it exists
+  (when-let ((buf (get-buffer "*eww org-preview-html*")))
+    (kill-buffer buf))
+
+  ;; Configure to open in regular buffer, not popup
+  (let ((display-buffer-alist '(("^\\*eww org-preview-html\\*"
+                                 (display-buffer-reuse-window
+                                  display-buffer-pop-up-window)
+                                 (reusable-frames . visible)))))
+
+    (unless (bound-and-true-p org-preview-html-mode)
+      (org-preview-html-mode 1))
+
+    ;; Force refresh
+    (when (bound-and-true-p org-preview-html-mode)
+      (org-preview-html-refresh))))
+
+;; Custom function to hide preview
+(defun my/org-preview-html-hide ()
+  "Hide org HTML preview."
+  (interactive)
+  (when (bound-and-true-p org-preview-html-mode)
+    (org-preview-html-mode -1))
+  ;; Also kill the buffer
+  (when-let ((buf (get-buffer "*eww org-preview-html*")))
+    (kill-buffer buf)))
+
+;; Ensure package loads properly; NOTE: place back ..testing non-eww browser for latex
+;; (use-package! org-preview-html
+;;   :after org
+;;   :config
+;;   (setq org-preview-html-viewer 'eww
+;;         org-preview-html-refresh-configuration-p nil)
+;; )
+
+
+
+;; Remove any popup rules for this buffer
+(after! org-preview-html
+  (set-popup-rule! "^\\*eww org-preview-html\\*" :ignore t))
+
+(defun my/org-preview-html-refresh-latex ()
+  "Force re-render LaTeX fragments and refresh HTML preview."
+  (interactive)
+  (when (eq major-mode 'org-mode)
+    (org-latex-preview) ;; Re-render LaTeX fragments
+    (when (bound-and-true-p org-preview-html-mode)
+      (org-preview-html-refresh))))
+
+;; Key bindings
+(map! :after org
+      :map org-mode-map
+      :localleader
+      "v" #'my/org-preview-html-show   ;; SPC m v to show preview
+      "V" #'my/org-preview-html-hide  ;; SPC m V to hide preview
+      "r" #'my/org-preview-html-refresh-latex   ;; SPC m V to hide preview
+)
+
+;; ------- Modify how eww browser works (buffer not popup; opens on left)
+;; (map! :leader
+;;       :desc "EWW in horizontal split"
+;;       "o w" (lambda ()
+;;               (interactive)
+;;               ;;(1) open eww in buffer not popup
+;;               (after! eww
+;;                 (set-popup-rule! "^\\*eww\\*" :ignore t))
+
+;;               ;; opens buffer to the left
+;;               (split-window-right)
+;;               (call-interactively #'eww))
+
+;;                ;;VARIANT: opens buffer to the right
+;;               ;; (split-window-right)
+;;               ;; (other-window 0)
+;;               ;; (call-interactively #'eww))
+;; )
+
+
+;; removes hiding files in dired .. weird default
+(remove-hook 'dired-mode-hook #'dired-omit-mode)
 
 (cl-loop for (module . map) in '((doc-view . doc-view-mode-map)
                                  (image . image-mode-map)
@@ -160,7 +351,10 @@
 (setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'light))
 
 (setq doom-theme
-      'doom-moonlight
+      'leuven
+      ;; 'ef-owl
+      ;; 'ef-day
+      ;; 'doom-moonlight
       ;; 'doom-palenight
       ;; 'doom-tokyo-night
       ;; 'doom-henna

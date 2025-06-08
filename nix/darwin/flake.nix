@@ -69,8 +69,21 @@
             pkgs.tesseract
             pkgs.vips
             pkgs.yt-dlp
+            (pkgs.texlive.combine {
+              inherit (pkgs.texlive)
+                scheme-basic # Core LaTeX
+                dvipng # PNG for Emacs preview
+                dvisvgm # SVG option, useful for scalability
+                amsmath # Math essentials
+                amsfonts # Math fonts
+                latex-bin # LaTeX commands
+                ulem # without this doom emacs breaks when previewing latex?? might be better to use textlive scheme medium
+                ; # Add more if needed (e.g., hyperref, geometry)
+            })
+            # pkgs.texlive.combined.scheme-medium
 
             # ---- Development Tools ----
+            pkgs.nodejs
             pkgs.git
             pkgs.gh
             pkgs.neovim
@@ -89,6 +102,13 @@
                 torch
                 transformers
                 uvicorn
+                langdetect
+                fasttext
+
+                #NOTE: running into issues building this  (need it for fasstext since langdetect is not robust)
+                # (numpy.overridePythonAttrs (old: {
+                #   version = "1.26.4";
+                # })) # Pin to 1.26.4
               ]
             ))
 
@@ -167,13 +187,18 @@
 
             brews = [
               "mas"
+              # {
+              #   name = "emacs-plus@30";
+              #   options = [ "with-xwidgets" ];
+              # }
               {
+                # name = "emacs-plus@30";
                 name = "emacs-plus@30";
-                # name = "emacs-plus@29";
-                # args = [
-                #   "with-native-comp" #not valid in @30
-                #   "with-modern-doom3-icon"
-                # ];
+                args = [
+                  "with-xwidgets"
+                  # "with-native-comp" #not valid in @30
+                  # "with-modern-doom3-icon"
+                ];
               }
               "libgccjit" # Required for native compilation
             ];

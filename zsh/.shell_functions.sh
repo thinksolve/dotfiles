@@ -1,5 +1,23 @@
 #!/bin/bash
 
+function remove_last_newline_yas_snippet() {
+    local file="$1"
+    if [[ ! -f "$file" ]]; then
+        echo "❌ File not found: $file"
+        return 1
+    fi
+
+    local last_char
+    last_char=$(tail -c 1 "$file")
+
+    if [[ "$last_char" == $'\n' ]]; then
+        echo "⚠️  Trailing newline detected in $file — fixing..."
+        sed '$d' "$file" >"$file.tmp" && mv "$file.tmp" "$file"
+    else
+        echo "✅ No trailing newline in $file"
+    fi
+}
+
 readonly translate_host="127.0.0.1"
 readonly translate_port="8000"
 
@@ -72,10 +90,18 @@ function translate_from_to() {
         done
     fi
 
+    local json_payload
+    json_payload=$(jq -n \
+        --arg text "$text" \
+        --arg src "$src_lang" \
+        --arg tgt "$tgt_lang" \
+        '{text: $text, source_lang: $src, target_lang: $tgt}')
+
     # Make the API call
     curl -s -X POST http://$translate_host:$translate_port/translate/ \
         -H "Content-Type: application/json" \
-        -d "{\"text\": \"$text\", \"source_lang\": \"$src_lang\", \"target_lang\": \"$tgt_lang\"}" |
+        -d "$json_payload" |
+        # -d "{\"text\": \"$text\", \"source_lang\": \"$src_lang\", \"target_lang\": \"$tgt_lang\"}" |
         jq -r '.translation'
 }
 
@@ -143,9 +169,13 @@ function stop_translator_daemon() {
 }
 
 function kill_restart_emacs() {
-    emacsclient -e '(kill-emacs)'
+    # echo "Resyncing doom"
+    # doom sync
+    echo "Restarting Emacs daemon..."
+    emacsclient -e '(kill-emacs)' || echo "No daemon running or failed to kill"
     emacs --daemon
-    emacsclient -n -c 'emacs'
+    emacsclient -n -c || echo "Failed to create new Emacs client frame"
+    echo "Emacs daemon should be restarted"
 }
 
 #useful for hammerspoon as bundleId string is more robust to identify apps
