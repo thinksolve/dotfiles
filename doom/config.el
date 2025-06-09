@@ -1,190 +1,62 @@
-(use-package! math-preview)
-(after! org
-  (add-hook 'org-mode-hook #'math-preview-all)
 
-  ;; Manual keybindings
-  (map! :map org-mode-map
-        :localleader
-        "a" #'math-preview-all           ;; Re-render all LaTeX
-        "p" #'math-preview-at-point      ;; Render just at point
-        "d" #'math-preview-clear-all     ;; Clear all previews
-        )
+;; (setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'thin))
+(setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'light))
+
+(setq doom-theme
+      ;; 'leuven
+      ;; 'ef-owl
+      'ef-day
+      ;; 'doom-moonlight
+      ;; 'doom-palenight
+      ;; 'doom-tokyo-night
+      ;; 'doom-henna
+      ;; 'doom-city-lights
+      ;; 'doom-one ;;default
 )
 
-
-
+;; NOTE: this works in org-mode but not scratch buffer ..
 ;; (use-package! math-preview
-;;   :custom
-;;   (math-preview-command "math-preview")
-;;   :hook
-;;   (org-mode . (lambda () (when (derived-mode-p 'org-mode) (math-preview-all))))
+;;   :after org
+;;   (add-hook 'org-mode-hook #'math-preview-all)
 ;;   :config
-;;   (defun my/math-preview-rerender-on-move ()
-;;     "Re-render LaTeX fragment at point if it was unrendered."
-;;     (when (and (derived-mode-p 'org-mode)
-;;                (org-inside-LaTeX-fragment-p))
-;;       (math-preview-region)))
-;;   :hook
-;;   (post-command-hook . my/math-preview-rerender-on-move))
-
-;; auto-toggle latex fragments with fragtog
-;; (after! org
-;;   (add-hook 'org-mode-hook #'org-fragtog-mode)
-;;   (setq org-latex-create-formula-image-program 'dvisvgm) ; Ensure SVG output
-;;   (setq org-image-actual-width nil) ; Allow images to scale with buffer
-;;   (plist-put org-format-latex-options :scale 1.8) ; Adjust for visibility
-
+;;   (map! :map org-mode-map
+;;         :localleader
+;;         "a" #'math-preview-all           ;; Re-render all LaTeX
+;;         "p" #'math-preview-at-point      ;; Render just at point
+;;         "d" #'math-preview-clear-all     ;; Clear all previews
+;;         )
 ;; )
+;; (map! "s-<right>" #'my/open-file-in-default-viewer)
 
-;; NOTE: if not mistaken this is not needed
-;; (defun my/org-mode-smart-tab ()
-;;   "Expand snippet or cycle org outline or indent."
-;;   (interactive)
-;;   (cond
-;;    ((and (bound-and-true-p yas-minor-mode)
-;;          (yas-expand))
-;;     ;; snippet expanded
-;;     )
-;;    ((org-at-table-p) (org-cycle))  ;; tables behave specially
-;;    (t (org-cycle))))
+;; works globally, such as scratch buffer and org-mode
+(use-package! math-preview)
+(map! :leader
+        "m a" #'math-preview-all           ;; Re-render all LaTeX
+        "m p" #'math-preview-at-point      ;; Render just at point
+        "m c" #'math-preview-clear-all     ;; Clear all previews
+)
 
-;; (add-hook 'org-mode-hook
-;;           (lambda ()
-;;             (local-set-key (kbd "TAB") #'my/org-mode-smart-tab)))
-
-;; NOTE: rebuild emacs with xwidget support!
-(setq org-preview-html-viewer 'xwidget) ; or 'eww
 
 
 (use-package! org-preview-html
   :after org
   :commands (org-preview-html-mode)
   :config
-  ;; Use external browser (not eww or xwidget)
+  ;; Set MathJax for HTML export
+  (setq org-html-mathjax-template
+        "<script src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>")
+  ;; Set preview viewer
+  (setq org-preview-html-viewer 'xwidget) ; or 'eww
+  ;; Set refresh configuration
+  (setq org-preview-html-refresh-configuration 'manual) ; or 'save', 'export', 'timer', 'instant
+  ;; ;; Prevent config reloading (optional perf boost); NOTE: apparently old syntax
+  ;;   (setq org-preview-html-refresh-configuration-p nil)
+)
 
-  ;; Prevent config reloading (optional perf boost)
-  (setq org-preview-html-refresh-configuration-p nil))
-
-(setq org-html-mathjax-template
-      "<script src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>")
 
 
 ;;suppress message when using latex in scratch buffer
-(setq warning-suppress-types '((org-element org-element-parser)))
-
-
-
-
-
-;; WIP .. likely delete
-;; (use-package! impatient-mode
-;;   :after org
-;;   :config
-;;   (defun org-html-export-string ()
-;;     (org-export-as 'html nil nil t nil))
-;;   (defun org-impatient-mode-setup ()
-;;     (imp-set-user-filter 'org-html-export-string)
-;;     (impatient-mode 1))
-;;   (add-hook 'org-mode-hook #'org-impatient-mode-setup)
-;;   (defun org-to-html-string (buffer)
-;;   "Export Org BUFFER to HTML and send to browser."
-;;   (with-current-buffer buffer
-;;     (princ (org-export-as 'html nil nil t nil) (current-buffer))))
-
-
-;;   )
-
-
-
-;; (setq org-startup-with-latex-preview t)
-(use-package! org
-  :config
-  ;; (setq org-startup-with-latex-preview t)
-  (setq org-export-with-latex ''dvisvgm))
-;;;; (setq org-export-with-latex 'dvipng)) ;; or 'imagemagick
-
-;; Alternative approach with more direct control
-(defun my/org-preview-html-show ()
-  "Always show org HTML preview in a regular buffer."
-  (interactive)
-  (require 'org-preview-html)
-
-  ;; Kill existing preview buffer if it exists
-  (when-let ((buf (get-buffer "*eww org-preview-html*")))
-    (kill-buffer buf))
-
-  ;; Configure to open in regular buffer, not popup
-  (let ((display-buffer-alist '(("^\\*eww org-preview-html\\*"
-                                 (display-buffer-reuse-window
-                                  display-buffer-pop-up-window)
-                                 (reusable-frames . visible)))))
-
-    (unless (bound-and-true-p org-preview-html-mode)
-      (org-preview-html-mode 1))
-
-    ;; Force refresh
-    (when (bound-and-true-p org-preview-html-mode)
-      (org-preview-html-refresh))))
-
-;; Custom function to hide preview
-(defun my/org-preview-html-hide ()
-  "Hide org HTML preview."
-  (interactive)
-  (when (bound-and-true-p org-preview-html-mode)
-    (org-preview-html-mode -1))
-  ;; Also kill the buffer
-  (when-let ((buf (get-buffer "*eww org-preview-html*")))
-    (kill-buffer buf)))
-
-;; Ensure package loads properly; NOTE: place back ..testing non-eww browser for latex
-;; (use-package! org-preview-html
-;;   :after org
-;;   :config
-;;   (setq org-preview-html-viewer 'eww
-;;         org-preview-html-refresh-configuration-p nil)
-;; )
-
-
-
-;; Remove any popup rules for this buffer
-(after! org-preview-html
-  (set-popup-rule! "^\\*eww org-preview-html\\*" :ignore t))
-
-(defun my/org-preview-html-refresh-latex ()
-  "Force re-render LaTeX fragments and refresh HTML preview."
-  (interactive)
-  (when (eq major-mode 'org-mode)
-    (org-latex-preview) ;; Re-render LaTeX fragments
-    (when (bound-and-true-p org-preview-html-mode)
-      (org-preview-html-refresh))))
-
-;; Key bindings
-(map! :after org
-      :map org-mode-map
-      :localleader
-      "v" #'my/org-preview-html-show   ;; SPC m v to show preview
-      "V" #'my/org-preview-html-hide  ;; SPC m V to hide preview
-      "r" #'my/org-preview-html-refresh-latex   ;; SPC m V to hide preview
-)
-
-;; ------- Modify how eww browser works (buffer not popup; opens on left)
-;; (map! :leader
-;;       :desc "EWW in horizontal split"
-;;       "o w" (lambda ()
-;;               (interactive)
-;;               ;;(1) open eww in buffer not popup
-;;               (after! eww
-;;                 (set-popup-rule! "^\\*eww\\*" :ignore t))
-
-;;               ;; opens buffer to the left
-;;               (split-window-right)
-;;               (call-interactively #'eww))
-
-;;                ;;VARIANT: opens buffer to the right
-;;               ;; (split-window-right)
-;;               ;; (other-window 0)
-;;               ;; (call-interactively #'eww))
-;; )
+;; (setq warning-suppress-types '((org-element org-element-parser)))
 
 
 ;; removes hiding files in dired .. weird default
@@ -205,53 +77,21 @@
                          ;; :n "<left>" #'my/switch-to-previous-buffer))
 )
 
-;; (defun my/kill-and-switch-to-previous-buffer ()
-;;   "Kill the current buffer and switch to the most sensible previous buffer."
-;;   (interactive)
-;;   (let ((prev (other-buffer (current-buffer) t)))
-;;     (kill-buffer (current-buffer))
-;;     (when (buffer-live-p prev)
-;;       (switch-to-buffer prev))))
 
-;; (defun my/switch-to-previous-buffer ()
-;;   "Switch to the previous buffer."
-;;   (interactive)
-;;   (switch-to-buffer (other-buffer (current-buffer) t)))
-
-;; (dolist (pair '((image      . image-mode-map)
-;;                 (pdf-tools  . pdf-view-mode-map)
-;;                 (doc-view   . doc-view-mode-map))
-;;                 (archive-mode . archive-mode-map))
-;;    ;; (let ((module (car pair)) (map (cdr pair))) ;; weird old syntax
-;;   (cl-destructuring-bind (module . map) pair
-;;     (eval
-;;      `(map! :after ,module
-;;             :map ,map
-;;             :n "<left>" #'my/switch-to-previous-buffer))))
-
-;; smooth scrolling custom package(.el)
-(use-package! ultra-scroll
-  :init
-  (setq scroll-conservatively 101
-        scroll-margin 0)
-  :config
-  (ultra-scroll-mode 1))
-
-;;(use-package! pdf-tools
-;;   :defer t
+;; ;; smooth scrolling custom package(.el)
+;; (use-package! ultra-scroll
+;;   :init
+;;   (setq scroll-conservatively 101
+;;         scroll-margin 0)
 ;;   :config
-;;   (pdf-tools-install)) ;; Will build epdfinfo automatically
+;;   (ultra-scroll-mode 1))
 
-;; custom package(.el)
+
 (use-package! drag-stuff
   :config
   (drag-stuff-global-mode 1)
   (drag-stuff-define-keys))  ;; This sets up M-<up>, M-<down>, etc.
 
-
-;; set transparency
-;; (set-frame-parameter (selected-frame) 'alpha '(95 95))
-;; (add-to-list 'default-frame-alist '(alpha 95 95))
 
 ;;Lazy-load heavy packages
 (use-package lsp-mode
@@ -293,20 +133,13 @@
 ;; ==== Enhanced File Navigation ====
 ;; Global dirvish previews + vertico arrow navigation
 
-;; much needed to open a file in default app (like Preview for a pdf ... if i want)
-(map! "s-<right>" #'my/open-file-in-default-viewer)
 
 ;; allows dirvish file previews in (vertico?) minibuffers
 (add-hook! 'doom-after-init-hook (dirvish-peek-mode 1))
 
 
-;; allows dirvish like navigation within (vertico) minibuffers
-(after! vertico
-  (define-key vertico-map (kbd "<right>") #'my/vertico-enter-directory)
-  (define-key vertico-map (kbd "<left>")  #'my/vertico-up-directory))
-  ;; (define-key vertico-map (kbd "s-<right>") #'my/open-file-in-default-viewer))
-
-
+;; much needed to open a file in default app (like Preview for a pdf ... if i want)
+(map! "s-<right>" #'my/open-file-in-default-viewer)
 (defun my/open-file-in-default-viewer ()
   "Open the current file in the system's default viewer."
   (interactive)
@@ -318,7 +151,11 @@
       (start-process "open-default-viewer" nil "open" (expand-file-name file)))))
 
 
-
+;; allows dirvish like navigation within (vertico) minibuffers
+(after! vertico
+  (define-key vertico-map (kbd "<right>") #'my/vertico-enter-directory)
+  (define-key vertico-map (kbd "<left>")  #'my/vertico-up-directory))
+  ;; (define-key vertico-map (kbd "s-<right>") #'my/open-file-in-default-viewer))
 (defun my/vertico-enter-directory ()
   "Enter directory or select file in Vertico."
   (interactive)
@@ -343,25 +180,6 @@
     (call-interactively #'find-file)))
 
 
-;; ;; check config directory (since symlink check with file-truename)
-;; (message doom-private-dir)
-;; (message (file-truename doom-private-dir))
-
-;; (setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'thin))
-(setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'light))
-
-(setq doom-theme
-      'leuven
-      ;; 'ef-owl
-      ;; 'ef-day
-      ;; 'doom-moonlight
-      ;; 'doom-palenight
-      ;; 'doom-tokyo-night
-      ;; 'doom-henna
-      ;; 'doom-moonlight
-      ;; 'doom-city-lights
-      ;; 'doom-one ;;default
-)
 
 
 ;; s- is the Cmd key in Doom's keymap; this mimics custom OS window switching for emac frames

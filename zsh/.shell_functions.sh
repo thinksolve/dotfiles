@@ -607,20 +607,48 @@ function find_dir_from_cache() {
     fi
 }
 
-function find_file() {
+# function find_file_og() {
+#
+#     local dir_or_file=$(fd . $HOME -H ${dir_exclusions[@]/#/-E} | fzf --prompt="Find Files: " --preview "$preview")
+#
+#     if [[ -z "$dir_or_file" ]]; then
+#         echo "No directory selected."
+#         return 1
+#     fi
+#     if [[ -d "$dir_or_file" ]]; then
+#         # cd "$dir_or_file" && nvim .
+#         emacsclient -c -n "$dir"
+#     else
+#         if [[ "$(file --mime-type -b "$dir_or_file")" =~ ^text/ ]]; then
+#             cd $(dirname $dir_or_file) && nvim "$dir_or_file"
+#         else
+#             open "$dir_or_file"
+#         fi
+#     fi
+# }
 
-    local dir_or_file=$(fd . $HOME -H ${dir_exclusions[@]/#/-E} | fzf --prompt="Find Files: " --preview "$preview")
+function find_file() {
+    local mode="$1"
+    local fd_cmd=(fd . "$HOME" -H)
+    local is_raw=$([[ "$mode" == "raw" ]] && echo 1)
+
+    # no "raw" arugment passed then use exclusions list
+    if [[ ! $is_raw ]]; then
+        fd_cmd+=("${dir_exclusions[@]/#/-E}")
+    fi
+
+    local dir_or_file
+    dir_or_file=$("${fd_cmd[@]}" | fzf --prompt="Find Files${is_raw:+ (raw)}: " --preview "$preview")
 
     if [[ -z "$dir_or_file" ]]; then
         echo "No directory selected."
         return 1
     fi
     if [[ -d "$dir_or_file" ]]; then
-        # cd "$dir_or_file" && nvim .
         emacsclient -c -n "$dir"
     else
         if [[ "$(file --mime-type -b "$dir_or_file")" =~ ^text/ ]]; then
-            cd $(dirname $dir_or_file) && nvim "$dir_or_file"
+            cd "$(dirname "$dir_or_file")" && nvim "$dir_or_file"
         else
             open "$dir_or_file"
         fi

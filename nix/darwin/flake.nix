@@ -84,6 +84,8 @@
 
             # ---- Development Tools ----
             pkgs.nodejs
+            pkgs.math-preview
+            #instead of 'npm install -g git+https://gitlab.com/matsievskiysv/math-preview' and change npm prefix .. due to nix immutability
             pkgs.git
             pkgs.gh
             pkgs.neovim
