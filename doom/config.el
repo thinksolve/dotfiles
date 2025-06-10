@@ -1,32 +1,62 @@
 
-;; (setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'thin))
-(setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'light))
+;; ;; -------- LATEX RELATED ---------
+;; Override org-latex-preview with math-preview when hitting enter on latex fragment
+(defun my/+org/dwim-at-point--math-preview-fix (orig-fn &rest args)
+  "Override LaTeX preview handling to use `math-preview` instead of Org's default."
+  (let* ((context (org-element-context))
+         (type (org-element-type context)))
+    (if (memq type '(latex-fragment latex-environment))
+        ;; Instead of org-latex-preview, call math-preview
+        (math-preview-at-point)
+      ;; Fall back to original function
+      (apply orig-fn args))))
 
-(setq doom-theme
-      ;; 'leuven
-      ;; 'ef-owl
-      'ef-day
-      ;; 'doom-moonlight
-      ;; 'doom-palenight
-      ;; 'doom-tokyo-night
-      ;; 'doom-henna
-      ;; 'doom-city-lights
-      ;; 'doom-one ;;default
-)
+(advice-add '+org/dwim-at-point :around #'my/+org/dwim-at-point--math-preview-fix)
 
-;; NOTE: this works in org-mode but not scratch buffer ..
-;; (use-package! math-preview
-;;   :after org
-;;   (add-hook 'org-mode-hook #'math-preview-all)
-;;   :config
-;;   (map! :map org-mode-map
-;;         :localleader
-;;         "a" #'math-preview-all           ;; Re-render all LaTeX
-;;         "p" #'math-preview-at-point      ;; Render just at point
-;;         "d" #'math-preview-clear-all     ;; Clear all previews
-;;         )
-;; )
-;; (map! "s-<right>" #'my/open-file-in-default-viewer)
+
+;; Code below allows fragment to re-render when leaving fragment
+(add-hook 'post-command-hook #'my/math-preview-auto-render)
+
+
+(defun my/math-preview-auto-render ()
+  "Auto-render math fragments when cursor leaves them."
+  (when (eq major-mode 'org-mode)
+    (let* ((current-in-math (my/in-math-fragment-p))
+           (current-element (when current-in-math (org-element-context))))
+      ;; If we were in math but aren't now, render the previous element
+      (when (and my/math-preview-last-element
+                 (not current-in-math))
+        ;; Clear any lingering selection before rendering
+        (my/clear-math-selection)
+        (save-excursion
+          (goto-char (org-element-property :begin my/math-preview-last-element))
+          (math-preview-at-point)))
+      ;; Update tracking
+      (setq my/math-preview-last-element
+            (if current-in-math current-element nil)))))
+
+(defun my/clear-math-selection ()
+  "Clear any lingering math fragment selection/highlighting."
+  (when (use-region-p)
+    (deactivate-mark))
+  ;; Clear any math-preview specific overlays that might be causing selection
+  (dolist (ov (overlays-at (point)))
+    (when (overlay-get ov 'math-preview-selection)
+      (delete-overlay ov))))
+
+
+
+(defvar my/math-preview-last-element nil
+  "Track the last math element we were in.")
+
+(defun my/in-math-fragment-p ()
+  "Check if point is in a LaTeX math fragment."
+  (let* ((element (org-element-context))
+         (type (org-element-type element)))
+    (memq type '(latex-fragment latex-environment))))
+
+
+
 
 ;; works globally, such as scratch buffer and org-mode
 (use-package! math-preview)
@@ -52,6 +82,44 @@
   ;; ;; Prevent config reloading (optional perf boost); NOTE: apparently old syntax
   ;;   (setq org-preview-html-refresh-configuration-p nil)
 )
+;; ;; -------- LATEX RELATED ---------
+
+;; (setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'thin))
+(setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'light))
+
+(setq doom-theme
+      'tango
+      ;; 'leuven
+      ;; 'ef-owl
+      ;; 'ef-light
+      ;; 'ef-day
+      ;; 'doom-rouge
+      ;; 'doom-moonlight
+      ;; 'doom-palenight
+      ;; 'doom-tokyo-night
+      ;; 'doom-henna
+      ;; 'doom-city-lights
+      ;; 'doom-one ;;default
+)
+;; run to disable all themes
+;; (mapcar #'disable-theme custom-enabled-themes)
+
+
+;; NOTE: this works in org-mode but not scratch buffer ..
+;; (use-package! math-preview
+;;   :after org
+;;   (add-hook 'org-mode-hook #'math-preview-all)
+;;   :config
+;;   (map! :map org-mode-map
+;;         :localleader
+;;         "a" #'math-preview-all           ;; Re-render all LaTeX
+;;
+;;         "p" #'math-preview-at-point      ;; Render just at point
+;;         "d" #'math-preview-clear-all     ;; Clear all previews
+;;         )
+;; )
+;; (map! "s-<right>" #'my/open-file-in-default-viewer)
+
 
 
 
