@@ -1,6 +1,9 @@
 
 ;; ;; -------- LATEX RELATED ---------
-;; Override org-latex-preview with math-preview when hitting enter on latex fragment
+
+;; toggle latex fragment using math-preview instead of org-latex-preview
+(advice-add '+org/dwim-at-point :around #'my/+org/dwim-at-point--math-preview-fix)
+
 (defun my/+org/dwim-at-point--math-preview-fix (orig-fn &rest args)
   "Override LaTeX preview handling to use `math-preview` instead of Org's default."
   (let* ((context (org-element-context))
@@ -11,61 +14,25 @@
       ;; Fall back to original function
       (apply orig-fn args))))
 
-(advice-add '+org/dwim-at-point :around #'my/+org/dwim-at-point--math-preview-fix)
+
+(use-package! math-preview
+
+  ;; render all latex in org file ONCE, when visiting
+  :hook (org-mode . (lambda ()
+                      (unless (bound-and-true-p math-preview-done)
+                        (setq-local math-preview-done nil))
+                      (unless math-preview-done
+                        (when (fboundp 'math-preview-all)
+                          (math-preview-all)
+                          (setq-local math-preview-done t)))))
 
 
-;; Code below allows fragment to re-render when leaving fragment
-(add-hook 'post-command-hook #'my/math-preview-auto-render)
-
-
-(defun my/math-preview-auto-render ()
-  "Auto-render math fragments when cursor leaves them."
-  (when (eq major-mode 'org-mode)
-    (let* ((current-in-math (my/in-math-fragment-p))
-           (current-element (when current-in-math (org-element-context))))
-      ;; If we were in math but aren't now, render the previous element
-      (when (and my/math-preview-last-element
-                 (not current-in-math))
-        ;; Clear any lingering selection before rendering
-        (my/clear-math-selection)
-        (save-excursion
-          (goto-char (org-element-property :begin my/math-preview-last-element))
-          (math-preview-at-point)))
-      ;; Update tracking
-      (setq my/math-preview-last-element
-            (if current-in-math current-element nil)))))
-
-(defun my/clear-math-selection ()
-  "Clear any lingering math fragment selection/highlighting."
-  (when (use-region-p)
-    (deactivate-mark))
-  ;; Clear any math-preview specific overlays that might be causing selection
-  (dolist (ov (overlays-at (point)))
-    (when (overlay-get ov 'math-preview-selection)
-      (delete-overlay ov))))
-
-
-
-(defvar my/math-preview-last-element nil
-  "Track the last math element we were in.")
-
-(defun my/in-math-fragment-p ()
-  "Check if point is in a LaTeX math fragment."
-  (let* ((element (org-element-context))
-         (type (org-element-type element)))
-    (memq type '(latex-fragment latex-environment))))
-
-
-
-
-;; works globally, such as scratch buffer and org-mode
-(use-package! math-preview)
-(map! :leader
-        "m a" #'math-preview-all           ;; Re-render all LaTeX
-        "m p" #'math-preview-at-point      ;; Render just at point
-        "m c" #'math-preview-clear-all     ;; Clear all previews
-)
-
+  ;;NOTE using`:leader' instead of `:localleader' to work in scratch buffer
+  :config (map! :leader
+                "m a" #'math-preview-all           ;; Re-render all LaTeX
+                "m p" #'math-preview-at-point      ;; Render just at point
+                "m c" #'math-preview-clear-all     ;; Clear all previews
+                ))
 
 
 (use-package! org-preview-html
@@ -82,10 +49,65 @@
   ;; ;; Prevent config reloading (optional perf boost); NOTE: apparently old syntax
   ;;   (setq org-preview-html-refresh-configuration-p nil)
 )
-;; ;; -------- LATEX RELATED ---------
 
-;; (setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'thin))
-(setq doom-font (font-spec :family "JetBrains Mono" :size 16 :weight 'light))
+
+;;NOTE: kinda WIP: autorender convenient but emacs single-threaded ... and this runs on every cursor movement;
+;; the manual toggling when hitting enter (using math-preview) is enough
+;;
+;; Re-render latex fragment when cursor leaves fragment
+;; (add-hook 'post-command-hook #'my/math-preview-auto-render)
+
+;; (defvar my/math-preview--last-point nil)
+;; (defvar my/math-preview-last-element nil
+;;   "Track the last math element we were in.")
+
+;; (defun my/math-preview-auto-render ()
+;;   "Auto-render math fragments when cursor leaves them."
+;;   (when (and (eq major-mode 'org-mode)
+;;              (not (eq (point) my/math-preview--last-point)))
+;;     (let* ((current-element (org-element-context))
+;;            (current-type (org-element-type current-element))
+;;            (current-in-math (memq current-type '(latex-fragment latex-environment))))
+;;       ;; If we were in math but aren't now, render the previous element
+;;       (when (and my/math-preview-last-element
+;;                  (not current-in-math))
+;;         (save-excursion
+;;           (goto-char (org-element-property :begin my/math-preview-last-element))
+;;           (math-preview-at-point)))
+;;       ;; Update tracking
+;;       (setq my/math-preview-last-element
+;;             (if current-in-math current-element nil))
+;;       ;; Update point tracking AFTER doing the work
+;;       (setq my/math-preview--last-point (point)))))
+
+
+;; (defun my/clear-math-selection ()
+;;   "Clear any lingering math fragment selection/highlighting."
+;;   (when (use-region-p)
+;;     (deactivate-mark))
+;;   ;; Clear any math-preview specific overlays that might be causing selection
+;;   (dolist (ov (overlays-at (point)))
+;;     (when (overlay-get ov 'math-preview-selection)
+;;       (delete-overlay ov))))
+
+;; ;; -------- LATEX RELATED ---------.
+
+
+
+;; ;; -------- UX RELATED ---------
+
+;; _soft_ word wrapping (i.e. no new lines inserted)
+(global-visual-line-mode 1)
+
+(map! :n "C-j" (cmd! (evil-next-line 3))
+      :n "C-k" (cmd! (evil-previous-line 3 )))
+
+
+(setq doom-font (font-spec :family "JetBrains Mono"
+                           :size 17 :weight 'light
+                           ;; :size 16 :weight 'thin
+                           )
+      )
 
 (setq doom-theme
       'tango
@@ -100,26 +122,27 @@
       ;; 'doom-henna
       ;; 'doom-city-lights
       ;; 'doom-one ;;default
-)
-;; run to disable all themes
-;; (mapcar #'disable-theme custom-enabled-themes)
+      )
+
+;; ;; run to disable all themes
+;; ;; (mapcar #'disable-theme custom-enabled-themes)
 
 
-;; NOTE: this works in org-mode but not scratch buffer ..
-;; (use-package! math-preview
-;;   :after org
-;;   (add-hook 'org-mode-hook #'math-preview-all)
-;;   :config
-;;   (map! :map org-mode-map
-;;         :localleader
-;;         "a" #'math-preview-all           ;; Re-render all LaTeX
-;;
-;;         "p" #'math-preview-at-point      ;; Render just at point
-;;         "d" #'math-preview-clear-all     ;; Clear all previews
-;;         )
-;; )
-;; (map! "s-<right>" #'my/open-file-in-default-viewer)
+;; Maximize window when opened normal way (icon click or open command in terminal)
+(add-to-list 'initial-frame-alist '(fullscreen . maximized))
+;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
+;; ;; Maximize window when started via emacsclient
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (select-frame frame)
+            (toggle-frame-maximized)))
+
+(use-package! org-bullets
+  :hook (org-mode . org-bullets-mode))
+
+
+;; ;; -------- UX RELATED ---------.
 
 
 
@@ -130,20 +153,38 @@
 ;; removes hiding files in dired .. weird default
 (remove-hook 'dired-mode-hook #'dired-omit-mode)
 
-(cl-loop for (module . map) in '((doc-view . doc-view-mode-map)
-                                 (image . image-mode-map)
-                                 (pdf-tools . pdf-view-mode-map)
-                                 (archive-mode . archive-mode-map))
-         ;; NOTE below: eval-wrapped 'map!' macro needed since loop/dolist evaluates at runtime; macros
-         ;; run at macro-time (build time) so cannot interpret _variable_ arguments properly.
-         ;; I.e., eval pushes map! to evaluate at runtime.
 
-         do (eval `(map! :after ,module
-                         :map ,map
-                         :n "<left>" (lambda () (interactive) (kill-current-buffer))))
-                         ;; :n "<left>" #'my/kill-and-switch-to-previous-buffer ))
-                         ;; :n "<left>" #'my/switch-to-previous-buffer))
-)
+;; Bound to <left> for read-only modes; for writable modes cursor needs to be at left edge of screen for <left> to work
+(map! :n "<left>" #'my/kill-buffer-with-confirmation-or-not)
+(defun my/kill-buffer-with-confirmation-or-not ()
+  "Kill the current buffer without confirmation for read-only or image buffers, with confirmation for writable buffers at the left edge of the screen."
+  (interactive)
+  (if (or buffer-read-only                      ;; Check if it's read-only
+          (derived-mode-p 'image-mode))         ;; Check if it's an image buffer
+      ;; Kill without confirmation for read-only or image buffers
+      (kill-current-buffer)
+    ;; In writable buffers, ask for confirmation ONLY if point is at the left edge (x=0)
+    (if (and (not buffer-read-only)             ;; Make sure buffer is not read-only
+             (looking-at "^"))                  ;; Check if point is at the beginning of a line (x=0)
+        (when (y-or-n-p "Are you sure you want to kill this buffer?")
+          (kill-current-buffer)))))
+
+
+;; ;; NOTE: old verbose version of now using 'my/kill-buffer-with-confirmation-or-not'
+;; (cl-loop for (module . map) in '((doc-view . doc-view-mode-map)
+;;                                  (image . image-mode-map)
+;;                                  (pdf-tools . pdf-view-mode-map)
+;;                                  (archive-mode . archive-mode-map))
+;;          ;; NOTE below: eval-wrapped 'map!' macro needed since loop/dolist evaluates at runtime; macros
+;;          ;; run at macro-time (build time) so cannot interpret _variable_ arguments properly.
+;;          ;; I.e., eval pushes map! to evaluate at runtime.
+
+;;          do (eval `(map! :after ,module
+;;                          :map ,map
+;;                          :n "<left>" (lambda () (interactive) (kill-current-buffer))))
+;;          )
+
+
 
 
 ;; ;; smooth scrolling custom package(.el)
@@ -161,20 +202,24 @@
   (drag-stuff-define-keys))  ;; This sets up M-<up>, M-<down>, etc.
 
 
+
+
+;; ;; --------PERFORMANCE RELATED ---------
+
 ;;Lazy-load heavy packages
-(use-package lsp-mode
+(use-package! lsp-mode
   :defer t
   :hook ((lua-mode nix-mode) . lsp)) ; Load LSP for specific modes
 
-(use-package magit
+(use-package! magit
   :defer t
   :commands (magit-status magit-blame)) ; Load on specific commands
 
-(use-package org
+(use-package! org
   :defer t
   :commands (org-mode org-agenda)) ; Load when entering Org files or agenda
 
-(use-package vertico
+(use-package! vertico
   :defer t
   :init
   (vertico-mode 1) ; Enable Vertico when needed
@@ -184,12 +229,12 @@
   :config
   (setq dirvish-attributes '(file-size git-msg))) ; Optimize attributes
 
-(use-package corfu
+(use-package! corfu
   :defer t
   :init
   (global-corfu-mode 1)) ; Enable Corfu when needed
 
-(use-package orderless
+(use-package! orderless
   :defer t
   :init
   (setq completion-styles '(orderless basic))) ; Enable Orderless for completion
@@ -198,9 +243,12 @@
 (setq inhibit-compacting-font-caches t) ; Speed up font rendering
 (menu-bar-mode -1)                     ; Disable menu bar
 
-;; ==== Enhanced File Navigation ====
-;; Global dirvish previews + vertico arrow navigation
+;; ;; --------PERFORMANCE RELATED ---------.
 
+
+
+
+;; ;; -------- FILE NAVIGATION RELATED ---------
 
 ;; allows dirvish file previews in (vertico?) minibuffers
 (add-hook! 'doom-after-init-hook (dirvish-peek-mode 1))
@@ -247,21 +295,14 @@
     (select-frame-set-input-focus (selected-frame))
     (call-interactively #'find-file)))
 
+;; ;; -------- FILE NAVIGATION RELATED ---------.
 
 
 
-;; s- is the Cmd key in Doom's keymap; this mimics custom OS window switching for emac frames
+
+;; ... mimics custom macOS window switching but for emac frames
 (map! "s-." #'other-frame)
 
-;; Maximize window when opened normal way (icon click or open command in terminal)
-(add-to-list 'initial-frame-alist '(fullscreen . maximized))
-;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
-
-;; ;; Maximize window when started via emacsclient
-(add-hook 'after-make-frame-functions
-          (lambda (frame)
-            (select-frame frame)
-            (toggle-frame-maximized)))
 
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
@@ -340,22 +381,3 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
-;; _soft_ word wrapping (i.e. no new lines inserted)
-(global-visual-line-mode 1)
-
-
-;; (defun my/evil-next-3-lines ()
-;;   "Move cursor down 3 lines."
-;;   (interactive)
-;;   (evil-next-line 3))
-
-;; (defun my/evil-previous-3-lines ()
-;;   "Move cursor up 3 lines."
-;;   (interactive)
-;;   (evil-previous-line 3))
-
-;; (map! :n "j" #'my/evil-next-3-lines
-;;       :n "k" #'my/evil-previous-3-lines)
-
-(map! :n "C-j" (cmd! (evil-next-line 3))
-      :n "C-k" (cmd! (evil-previous-line 3 )))

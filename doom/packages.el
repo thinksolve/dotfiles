@@ -72,3 +72,4 @@
   :recipe (:host gitlab
            :repo "matsievskiysv/math-preview"
            :files ("*.el" "bin")))
+(package! org-bullets)
