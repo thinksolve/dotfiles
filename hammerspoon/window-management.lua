@@ -183,22 +183,53 @@ local currentWindows = {}
 local currentIndex = 1
 
 function update_windows()
-	currentWindows = hs.window.filter.new():setCurrentSpace(true):getWindows()
+	local wf = hs.window.filter.new():setCurrentSpace(true)
 
+	-- old way but i wanted to instead collect by app, not by all windows
+	-- currentWindows = wf:getWindows()
+
+	-- Collect one window per application
+	local appWindows = {}
+	local seenApps = {}
+	for _, win in ipairs(wf:getWindows()) do
+		local appId = win:application():bundleID() or "unknown"
+		if not seenApps[appId] then
+			seenApps[appId] = true
+			table.insert(appWindows, win)
+		end
+	end
+	currentWindows = appWindows
+
+	-- Sort by x-coordinate, then y-coordinate, then window ID for stability
 	table.sort(currentWindows, function(a, b)
-		return a:frame().x < b:frame().x
+		-- -- Comprehensive filter but not needed
+		-- local ax, ay = a:frame().x, a:frame().y
+		-- local bx, by = b:frame().x, b:frame().y
+		-- local a_id, b_id = a:id() or 0, b:id() or 0
+		-- return ax < bx or (ax == bx and (ay < by or (ay == by and a_id < b_id)))
+
+		return a:frame().x < b:frame().x or (a:id() < b:id())
+		-- return a:frame().x < b:frame().x  ---- bug whenever there were ties
 	end)
+
+	-- Debug: Show window count and titles (handle nil/empty titles)
+	-- local titles = ""
+	-- for i, win in ipairs(currentWindows) do
+	-- 	titles = titles .. i .. ": " .. (win:title() or "[No Title]") .. " (ID: " .. (win:id() or "nil") .. ")\n"
+	-- end
+	-- hs.alert.show("Windows: " .. #currentWindows .. "\n" .. titles)
 end
 
 function cycleWindows(direction)
 	direction = direction or "right" -- Default to cycling right
 
 	update_windows()
+
 	if #currentWindows <= 1 then
 		return
 	end
 
-	currentIndex = 1
+	-- currentIndex = 1
 
 	local focused = hs.window.focusedWindow()
 	for i, win in ipairs(currentWindows) do

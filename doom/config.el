@@ -154,20 +154,86 @@
 (remove-hook 'dired-mode-hook #'dired-omit-mode)
 
 
-;; Bound to <left> for read-only modes; for writable modes cursor needs to be at left edge of screen for <left> to work
-(map! :n "<left>" #'my/kill-buffer-with-confirmation-or-not)
-(defun my/kill-buffer-with-confirmation-or-not ()
-  "Kill the current buffer without confirmation for read-only or image buffers, with confirmation for writable buffers at the left edge of the screen."
+;; ;; --------WIP RELATED ---------
+
+;; ;; Bound to <left> for read-only modes; for writable modes cursor needs to be at left edge of screen for <left> to work
+;; (map! :n "<left>" #'my/kill-buffer-with-confirmation-or-not)
+
+;; (defun my/log-killed-buffer-path ()
+;;   "If current buffer has a file, log its path to *Killed Paths* buffer."
+;;   (when-let ((path (buffer-file-name)))
+;;     (with-current-buffer (get-buffer-create "*Killed Paths*")
+;;       (goto-char (point-max))
+;;       (insert (format "%s\n" path)))))
+
+;; (defun my/kill-buffer-with-confirmation-or-not ()
+;;   "Kill current buffer contextually. Logs path if file-backed."
+;;   (interactive)
+;;   (let ((buffer-path (buffer-file-name)))
+;;     (my/log-killed-buffer-path)
+;;     (message "Killed: %s (stored in *Killed Paths*)" (or buffer-path (buffer-name)))
+;;     (cond
+;;      ((or buffer-read-only (derived-mode-p 'image-mode))
+;;       (kill-current-buffer))
+;;      ((and (not buffer-read-only) (= (current-column) 0))
+;;       (when (yes-or-no-p "Kill this writable buffer? ")
+;;         (kill-current-buffer)))
+;;      (t
+;;       (left-char)))))
+
+;; (defun my/deduplicate-killed-paths-buffer ()
+;;   "Remove duplicate lines from *Killed Paths* buffer."
+;;   (interactive)
+;;   (with-current-buffer "*Killed Paths*"
+;;     (let ((lines (split-string (buffer-string) "\n" t))
+;;           (deduped (make-hash-table :test #'equal)))
+;;       (erase-buffer)
+;;       (dolist (line lines)
+;;         (unless (gethash line deduped)
+;;           (puthash line t deduped)
+;;           (insert line "\n"))))))
+
+;; (add-hook 'buffer-list-update-hook
+;;           (lambda ()
+;;             (when (string= (buffer-name) "*Killed Paths*")
+;;               (let ((lines (split-string (buffer-string) "\n" t))
+;;                     (seen (make-hash-table :test #'equal)))
+;;                 (save-excursion
+;;                   (goto-char (point-min))
+;;                   (let ((inhibit-read-only t))
+;;                     (erase-buffer)
+;;                     (dolist (line lines)
+;;                       (unless (gethash line seen)
+;;                         (puthash line t seen)
+;;                         (insert line "\n")))))))))
+
+;; ;; --------WIP RELATED ---------
+
+
+
+(map! :n "<left>" #'my/smart-left-or-kill-buffer)
+(defun my/smart-left-or-kill-buffer ()
+  "In read-only/image buffers, kill buffer.
+In writable buffers, allow normal left movement unless at line start."
   (interactive)
-  (if (or buffer-read-only                      ;; Check if it's read-only
-          (derived-mode-p 'image-mode))         ;; Check if it's an image buffer
-      ;; Kill without confirmation for read-only or image buffers
-      (kill-current-buffer)
-    ;; In writable buffers, ask for confirmation ONLY if point is at the left edge (x=0)
-    (if (and (not buffer-read-only)             ;; Make sure buffer is not read-only
-             (looking-at "^"))                  ;; Check if point is at the beginning of a line (x=0)
-        (when (y-or-n-p "Are you sure you want to kill this buffer?")
-          (kill-current-buffer)))))
+  (cond
+   ;; If buffer is read-only or image mode, kill buffer
+   ((or buffer-read-only
+        (derived-mode-p 'image-mode))
+    (kill-current-buffer))
+
+   ;; If in writable buffer AND at beginning of line (column 0)
+   ((and (not buffer-read-only)
+         (= (current-column) 0))
+    (let ((response (read-char-choice "Kill buffer? (y/RET) " '(?y ?\r ?\n))))
+      (when (memq response '(?y ?\r ?\n))
+        (kill-current-buffer))))
+
+   ;; Otherwise, perform normal left-move (backward-char)
+   (t
+    (backward-char))))
+
+
 
 
 ;; ;; NOTE: old verbose version of now using 'my/kill-buffer-with-confirmation-or-not'
