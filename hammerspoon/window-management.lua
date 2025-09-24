@@ -200,7 +200,6 @@ function update_windows()
 	end
 	currentWindows = appWindows
 
-	-- Sort by x-coordinate, then y-coordinate, then window ID for stability
 	table.sort(currentWindows, function(a, b)
 		-- -- Comprehensive filter but not needed
 		-- local ax, ay = a:frame().x, a:frame().y
@@ -224,12 +223,9 @@ function cycleWindows(direction)
 	direction = direction or "right" -- Default to cycling right
 
 	update_windows()
-
 	if #currentWindows <= 1 then
 		return
 	end
-
-	-- currentIndex = 1
 
 	local focused = hs.window.focusedWindow()
 	for i, win in ipairs(currentWindows) do

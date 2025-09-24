@@ -276,6 +276,11 @@ local function set_up_cmd(plugin, callback)
 end
 
 require("lazy").setup({
+	{ -- simple regex-based Marko colours (treesitter has no marko support!)
+		"Epitrochoid/marko-vim-syntax.git",
+		name = "marko-vim-syntax", -- optional, just keeps the short name
+		ft = "marko",
+	},
 	{
 		"brianhuster/live-preview.nvim",
 		cmd = "LP", -- load plugin on this command; init function below also starts live preview server
@@ -1131,8 +1136,10 @@ require("lazy").setup({
 		build = ":TSUpdate",
 		main = "nvim-treesitter.configs", -- Sets main module to use for opts
 		-- [[ Configure Treesitter ]] See `:help nvim-treesitter`
+
 		opts = {
 			ensure_installed = {
+				-- "marko" == doesnt work,
 				"astro", -- NOTE: custom: added
 				"svelte", -- NOTE: custom: added
 				"css", -- NOTE: custom: added
@@ -1151,6 +1158,7 @@ require("lazy").setup({
 				"vim",
 				"vimdoc",
 			},
+
 			-- Autoinstall languages that are not installed
 			auto_install = true,
 			highlight = {
@@ -1460,5 +1468,70 @@ vim.api.nvim_create_autocmd("FileType", {
 	end,
 })
 --
+
+-- -- NOTE: treesitter doesnt support marko file, so have to do this craziness
+vim.api.nvim_create_autocmd({ "BufEnter", "CursorMoved" }, {
+	pattern = "*.marko",
+	callback = function()
+		local row = vim.fn.line(".") - 1
+		local mode = vim.fn.mode()
+		local start_row, end_row = mode:match("^[vV]") and vim.fn.line("v") - 1 or row, row
+		if start_row > end_row then
+			start_row, end_row = end_row, start_row
+		end
+		local lines = vim.api.nvim_buf_get_lines(0, 0, end_row + 1, false)
+
+		-- <style> context
+		local in_style = false
+		for i = #lines, 1, -1 do
+			local l = lines[i]
+			if l:match("^%s*</style") then
+				in_style = false
+				break
+			elseif l:match("^%s*<style") then
+				in_style = true
+				break
+			end
+		end
+
+		-- detect if any selected line is a <style> tag itself
+		local is_style_tag = false
+		for i = start_row + 1, end_row + 1 do
+			local l = lines[i] or vim.api.nvim_get_current_line()
+			if l:match("^%s*</?style") then
+				is_style_tag = true
+				break
+			end
+		end
+
+		-- JS detection (skip lines inside tags / ${})
+		local is_js = false
+		if not in_style and not is_style_tag then
+			for i = start_row + 1, end_row + 1 do
+				local raw = lines[i] or vim.api.nvim_get_current_line()
+				local txt = raw:gsub("^%s*(static%s+|export%s+|server%s+|client%s+)", ""):match("(.-)%s*$")
+				if txt ~= "" and not txt:match("^%s*<") and not txt:match("${.*}") then
+					local ok, p = pcall(vim.treesitter.get_string_parser, txt, "javascript")
+					if ok then
+						local root = p:parse()[1]:root()
+						is_js = root:type() == "program" and not root:has_error()
+						p:destroy()
+						if is_js then
+							break
+						end
+					end
+				end
+			end
+		end
+
+		vim.bo.filetype = "marko"
+		vim.bo.commentstring = (in_style and not is_style_tag) and "/* %s */"
+			or (is_style_tag or lines[end_row + 1]:match("^%s*<")) and "<!-- %s -->"
+			or is_js and "// %s"
+			or "<!-- %s -->"
+	end,
+})
+
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+--
