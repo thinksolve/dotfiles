@@ -61,6 +61,9 @@ alias lower="tr 'A-Z' 'a-z'"
 # bindkey -s '^F' 'echo "$(find_files_fuzzy_reduced)" | tr -d "\n" | pbcopy\n'
 # bindkey -s '^[^F' 'echo "$(find_files_fuzzy_full)" | tr -d "\n" | pbcopy\n' #last
 
+bindkey -s '^R' 'recent_pick\n'
+bindkey -s '^[^R' 'recent_pick\n'
+
 bindkey -s '^D' 'find_dir_from_cache\n'
 bindkey -s '^[^D' 'find_dir_then_cache\n'
 # bindkey -s '^D' 'fcd_cached\n'    #NOTE: somehow these disappeared in shell_functions.sh??

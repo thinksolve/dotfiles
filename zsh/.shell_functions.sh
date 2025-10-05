@@ -1,5 +1,30 @@
 #!/bin/bash
 
+export RECENT_DB="${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent"
+
+function recent_add() {
+    [[ -e $1 ]] || return
+    local dir=${RECENT_DB%/*}
+    [[ -d $dir ]] || mkdir -p "$dir"
+    printf '%s\n' "$(realpath "$1")" >>"$RECENT_DB" # no -m
+}
+
+function recent_pick() {
+    local filter=${1:-.*} pick raw
+    while IFS= read -r raw; do
+        if [[ -d $raw ]]; then
+            # printf '📁 %s\n' "$raw"
+            printf '\e[34mDIR \e[0m%s\n' "$raw" # blue DIR
+        else
+            # printf '📄 %s\n' "$raw"
+            printf '\e[33mFILE\e[0m%s\n' "$raw" # yellow FILE
+        fi
+    done < <(<"$RECENT_DB" grep -E "$filter" | tac | awk '!seen[$0]++') |
+        fzf --ansi --prompt="recent ${1:-}> " |
+        IFS= read -r pick && [[ $pick ]] &&
+        ${EDITOR:-nvim} "${pick#* }" # strip emoji+space
+}
+
 function remove_last_newline_yas_snippet() {
     local file="$1"
     if [[ ! -f "$file" ]]; then
@@ -1123,9 +1148,56 @@ function unship() {
 
 ## alias deship="git revert HEAD --no-commit && git push"
 
+function ship() {
+    # --- 1.  early exit if nothing to do ---
+    if [[ -z $(git status --porcelain) ]]; then
+        echo "Calm down Amazon, there's nothing to ship (working tree clean)."
+        return 0
+    fi
+
+    # --- 2.  parse flags -------------------------------------------------------
+    local yes_flag=false
+    while getopts ":y" opt; do
+        case $opt in
+        y) yes_flag=true ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            return 1
+            ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    # --- 3.  stage everything up-front -----------------------------------------
+    git add .
+    echo "Changes to be committed:"
+    git status --short # <-- concise list of staged
+
+    # --- 4.  interact ------------------------------------------------------------
+    local response
+    if [[ $yes_flag != true ]]; then
+        print "(enter or y): commit & push; (d): view diff; (dd): nvim diff; anything else cancels."
+        read -r response
+    fi
+
+    # --- 5.  act -----------------------------------------------------------------
+    case "${response:-y}" in # default to 'y' when -y flag given
+    y | Y | "")
+        git commit -m "${*:-chore: quick ship}" && git push
+        echo "🚀  Changes committed and pushed."
+        ;;
+    d | D) git diff --cached ;;
+    dd | DD) nvim -c 'DiffviewOpen' ;;
+    *)
+        git reset HEAD . # <-- unstage on cancel
+        echo "Operation cancelled."
+        ;;
+    esac
+}
+
 # consolidated git commit commands  ... originally to push my sveltekit app to GitHub.  Cloudflare pages listens to GitHub changes and re-deploys app
 # NOTE: quick commit to github
-function ship() {
+function ship_oct5_2025() {
     # Display git status; if empty exit early
     if [ -z "$(git status --porcelain)" ]; then
         echo "Calm down Amazon there's nothing to ship (working tree clean)."

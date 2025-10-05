@@ -186,6 +186,8 @@ hs.hotkey.bind({ "cmd" }, "/", function()
 	-- local command = "fcd_1_level"
 	-- os.execute("cd ~ && find_dir_from_cache && exit")
 	runCommandInItermAndHitEnter("find_dir_from_cache 'emacs'")
+	-- runCommandInItermAndHitEnter("find_dir_from_cache")
+
 	-- runCommandInItermAndHitEnter("find_dir_from_cache 'emacs' && exit && killall ghostty")
 	-- runCommandInItermAndHitEnter(string.format("find_dir_from_cache 'emacs' && killall %s", terminal_app_id))
 end)

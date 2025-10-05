@@ -163,6 +163,12 @@ vim.opt.scrolloff = 10
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
+--
+-- Clear echo area
+vim.keymap.set("n", "<leader>ce", function()
+	vim.api.nvim_echo({}, false, {})
+	vim.cmd("redraw")
+end, { desc = "Clear echo area" })
 
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
@@ -273,6 +279,229 @@ local function set_up_cmd(plugin, callback)
 		require("lazy").load({ plugins = { plugin.name } })
 		vim.schedule(callback)
 	end, {})
+end
+
+local function set_marko_commentstring()
+	if vim.bo.filetype ~= "marko" then
+		return
+	end
+
+	local cursor_row = vim.fn.line(".") - 1
+	local anchor_row = vim.fn.mode():match("^[vV]") and vim.fn.line("v") - 1 or cursor_row
+
+	local start_row = math.min(cursor_row, anchor_row)
+	local end_row = math.max(cursor_row, anchor_row)
+
+	-- Get all selected lines
+	local lines = vim.api.nvim_buf_get_lines(0, start_row, end_row + 1, false)
+
+	-- Strip leading blank lines from the selection
+	local first_nonblank_index = nil
+	for i, line in ipairs(lines) do
+		if line:match("%S") then
+			first_nonblank_index = i
+			break
+		end
+	end
+
+	-- If leading blank line(s), adjust start_row and lines accordingly
+	if first_nonblank_index and first_nonblank_index > 1 then
+		-- Shift start_row down to first nonblank line's actual buffer line
+		start_row = start_row + first_nonblank_index - 1
+		lines = vim.api.nvim_buf_get_lines(0, start_row, end_row + 1, false)
+	end
+
+	-- Now run your existing logic on 'lines' and 'start_row'/'end_row' as needed
+	-- For example, detect style tags, html tags, etc using 'lines'
+
+	-- (Your existing style/js/html detection here, but working on trimmed lines)
+
+	-- Example: quick <style> detection
+	local is_style_tag = false
+	for _, line in ipairs(lines) do
+		if line:match("^%s*</?style") then
+			is_style_tag = true
+			break
+		end
+	end
+
+	-- etc... rest of your logic...
+
+	-- Finally set commentstring accordingly
+	if is_style_tag then
+		vim.bo.commentstring = "/* %s */"
+	elseif #lines > 0 and lines[1]:match("^%s*<") then
+		vim.bo.commentstring = "<!-- %s -->"
+	else
+		vim.bo.commentstring = "// %s"
+	end
+end
+
+---- NOTE: manually handle comment string logic for marko files
+local function set_marko_commentstring_og()
+	-- extra safety in case function call not guarded with 'in marko file' logic
+	if vim.bo.filetype ~= "marko" then
+		return
+	end
+
+	local end_row = vim.fn.line(".") - 1 -- current cursor row (0-based)
+	local start_row = vim.fn.mode():match("^[vV]") and vim.fn.line("v") - 1 or end_row
+	if start_row > end_row then
+		start_row, end_row = end_row, start_row
+	end
+	local lines = vim.api.nvim_buf_get_lines(0, 0, end_row + 1, false)
+
+	-- 1. quick reject if selection itself contains <style> or </style>
+	local is_style_tag = false
+	for i = start_row + 1, end_row + 1 do
+		local l = lines[i] or vim.api.nvim_get_current_line()
+		if l:match("^%s*</?style") then
+			is_style_tag = true
+			break
+		end
+	end
+
+	-- 2. nearest style boundary *above* selection (only if we aren't a tag)
+	local in_style = false
+	if not is_style_tag then
+		for i = start_row, 0, -1 do -- backwards from line above selection
+			local l = lines[i] or ""
+			if l:match("^%s*</style") then
+				in_style = false
+				break
+			end
+			if l:match("^%s*<style") then
+				in_style = true
+				break
+			end
+		end
+	end
+
+	-- 3. JS detection: if *any* selected line has a Marko prefix → entire block is JS
+	local is_js = false
+	for i = start_row + 1, end_row + 1 do
+		local raw = lines[i] or vim.api.nvim_get_current_line()
+		local txt = raw:match("^%s*(.-)%s*$") -- drop indent
+		local stripped = txt:gsub("^(static%s+|export%s+|server%s+|client%s+)", "") -- drop prefix
+
+		-- fast path: had a Marko prefix → whole block is JS
+		if txt ~= stripped then
+			is_js = true
+			break
+		end
+
+		-- otherwise run the original parse test on the stripped remainder
+		if stripped ~= "" and not stripped:match("^%s*<") and not stripped:match("${.*}") then
+			local ok, p = pcall(vim.treesitter.get_string_parser, stripped, "javascript")
+			if ok then
+				local root = p:parse()[1]:root()
+				if root:type() == "program" and not root:has_error() then
+					is_js = true
+					p:destroy()
+					break
+				end
+				p:destroy()
+			end
+		end
+	end
+
+	-- -- NOTE: BROKEN: 3. JS detection (skip lines inside tags / ${} )
+	-- local is_js = false
+	-- if not in_style and not is_style_tag then
+	-- 	for i = start_row + 1, end_row + 1 do
+	-- 		local raw = lines[i] or vim.api.nvim_get_current_line()
+	-- 		-- NOTE: previously problematic
+	-- 		-- local txt = raw:gsub("^%s*(static%s+|export%s+|server%s+|client%s+)", ""):match("(.-)%s*$")
+	--
+	-- 		local txt = raw:match("^%s*(.-)%s*$") -- trim indent
+	-- 		txt = txt:gsub("^(static%s+|export%s+|server%s+|client%s+)", "") -- drop prefix
+	--
+	-- 		if txt ~= "" and not txt:match("^%s*<") and not txt:match("${.*}") then
+	-- 			local ok, p = pcall(vim.treesitter.get_string_parser, txt, "javascript")
+	-- 			if ok then
+	-- 				local root = p:parse()[1]:root()
+	-- 				is_js = root:type() == "program" and not root:has_error()
+	-- 				p:destroy()
+	-- 				if is_js then
+	-- 					break
+	-- 				end
+	-- 			end
+	-- 		end
+	-- 	end
+	-- end
+
+	vim.bo.filetype = "marko"
+	vim.bo.commentstring = (in_style and not is_style_tag) and "/* %s */"
+		or (is_style_tag or lines[end_row + 1]:match("^%s*<")) and "<!-- %s -->"
+		or is_js and "// %s"
+		or "<!-- %s -->"
+end
+
+local function set_marko_commentstring_test()
+	if vim.bo.filetype ~= "marko" then
+		return
+	end
+
+	local cursor_row = vim.fn.line(".") - 1
+	local anchor_row = vim.fn.mode():match("^[vV]") and vim.fn.line("v") - 1 or cursor_row
+
+	local start_row = math.min(cursor_row, anchor_row)
+	local end_row = math.max(cursor_row, anchor_row)
+
+	-- Get full selection
+	local lines = vim.api.nvim_buf_get_lines(0, start_row, end_row + 1, false)
+
+	-- Strip leading and trailing blank lines
+	local first, last = 1, #lines
+	while first <= #lines and lines[first]:match("^%s*$") do
+		first = first + 1
+	end
+	while last >= 1 and lines[last]:match("^%s*$") do
+		last = last - 1
+	end
+
+	local trimmed_lines = {}
+	for i = first, last do
+		table.insert(trimmed_lines, lines[i])
+	end
+
+	-- Exit early if empty after trimming
+	if #trimmed_lines == 0 then
+		vim.bo.commentstring = "// %s"
+		return
+	end
+
+	-- Check if inside <style> block (simplified)
+	local in_style = false
+	local style_lines = vim.api.nvim_buf_get_lines(0, 0, start_row, false)
+	for i = #style_lines, 1, -1 do
+		local l = style_lines[i]
+		if l:match("^%s*</style") then
+			break
+		end
+		if l:match("^%s*<style") then
+			in_style = true
+			break
+		end
+	end
+
+	-- Check if all lines look like HTML
+	local all_html = true
+	for _, line in ipairs(trimmed_lines) do
+		if not line:match("^%s*</?[%w][^>]*>") and not line:match("^%s*<[%w]+") then
+			all_html = false
+			break
+		end
+	end
+
+	-- Decide commentstring
+	if in_style then
+		vim.bo.commentstring = "/* %s */"
+	elseif all_html then
+		vim.bo.commentstring = "<!-- %s -->"
+	else
+		vim.bo.commentstring = "// %s"
+	end
 end
 
 require("lazy").setup({
@@ -1097,6 +1326,17 @@ require("lazy").setup({
 	{ -- Collection of various small independent plugins/modules
 		"echasnovski/mini.nvim",
 		config = function()
+			require("mini.comment").setup({
+				hooks = {
+					pre = function()
+						if vim.bo.filetype == "marko" then
+							set_marko_commentstring_test()
+							return
+						end
+					end,
+				},
+			})
+
 			-- Better Around/Inside textobjects
 			--
 			-- Examples:
@@ -1468,69 +1708,6 @@ vim.api.nvim_create_autocmd("FileType", {
 	end,
 })
 --
-
--- -- NOTE: treesitter doesnt support marko file, so have to do this craziness
-vim.api.nvim_create_autocmd({ "BufEnter", "CursorMoved" }, {
-	pattern = "*.marko",
-	callback = function()
-		local row = vim.fn.line(".") - 1
-		local mode = vim.fn.mode()
-		local start_row, end_row = mode:match("^[vV]") and vim.fn.line("v") - 1 or row, row
-		if start_row > end_row then
-			start_row, end_row = end_row, start_row
-		end
-		local lines = vim.api.nvim_buf_get_lines(0, 0, end_row + 1, false)
-
-		-- <style> context
-		local in_style = false
-		for i = #lines, 1, -1 do
-			local l = lines[i]
-			if l:match("^%s*</style") then
-				in_style = false
-				break
-			elseif l:match("^%s*<style") then
-				in_style = true
-				break
-			end
-		end
-
-		-- detect if any selected line is a <style> tag itself
-		local is_style_tag = false
-		for i = start_row + 1, end_row + 1 do
-			local l = lines[i] or vim.api.nvim_get_current_line()
-			if l:match("^%s*</?style") then
-				is_style_tag = true
-				break
-			end
-		end
-
-		-- JS detection (skip lines inside tags / ${})
-		local is_js = false
-		if not in_style and not is_style_tag then
-			for i = start_row + 1, end_row + 1 do
-				local raw = lines[i] or vim.api.nvim_get_current_line()
-				local txt = raw:gsub("^%s*(static%s+|export%s+|server%s+|client%s+)", ""):match("(.-)%s*$")
-				if txt ~= "" and not txt:match("^%s*<") and not txt:match("${.*}") then
-					local ok, p = pcall(vim.treesitter.get_string_parser, txt, "javascript")
-					if ok then
-						local root = p:parse()[1]:root()
-						is_js = root:type() == "program" and not root:has_error()
-						p:destroy()
-						if is_js then
-							break
-						end
-					end
-				end
-			end
-		end
-
-		vim.bo.filetype = "marko"
-		vim.bo.commentstring = (in_style and not is_style_tag) and "/* %s */"
-			or (is_style_tag or lines[end_row + 1]:match("^%s*<")) and "<!-- %s -->"
-			or is_js and "// %s"
-			or "<!-- %s -->"
-	end,
-})
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
