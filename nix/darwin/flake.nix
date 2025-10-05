@@ -28,22 +28,18 @@
       hostname = "bright";
       hostPlatform = "aarch64-darwin";
 
-      # Helper function: 'pkg.meta.broken' is overridden to allow broken package
-      unbreak =
-        pkg:
-        pkg.overrideAttrs (oldAttrs: {
-          meta.broken = false;
-        });
-
       configuration =
         { pkgs, ... }:
-        {
-          # security.pam.enableSudoTouchIdAuth = true;
-          security.pam.services.sudo_local.touchIdAuth = true;
-          # users.knownUsers = [ username ]; NOTE: was supposed to delete
-          environment.systemPackages = [
 
-            # ---- CLI Utilities ----
+        let
+          # Helper function: 'pkg.meta.broken' is overridden to allow broken package
+          unbreak =
+            pkg:
+            pkg.overrideAttrs (oldAttrs: {
+              meta.broken = false;
+            });
+
+          cli = [
             pkgs.bat
             pkgs.fd
             pkgs.fzf
@@ -53,36 +49,9 @@
             (unbreak pkgs.jp2a)
             # pkgs.jq
             # pkgs.yq
+          ];
 
-            # ---- Networking ----
-            pkgs.curl
-            pkgs.htop
-            pkgs.nghttp2
-            pkgs.nmap
-            pkgs.wget
-
-            # ---- Media Tools ----
-            pkgs.ffmpeg
-            pkgs.ffmpegthumbnailer
-            pkgs.imagemagick
-            pkgs.pngpaste
-            pkgs.tesseract
-            pkgs.vips
-            pkgs.yt-dlp
-            (pkgs.texlive.combine {
-              inherit (pkgs.texlive)
-                scheme-basic # Core LaTeX
-                dvipng # PNG for Emacs preview
-                dvisvgm # SVG option, useful for scalability
-                amsmath # Math essentials
-                amsfonts # Math fonts
-                latex-bin # LaTeX commands
-                ulem # without this doom emacs breaks when previewing latex?? might be better to use textlive scheme medium
-                ; # Add more if needed (e.g., hyperref, geometry)
-            })
-            # pkgs.texlive.combined.scheme-medium
-
-            # ---- Development Tools ----
+          dev_tools = [
             pkgs.nodejs
             pkgs.math-preview
             #instead of 'npm install -g git+https://gitlab.com/matsievskiysv/math-preview' and change npm prefix .. due to nix immutability
@@ -113,47 +82,97 @@
                 # })) # Pin to 1.26.4
               ]
             ))
+          ];
 
-            # ---- PDF and Document Processing ----
+          media_tools = [
+            pkgs.ffmpeg
+            pkgs.ffmpegthumbnailer
+            pkgs.imagemagick
+            pkgs.pngpaste
+            pkgs.tesseract
+            pkgs.vips
+            pkgs.yt-dlp
+            (pkgs.texlive.combine {
+              inherit (pkgs.texlive)
+                scheme-basic # Core LaTeX
+                dvipng # PNG for Emacs preview
+                dvisvgm # SVG option, useful for scalability
+                amsmath # Math essentials
+                amsfonts # Math fonts
+                latex-bin # LaTeX commands
+                ulem # without this doom emacs breaks when previewing latex?? might be better to use textlive scheme medium
+                ; # Add more if needed (e.g., hyperref, geometry)
+            })
+            # pkgs.texlive.combined.scheme-medium
+          ];
+
+          networking = [
+            pkgs.curl
+            pkgs.htop
+            pkgs.nghttp2
+            pkgs.nmap
+            pkgs.wget
+          ];
+
+          pdf_and_document = [
             pkgs.poppler
             pkgs.poppler_utils
+          ];
 
-            # ---- Terminal and Shell Enhancements ----
+          system_utilities = [
+            pkgs.blueutil
+            pkgs.hello
+            pkgs.rsync
+          ];
+
+          terminal_and_shell_enhancements = [
             pkgs.fastfetch
             pkgs.iterm2
             pkgs.pure-prompt
             pkgs.yazi
             # pkgs.tmux
-
-            # ---- System Utilities ----
-            pkgs.blueutil
-            pkgs.hello
-            pkgs.rsync
-
-            # pkgs.ghostscript # gs
-            # pkgs.haskellPackages.cabal-install
-            # pkgs.haskellPackages.haskell-language-server
-            # pkgs.haskellPackages.fourmolu
-            # pkgs.cabal-install # haskell
-            # pkgs.ghc # haskell
-
-            # (pkgs.neovim.overrideAttrs (oldAttrs: {
-            #   version = "0.11.0-dev-1265+g6cdcac4492";
-            #   src = pkgs.fetchFromGitHub {
-            #     owner = "neovim";
-            #     repo = "neovim";
-            #     rev = "6cdcac4492"; # The commit hash
-            #     sha256 = "0m8fki6mv71gzq14xx8h41cgs1kbr7vws523p59nszfc52sshps3"; # The new hash you obtained
-            #   };
-            # }))
-            # pkgs.glib
-            # pkgs.oh-my-zsh
-            # pkgs.parallel
-            # pkgs.unbound
-            # pkgs.zig
-            # pkgs.zsh-autosuggestions
-            # pkgs.zsh-syntax-highlighting
           ];
+
+        in
+        {
+          # security.pam.enableSudoTouchIdAuth = true;
+          security.pam.services.sudo_local.touchIdAuth = true;
+          # users.knownUsers = [ username ]; NOTE: was supposed to delete
+          environment.systemPackages =
+            cli
+            ++ dev_tools
+            ++ networking
+            ++ pdf_and_document
+            ++ terminal_and_shell_enhancements
+            ++ system_utilities
+            ++ media_tools;
+
+          # ---- MISC PKGS to add later potentially----
+          # [
+          # pkgs.ghostscript # gs
+          # pkgs.haskellPackages.cabal-install
+          # pkgs.haskellPackages.haskell-language-server
+          # pkgs.haskellPackages.fourmolu
+          # pkgs.cabal-install # haskell
+          # pkgs.ghc # haskell
+
+          # (pkgs.neovim.overrideAttrs (oldAttrs: {
+          #   version = "0.11.0-dev-1265+g6cdcac4492";
+          #   src = pkgs.fetchFromGitHub {
+          #     owner = "neovim";
+          #     repo = "neovim";
+          #     rev = "6cdcac4492"; # The commit hash
+          #     sha256 = "0m8fki6mv71gzq14xx8h41cgs1kbr7vws523p59nszfc52sshps3"; # The new hash you obtained
+          #   };
+          # }))
+          # pkgs.glib
+          # pkgs.oh-my-zsh
+          # pkgs.parallel
+          # pkgs.unbound
+          # pkgs.zig
+          # pkgs.zsh-autosuggestions
+          # pkgs.zsh-syntax-highlighting
+          # ];
 
           homebrew = {
             enable = true;
