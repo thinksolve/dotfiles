@@ -1,6 +1,49 @@
 #!/bin/bash
 
+#local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else less {} 2>/dev/null; fi"
+#local preview="tree -a -C -L 1 {}"
+# local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else cat {} 2>/dev/null; fi"
+#local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else head -n 20 {} 2>/dev/null; fi"
+
 export RECENT_DB="${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent"
+
+local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else command -v bat >/dev/null && bat --color=always {} || cat {} 2>/dev/null; fi"
+local home_dirs_cache="$HOME/.cache/fcd_cache.gz"
+local dir_exclusions=(node_modules .git .cache .DS_Store venv __pycache__ Trash "*.bak" "*.log")
+
+function recent_pick() {
+    local filter=${1:-.*} pick
+
+    <"$RECENT_DB" grep -E "$filter" | tac | awk '!seen[$0]++' |
+        while IFS= read -r path; do
+            if [[ -d $path ]]; then
+                printf '\e[34mDIR\e[0m\t%s\n' "$path"
+            else
+                printf '\e[33mFILE\e[0m\t%s\n' "$path"
+            fi
+        done |
+        fzf --ansi \
+            --prompt="filter: ${1:-}" \
+            --header="Ctrl-E -> edit" \
+            --bind "ctrl-e:execute(${EDITOR:-nvim} \"$RECENT_DB\" > /dev/tty)" \
+            --with-nth=1,2 \
+            --preview '
+            path=$(echo {} | cut -f2-)
+
+            if [[ -d "$path" ]]; then
+                /run/current-system/sw/bin/tree -a -C -L 1 "$path"
+            else
+                if /run/current-system/sw/bin/bat --version >/dev/null 2>&1; then
+                    /run/current-system/sw/bin/bat --color=always "$path"
+                else
+                    cat "$path" 2>/dev/null
+                fi
+            fi
+        ' |
+        awk -F'\t' '{print $2}' | while IFS= read -r pick; do
+        [[ $pick ]] && ${EDITOR:-nvim} "$pick"
+    done
+}
 
 function recent_add() {
     [[ -e $1 ]] || return
@@ -9,21 +52,21 @@ function recent_add() {
     printf '%s\n' "$(realpath "$1")" >>"$RECENT_DB" # no -m
 }
 
-function recent_pick() {
-    local filter=${1:-.*} pick raw
-    while IFS= read -r raw; do
-        if [[ -d $raw ]]; then
-            # printf '📁 %s\n' "$raw"
-            printf '\e[34mDIR \e[0m%s\n' "$raw" # blue DIR
-        else
-            # printf '📄 %s\n' "$raw"
-            printf '\e[33mFILE\e[0m%s\n' "$raw" # yellow FILE
-        fi
-    done < <(<"$RECENT_DB" grep -E "$filter" | tac | awk '!seen[$0]++') |
-        fzf --ansi --prompt="recent ${1:-}> " |
-        IFS= read -r pick && [[ $pick ]] &&
-        ${EDITOR:-nvim} "${pick#* }" # strip emoji+space
-}
+# function recent_pick_og() {
+#     local filter=${1:-.*} pick raw
+#     while IFS= read -r raw; do
+#         if [[ -d $raw ]]; then
+#             # printf '📁 %s\n' "$raw"
+#             printf '\e[34mDIR \e[0m%s\n' "$raw" # blue DIR
+#         else
+#             # printf '📄 %s\n' "$raw"
+#             printf '\e[33mFILE \e[0m%s\n' "$raw" # yellow FILE
+#         fi
+#     done < <(<"$RECENT_DB" grep -E "$filter" | tac | awk '!seen[$0]++') |
+#         fzf --ansi --prompt="recent ${1:-}> " |
+#         IFS= read -r pick && [[ $pick ]] &&
+#         ${EDITOR:-nvim} "${pick#* }" # strip emoji+space
+# }
 
 function remove_last_newline_yas_snippet() {
     local file="$1"
@@ -281,6 +324,7 @@ function generate_icns() {
     echo "Created $output_icns"
 }
 
+# old way; new way with 'rat'
 function rem() {
     local comment_char="$1"
     local file="$2"
@@ -297,6 +341,31 @@ function rem() {
     else
         echo "Error: No input provided. Usage: rem COMMENT_CHAR [FILE]" >&2
         return 1
+    fi
+}
+
+function rat() {
+    local comment=
+    local opt OPTIND
+    while getopts 'c:' opt; do
+        case $opt in
+        c) comment=$OPTARG ;;
+        *)
+            echo "Usage: rat [-cCOMMENT] [FILE]" >&2
+            return 1
+            ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    local file=${1:-/dev/stdin}
+
+    if [[ -n $comment ]]; then
+        sed -e "/^[[:blank:]]*${comment}/d" \
+            -e "s/[[:blank:]]*${comment}.*//" \
+            -e '/^$/{N;/^\n$/D;}' "$file"
+    else
+        cat "$file"
     fi
 }
 
@@ -473,13 +542,6 @@ function zh_pi() {
 #   cd $(ls -d -A "$HOME"/*/ "$HOME"/.*/ | grep -v -E 'node_modules|.git|.cache|\.\.$' | fzf) && nvim .
 # }
 #
-local home_dirs_cache="$HOME/.cache/fcd_cache.gz"
-local dir_exclusions=(node_modules .git .cache .DS_Store venv __pycache__ Trash "*.bak" "*.log")
-local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else command -v bat >/dev/null && bat --color=always {} || cat {} 2>/dev/null; fi"
-#local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else less {} 2>/dev/null; fi"
-#local preview="tree -a -C -L 1 {}"
-# local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else cat {} 2>/dev/null; fi"
-#local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else head -n 20 {} 2>/dev/null; fi"
 
 #NOTE: problematic zsh specific syntax disallows this bash file from formatting on save
 
@@ -673,7 +735,9 @@ function find_file() {
         emacsclient -c -n "$dir"
     else
         if [[ "$(file --mime-type -b "$dir_or_file")" =~ ^text/ ]]; then
+            # (cd "$(dirname "$dir_or_file")" && nvim "$dir_or_file")
             cd "$(dirname "$dir_or_file")" && nvim "$dir_or_file"
+            # nvim "$dir_or_file"
         else
             open "$dir_or_file"
         fi
@@ -1148,6 +1212,11 @@ function unship() {
 
 ## alias deship="git revert HEAD --no-commit && git push"
 
+## NOTE: yet to be tested (oct 5 2025); once tested delete this message
+function ship_dotfiles() {
+    (cd "$HOME/.dotfiles" && ship "$@")
+}
+
 function ship() {
     # --- 1.  early exit if nothing to do ---
     if [[ -z $(git status --porcelain) ]]; then
@@ -1227,44 +1296,6 @@ function ship_oct5_2025() {
     # Escape input
     local escaped_input="${input//\$/\\\\\$}"
     escaped_input="${escaped_input//\\/\\\\}" # Escape backslashes
-    escaped_input="${escaped_input//\|/\\|}"  # Escape pipe symbols
-    escaped_input="${escaped_input//\`/\\\`}" # Escape command substitution
-    escaped_input="${escaped_input//\!/\\}"   # Escape exclamation marks
-
-    local response
-
-    if [ "$yes_flag" != true ]; then
-        # Prompt for action if yes_flag is not set
-        print "(enter or y): commit changes; (d): view diff; (dd): view diff in Neovim; anything else cancels."
-        read -r response
-    fi
-
-    if [ "$yes_flag" = true ] || [ -z "$response" ] || [[ $response =~ ^[yY]$ ]]; then
-        # Proceed with the action
-        git add . && git commit -m "$escaped_input" && git push
-        echo "🚀 Changes committed and pushed successfully."
-    elif [[ $response =~ ^[dD]$ ]]; then
-        # Display git diff using standard tool
-        echo "Changes to be committed (staged):"
-        git diff --cached
-        echo "Changes not staged for commit:"
-        git diff
-    elif [[ $response =~ ^[dD][dD]$ ]]; then
-        # Display git diff using Neovim
-        echo "Opening diff in Neovim..."
-        # nvim -c "DiffviewOpen" .
-        nvim -c "InitDiffviewOpen"
-        # nvim -c "doautocmd User InitDiffview | DiffviewOpen"
-        # nvim -c "doautocmd User InitDiffview" -c "DiffviewOpen"
-    else
-        # Cancel the operation (fall back for any other input)
-        echo "Operation cancelled."
-    fi
-}
-
-function ship_old() {
-    local input="$1"
-    escaped_input="${input//\$/\\\\\$}"
     escaped_input="${escaped_input//\\/\\\\}" # Escape backslashes
     escaped_input="${escaped_input//\|/\\|}"  # Escape pipe symbols
     escaped_input="${escaped_input//\`/\\\`}" # Escape command substitution

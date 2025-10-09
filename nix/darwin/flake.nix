@@ -133,6 +133,31 @@
             # pkgs.tmux
           ];
 
+          # __commented_out_pkgs = [
+          #   pkgs.ghostscript # gs
+          #   pkgs.haskellPackages.cabal-install
+          #   pkgs.haskellPackages.haskell-language-server
+          #   pkgs.haskellPackages.fourmolu
+          #   pkgs.cabal-install # haskell
+          #   pkgs.ghc # haskell
+          #
+          #   (pkgs.neovim.overrideAttrs (oldAttrs: {
+          #     version = "0.11.0-dev-1265+g6cdcac4492";
+          #     src = pkgs.fetchFromGitHub {
+          #       owner = "neovim";
+          #       repo = "neovim";
+          #       rev = "6cdcac4492"; # The commit hash
+          #       sha256 = "0m8fki6mv71gzq14xx8h41cgs1kbr7vws523p59nszfc52sshps3"; # The new hash you obtained
+          #     };
+          #   }))
+          #   pkgs.glib
+          #   pkgs.oh-my-zsh
+          #   pkgs.parallel
+          #   pkgs.unbound
+          #   pkgs.zig
+          #   pkgs.zsh-autosuggestions
+          #   pkgs.zsh-syntax-highlighting
+          # ];
         in
         {
           # security.pam.enableSudoTouchIdAuth = true;
@@ -141,38 +166,11 @@
           environment.systemPackages =
             cli
             ++ dev_tools
+            ++ media_tools
             ++ networking
             ++ pdf_and_document
-            ++ terminal_and_shell_enhancements
             ++ system_utilities
-            ++ media_tools;
-
-          # ---- MISC PKGS to add later potentially----
-          # [
-          # pkgs.ghostscript # gs
-          # pkgs.haskellPackages.cabal-install
-          # pkgs.haskellPackages.haskell-language-server
-          # pkgs.haskellPackages.fourmolu
-          # pkgs.cabal-install # haskell
-          # pkgs.ghc # haskell
-
-          # (pkgs.neovim.overrideAttrs (oldAttrs: {
-          #   version = "0.11.0-dev-1265+g6cdcac4492";
-          #   src = pkgs.fetchFromGitHub {
-          #     owner = "neovim";
-          #     repo = "neovim";
-          #     rev = "6cdcac4492"; # The commit hash
-          #     sha256 = "0m8fki6mv71gzq14xx8h41cgs1kbr7vws523p59nszfc52sshps3"; # The new hash you obtained
-          #   };
-          # }))
-          # pkgs.glib
-          # pkgs.oh-my-zsh
-          # pkgs.parallel
-          # pkgs.unbound
-          # pkgs.zig
-          # pkgs.zsh-autosuggestions
-          # pkgs.zsh-syntax-highlighting
-          # ];
+            ++ terminal_and_shell_enhancements;
 
           homebrew = {
             enable = true;

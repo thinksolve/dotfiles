@@ -278,4 +278,28 @@ export VISUAL=nvim
 
 
 #export LSCOLORS=gxBxhxDxfxhxhxhxhxcxcx
+#
+#
 
+# -------  bottom of .zshrc  -------
+autoload -Uz add-zsh-hook
+
+# 1. directory logger
+recent_add_dir() { recent_add "$PWD"; }
+add-zsh-hook chpwd recent_add_dir
+
+# 2. file logger
+recent_add_file() {
+  local -a words
+  words=(${(z)1})
+  for w in $words; do
+    case $w in
+      nvim|vim|vi|emacs|nano|micro|code)
+        local file=${words[-1]}
+        [[ -f $file ]] && recent_add ${file:a}
+        return
+        ;;
+    esac
+  done
+}
+add-zsh-hook preexec recent_add_file

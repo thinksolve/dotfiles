@@ -72,6 +72,28 @@ hs.hotkey.bind(goto_app_mod, "t", function()
 	-- window_management.toggle_app(terminal_app)
 end)
 
+local function runCommand(command)
+	hs.eventtap.keyStrokes(command)
+	hs.eventtap.keyStroke({}, "return")
+end
+
+local function runCommandInItermAndHitEnter(command, delay)
+	local app_running = hs.application.find(terminal_app)
+
+	delay = app_running and 0.0 or (delay or 0.25)
+
+	hs.application.launchOrFocus(terminal_app)
+	hs.timer.doAfter(delay, function()
+		if app_running then
+			hs.eventtap.keyStroke({ "command" }, "n")
+		end
+		runCommand(command)
+	end)
+end
+-- hs.hotkey.bind(goto_app_mod, "y", function()
+-- 	runCommandInItermAndHitEnter("yazi")
+-- end)
+
 hs.hotkey.bind(goto_app_mod, "s", function()
 	window_management.toggle_app("Spotify")
 end)
@@ -122,25 +144,6 @@ end)
 -- 		hs.eventtap.keyStroke({}, "return") -- Press Enter
 -- 	end)
 -- end
-
-local function runCommand(command)
-	hs.eventtap.keyStrokes(command)
-	hs.eventtap.keyStroke({}, "return")
-end
-
-local function runCommandInItermAndHitEnter(command, delay)
-	local app_running = hs.application.find(terminal_app)
-
-	delay = app_running and 0.0 or (delay or 0.25)
-
-	hs.application.launchOrFocus(terminal_app)
-	hs.timer.doAfter(delay, function()
-		if app_running then
-			hs.eventtap.keyStroke({ "command" }, "n")
-		end
-		runCommand(command)
-	end)
-end
 
 -- Run a command in iTerm2, hit Enter, and unfocus iTerm2
 local function runCommandInItermAndUnfocus(command, delay)
@@ -421,26 +424,27 @@ function prompt_with_callback(place_holder_text, call_back)
 	chooser:show()
 end
 
-hs.hotkey.bind({ "cmd", "option" }, "r", function()
-	prompt_with_callback("Enter comment character (e.g. #)", function(comment_char)
-		-- local script =
-		-- 	string.format("/bin/zsh -c 'source ~/.zshrc 2>/dev/null; pbpaste | rem %q | pbcopy &'", comment_char)
-		-- -- hs.execute(script .. " &") --  sub-shell truncates output!
-		-- hs.execute(script)
-
-		local script = string.format("source ~/.zshrc 2>/dev/null; pbpaste | rem %q | pbcopy", comment_char)
-		hs.task
-			.new("/bin/zsh", function(exitCode, stdOut, stdErr)
-				if exitCode == 0 then
-					hs.alert.show("Result copied to clipboard!")
-				else
-					hs.alert.show("Error: " .. (stdErr or "Unknown error"))
-				end
-			end, { "-c", script })
-			:start()
-		hs.alert.show("Result copied to clipboard!")
-	end)
-end)
+-- NOTE: WIP below
+-- hs.hotkey.bind({ "cmd", "option" }, "r", function()
+-- 	prompt_with_callback("Enter comment character (e.g. #)", function(comment_char)
+-- 		-- local script =
+-- 		-- 	string.format("/bin/zsh -c 'source ~/.zshrc 2>/dev/null; pbpaste | rem %q | pbcopy &'", comment_char)
+-- 		-- -- hs.execute(script .. " &") --  sub-shell truncates output!
+-- 		-- hs.execute(script)
+--
+-- 		local script = string.format("source ~/.zshrc 2>/dev/null; pbpaste | rem %q | pbcopy", comment_char)
+-- 		hs.task
+-- 			.new("/bin/zsh", function(exitCode, stdOut, stdErr)
+-- 				if exitCode == 0 then
+-- 					hs.alert.show("Result copied to clipboard!")
+-- 				else
+-- 					hs.alert.show("Error: " .. (stdErr or "Unknown error"))
+-- 				end
+-- 			end, { "-c", script })
+-- 			:start()
+-- 		hs.alert.show("Result copied to clipboard!")
+-- 	end)
+-- end)
 
 -- -- Interactive translation with UI prompt (doesn't auto-copy)
 -- hs.hotkey.bind({ "cmd", "option", "shift" }, "x", function()
@@ -602,4 +606,64 @@ hs.hotkey.bind({ "option", "cmd", "shift" }, "v", function()
 		clipboardActive = true
 		hs.alert.show("ClipboardTool Enabled")
 	end
+end)
+
+-- 1. Original “plain terminal” toggle -------------------------------------------------
+local termBundle = "com.mitchellh.ghostty"
+
+-- one helper that works for *any* terminal -------------------------------
+local function launchTerminalTheRunCmd(opts)
+	opts = opts or {} -- guard against nil
+	local bundleID = opts.bundleID or "com.mitchellh.ghostty"
+	local cmd = opts.cmd or error("opts.cmd required")
+	local pollPeriod = opts.poll or 0.02 -- seconds
+	local finalPause = opts.pause or 0.03 -- seconds
+	local timeout = opts.timeout or 3 -- seconds
+
+	-- 1. start the app if necessary
+	local app = hs.application.get(bundleID)
+	if not app then
+		hs.application.launchOrFocusByBundleID(bundleID)
+	end
+
+	-- 2. poll until a window exists
+	local poll
+	poll = hs.timer.doEvery(pollPeriod, function()
+		app = hs.application.get(bundleID)
+		if app and #app:allWindows() > 0 then
+			poll:stop()
+			app:activate()
+			hs.timer.doAfter(finalPause, function()
+				hs.eventtap.keyStrokes(cmd)
+				hs.eventtap.keyStroke({}, "return")
+			end)
+		end
+	end)
+
+	-- 3. safety kill-switch
+	hs.timer.doAfter(timeout, function()
+		if poll then
+			poll:stop()
+		end
+	end)
+end
+
+-- bind keys --------------------------------------------------------------
+hs.hotkey.bind({ "cmd", "alt" }, "y", function()
+	launchTerminalTheRunCmd({ cmd = "yazi" })
+	-- launchTerminalTheRunCmd({ cmd = "yazi", bundleID = "com.apple.Terminal" })
+end)
+
+-- hs.hotkey.bind({"cmd","alt"}, "r",
+--   function() launchTerminalThenRunCmd{
+--   bundleID = "com.apple.Terminal",
+--   cmd      = "ranger",
+--   poll     = 0.01,   -- 10 ms
+--   pause    = 0.05,   -- 50 ms
+--   timeout  = 5,
+-- }end)
+--
+
+hs.hotkey.bind({ "cmd", "alt" }, "r", function()
+	launchTerminalTheRunCmd({ cmd = "recent_pick" })
 end)
