@@ -179,25 +179,6 @@ local function runCommandInItermAndUnfocus(command, delay)
 end
 
 -- -- Directory search hotkey
-hs.hotkey.bind({ "cmd" }, "/", function()
-	-- runCommandInItermAndHitEnter("ruzzy")
-	-- runCommandInItermAndHitEnter('cd "$(find_dirs_fuzzy_full)" && nvim .')
-	-- runCommandInItermAndHitEnter('cd "$(find_dirs_fuzzy_full)" && yazi .')
-	-- runCommandInItermAndHitEnter("cd $(fzf) && nvim .")
-	--
-	-- local command = 'cd "$(fd . "$HOME" --type d -H --max-depth 3 | fzf --prompt="Find Dir: ")" && nvim .'
-	-- local command = "fcd_1_level"
-	-- os.execute("cd ~ && find_dir_from_cache && exit")
-	runCommandInItermAndHitEnter("find_dir_from_cache 'emacs'")
-	-- runCommandInItermAndHitEnter("find_dir_from_cache")
-
-	-- runCommandInItermAndHitEnter("find_dir_from_cache 'emacs' && exit && killall ghostty")
-	-- runCommandInItermAndHitEnter(string.format("find_dir_from_cache 'emacs' && killall %s", terminal_app_id))
-end)
-
-hs.hotkey.bind({ "cmd", "option" }, "/", function()
-	runCommandInItermAndHitEnter("find_file")
-end)
 
 local function runCommandInBackground(command)
 	-- Set PATH to include Homebrew binaries and source Zsh environment
@@ -648,9 +629,42 @@ local function launchTerminalTheRunCmd(opts)
 	end)
 end
 
+local function launchTerminalWithCmd_og(opts)
+	opts = opts or {}
+	local cmd = opts.cmd or error("opts.cmd required")
+	local bundleID = opts.bundleID or "com.mitchellh.ghostty"
+
+	-- Explicitly source .zshrc before running command
+	hs.execute(string.format("open -b %s --args -e zsh -c 'source ~/.zshrc && %s; exec zsh'", bundleID, cmd), true)
+end
+
+local function launchTerminalWithCmd(opts)
+	opts = opts or {}
+	local cmd = opts.cmd or error("opts.cmd required")
+	local bundleID = opts.bundleID or "com.mitchellh.ghostty"
+
+	local app = hs.application.get(bundleID)
+	local newWindow = (app and app:isRunning()) and "n" or ""
+
+	hs.execute(
+		string.format("open -%sb %s --args -e zsh -c 'source ~/.zshrc && %s; exec zsh'", newWindow, bundleID, cmd),
+		true
+	)
+end
+
+hs.hotkey.bind({ "cmd", "alt" }, "r", function()
+	launchTerminalWithCmd({ cmd = "recent_pick" })
+end)
+
+hs.hotkey.bind({ "cmd", "alt" }, "r", function()
+	-- launchTerminalTheRunCmd({ cmd = "recent_pick" })
+	launchTerminalWithCmd({ cmd = "recent_pick" })
+end)
+
 -- bind keys --------------------------------------------------------------
 hs.hotkey.bind({ "cmd", "alt" }, "y", function()
-	launchTerminalTheRunCmd({ cmd = "yazi" })
+	launchTerminalWithCmd({ cmd = "yazi" })
+	-- launchTerminalTheRunCmd({ cmd = "yazi" })
 	-- launchTerminalTheRunCmd({ cmd = "yazi", bundleID = "com.apple.Terminal" })
 end)
 
@@ -664,6 +678,25 @@ end)
 -- }end)
 --
 
-hs.hotkey.bind({ "cmd", "alt" }, "r", function()
-	launchTerminalTheRunCmd({ cmd = "recent_pick" })
+hs.hotkey.bind({ "cmd", "option" }, "/", function()
+	-- runCommandInItermAndHitEnter("find_file")
+	launchTerminalWithCmd({ cmd = "find_file" })
+end)
+
+hs.hotkey.bind({ "cmd" }, "/", function()
+	-- runCommandInItermAndHitEnter("ruzzy")
+	-- runCommandInItermAndHitEnter('cd "$(find_dirs_fuzzy_full)" && nvim .')
+	-- runCommandInItermAndHitEnter('cd "$(find_dirs_fuzzy_full)" && yazi .')
+	-- runCommandInItermAndHitEnter("cd $(fzf) && nvim .")
+	--
+	-- local command = 'cd "$(fd . "$HOME" --type d -H --max-depth 3 | fzf --prompt="Find Dir: ")" && nvim .'
+	-- local command = "fcd_1_level"
+	-- os.execute("cd ~ && find_dir_from_cache && exit")
+	-- runCommandInItermAndHitEnter("find_dir_from_cache")
+
+	-- runCommandInItermAndHitEnter("find_dir_from_cache 'emacs' && exit && killall ghostty")
+	-- runCommandInItermAndHitEnter(string.format("find_dir_from_cache 'emacs' && killall %s", terminal_app_id))
+
+	-- runCommandInItermAndHitEnter("find_dir_from_cache 'emacs'")
+	launchTerminalWithCmd({ cmd = "find_dir_from_cache" })
 end)

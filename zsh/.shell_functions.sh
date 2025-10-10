@@ -52,41 +52,6 @@ function recent_add() {
     printf '%s\n' "$(realpath "$1")" >>"$RECENT_DB" # no -m
 }
 
-#NOTE: wrapping nvim itself to interpolate 'recent_add' rather than use wonky zshrc hooks for files vs directory (inconsistent)
-# function nvim() {
-#     local arg=$1
-#     echo "[nnvim] ARG: $arg" # Debug
-#
-#     if [[ -n "$arg" ]]; then
-#         local full_path
-#         full_path="$(/bin/realpath "$arg" 2>/dev/null)"
-#         echo "[nnvim] FULL_PATH: $full_path" # Debug
-#
-#         if [[ -f "$full_path" || -d "$full_path" ]]; then
-#             echo "[nnvim] Logging to recent_add: $full_path"
-#             recent_add "$full_path"
-#         fi
-#     fi
-#
-#     command nvim "$@"
-# }
-
-# function recent_pick_og() {
-#     local filter=${1:-.*} pick raw
-#     while IFS= read -r raw; do
-#         if [[ -d $raw ]]; then
-#             # printf '📁 %s\n' "$raw"
-#             printf '\e[34mDIR \e[0m%s\n' "$raw" # blue DIR
-#         else
-#             # printf '📄 %s\n' "$raw"
-#             printf '\e[33mFILE \e[0m%s\n' "$raw" # yellow FILE
-#         fi
-#     done < <(<"$RECENT_DB" grep -E "$filter" | tac | awk '!seen[$0]++') |
-#         fzf --ansi --prompt="recent ${1:-}> " |
-#         IFS= read -r pick && [[ $pick ]] &&
-#         ${EDITOR:-nvim} "${pick#* }" # strip emoji+space
-# }
-
 function remove_last_newline_yas_snippet() {
     local file="$1"
     if [[ ! -f "$file" ]]; then

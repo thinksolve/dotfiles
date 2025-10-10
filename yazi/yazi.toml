@@ -1,7 +1,6 @@
 [opener]
 markdown = [
-  # { run = 'nvim "$@"', block = true, for = "unix" },
-  # { run = '/Users/brightowl/.local/bin/nvim "$@"', block = true, for = "unix" },
+  { run = 'nvim "$@"', block = true, for = "unix" },
   { run = "open -a MacDown.app \"$1\"", desc = "Open with MacDown" },
 ]
 video = [

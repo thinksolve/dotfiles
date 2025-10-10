@@ -69,26 +69,37 @@ alias lower="tr 'A-Z' 'a-z'"
 # bindkey -s '^F' 'echo "$(find_files_fuzzy_reduced)" | tr -d "\n" | pbcopy\n'
 # bindkey -s '^[^F' 'echo "$(find_files_fuzzy_full)" | tr -d "\n" | pbcopy\n' #last
 
-bindkey -s '^R' 'recent_pick\n'
-bindkey -s '^[^R' 'recent_pick\n'
 
-bindkey -s '^D' 'find_dir_from_cache\n'
-bindkey -s '^[^D' 'find_dir_then_cache\n'
-# bindkey -s '^D' 'fcd_cached\n'    #NOTE: somehow these disappeared in shell_functions.sh??
-# bindkey -s '^[^D' 'fcd\n'         #NOTE: somehow these disappeared in shell_functions.sh??
-bindkey -s '^F' 'find_file\n'
+##NOTE: old way; pollutes history
+# bindkey -s '^R' 'recent_pick\n'
+# bindkey -s '^D' 'find_dir_from_cache\n'
+# bindkey -s '^[^D' 'find_dir_then_cache\n'
+# bindkey -s '^F' 'find_file\n'
+# bindkey -s '^[^Y' 'yazi . \n'
+# bindkey -s '^[^N' 'nvim . \n'
 
-# function find_file_and_run() {
-#   local cmd
-#   cmd=$(find_file)
-#   [[ -n "$cmd" ]] && BUFFER="$cmd" && zle accept-line
-# }
-# zle -N find_file_and_run
-# bindkey '^F' find_file_and_run  # Ctrl-F for example
+# Helper to create ZLE widget and bind key in one go
+function bindkey_zle() {
+    local key=$1
+    local func=$2
+    local widget_name="_${func}_widget"
+    
+    eval "function $widget_name() { $func; zle reset-prompt; }"
+    zle -N $widget_name
+    bindkey "$key" $widget_name
+}
 
+# Create widgets and bind in one go
+bindkey_zle '^R' recent_pick
+bindkey_zle '^D' find_dir_from_cache
+bindkey_zle '^[^D' find_dir_then_cache
+bindkey_zle '^F' find_file
 
-bindkey -s '^[^Y' 'yazi . \n'
-bindkey -s '^[^N' 'nvim . \n'
+function open_yazi_here() { yazi . }
+bindkey_zle '^[^Y' open_yazi_here
+
+function open_nvim_here() { nvim . }
+bindkey_zle '^[^N' open_nvim_here
 
 
 
