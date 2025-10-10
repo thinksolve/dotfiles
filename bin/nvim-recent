@@ -1,0 +1,20 @@
+#!/bin/sh
+REAL_NVIM=/run/current-system/sw/bin/nvim
+RECENT_DB=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
+MAX=75
+
+# first real file/dir argument
+for arg; do [ -e "$arg" ] && FILE=$(realpath "$arg") && break; done
+
+# atomic deduping write
+if [ -n "$FILE" ]; then
+  tmp=$(mktemp) || exit 1
+  {
+    echo "$FILE"
+    [ -f "$RECENT_DB" ] && cat "$RECENT_DB"
+  } |
+    awk '!seen[$0]++' | head -n "$MAX" >"$tmp" && mv "$tmp" "$RECENT_DB"
+fi
+
+exec "$REAL_NVIM" "$@"
+

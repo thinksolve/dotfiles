@@ -17,6 +17,10 @@ in
   home.stateVersion = "23.11";
 
   home.file = {
+    ".local/bin/nvim" = {
+      source = link_dotfiles "/bin/nvim-recent"; # source in dotfiles repo
+      executable = true; # chmod +x done by HM
+    };
     ".hammerspoon".source = link_dotfiles "/hammerspoon";
     ".zshrc".source = link_dotfiles "/zsh/.zshrc";
     ".tmux.conf".source = link_dotfiles "/tmux/.tmux.conf";

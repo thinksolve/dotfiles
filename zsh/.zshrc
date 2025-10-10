@@ -10,6 +10,11 @@ export VISUAL="$RECENT_NVIM"
 # alias nvim="$RECENT_NVIM"
 
 
+alias drs='darwin-rebuild switch --flake ~/.dotfiles/nix/darwin'
+function ship_config(){
+  cd ~/.dotfiles/ && ship "$1"
+}
+
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
