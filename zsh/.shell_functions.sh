@@ -12,44 +12,45 @@ local home_dirs_cache="$HOME/.cache/fcd_cache.gz"
 local dir_exclusions=(node_modules .git .cache .DS_Store venv __pycache__ Trash "*.bak" "*.log")
 
 function recent_pick() {
+    local db=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
+    local editor=${EDITOR:-nvim}
     local filter=${1:-.*} pick
 
-    <"$RECENT_DB" grep -E "$filter" | tac | awk '!seen[$0]++' |
+    <"$db" grep -E "$filter" | tac |
         while IFS= read -r path; do
-            if [[ -d $path ]]; then
-                printf '\e[34mDIR\e[0m\t%s\n' "$path"
-            else
+            [[ -d $path ]] &&
+                printf '\e[34mDIR\e[0m\t%s\n' "$path" ||
                 printf '\e[33mFILE\e[0m\t%s\n' "$path"
-            fi
         done |
         fzf --ansi \
             --prompt="filter: ${1:-}" \
-            --header="Ctrl-E -> edit" \
-            --bind "ctrl-e:execute(${EDITOR:-nvim} \"$RECENT_DB\" > /dev/tty)" \
+            --header="Ctrl-E → edit DB" \
+            --bind "ctrl-e:execute($editor \"$db\" >/dev/tty)" \
             --with-nth=1,2 \
             --preview '
-            path=$(echo {} | cut -f2-)
-
-            if [[ -d "$path" ]]; then
-                /run/current-system/sw/bin/tree -a -C -L 1 "$path"
-            else
-                if /run/current-system/sw/bin/bat --version >/dev/null 2>&1; then
-                    /run/current-system/sw/bin/bat --color=always "$path"
-                else
-                    cat "$path" 2>/dev/null
-                fi
-            fi
-        ' |
+        path=$(echo {} | cut -f2-)
+        if [[ -d $path ]]; then
+          /run/current-system/sw/bin/tree -a -C -L 1 "$path"
+        else
+          /run/current-system/sw/bin/bat --color=always "$path" 2>/dev/null || cat "$path" 2>/dev/null
+        fi' |
         awk -F'\t' '{print $2}' | while IFS= read -r pick; do
-        [[ $pick ]] && ${EDITOR:-nvim} "$pick"
+        [[ $pick ]] && $editor "$pick"
     done
 }
 
 function recent_add() {
+    local db=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
     [[ -e $1 ]] || return
-    local dir=${RECENT_DB%/*}
-    [[ -d $dir ]] || mkdir -p "$dir"
-    printf '%s\n' "$(realpath "$1")" >>"$RECENT_DB" # no -m
+    mkdir -p "${db%/*}"
+
+    local tmp
+    tmp=$(mktemp) || return
+
+    {
+        printf '%s\n' "$(realpath "$1")"
+        [[ -f $db ]] && cat "$db"
+    } | awk '!seen[$0]++' | head -n 75 >"$tmp" && mv "$tmp" "$db"
 }
 
 function remove_last_newline_yas_snippet() {
@@ -69,6 +70,47 @@ function remove_last_newline_yas_snippet() {
         echo "✅ No trailing newline in $file"
     fi
 }
+
+# function recent_add_old_no_dedupe() {
+#     [[ -e $1 ]] || return
+#     local dir=${RECENT_DB%/*}
+#     [[ -d $dir ]] || mkdir -p "$dir"
+#     printf '%s\n' "$(realpath "$1")" >>"$RECENT_DB" # no -m
+# }
+
+# function recent_pick_old_with_dedupe() {
+#     local filter=${1:-.*} pick
+#
+#     <"$RECENT_DB" grep -E "$filter" | tac | awk '!seen[$0]++' |
+#         while IFS= read -r path; do
+#             if [[ -d $path ]]; then
+#                 printf '\e[34mDIR\e[0m\t%s\n' "$path"
+#             else
+#                 printf '\e[33mFILE\e[0m\t%s\n' "$path"
+#             fi
+#         done |
+#         fzf --ansi \
+#             --prompt="filter: ${1:-}" \
+#             --header="Ctrl-E -> edit" \
+#             --bind "ctrl-e:execute(${EDITOR:-nvim} \"$RECENT_DB\" > /dev/tty)" \
+#             --with-nth=1,2 \
+#             --preview '
+#             path=$(echo {} | cut -f2-)
+#
+#             if [[ -d "$path" ]]; then
+#                 /run/current-system/sw/bin/tree -a -C -L 1 "$path"
+#             else
+#                 if /run/current-system/sw/bin/bat --version >/dev/null 2>&1; then
+#                     /run/current-system/sw/bin/bat --color=always "$path"
+#                 else
+#                     cat "$path" 2>/dev/null
+#                 fi
+#             fi
+#         ' |
+#         awk -F'\t' '{print $2}' | while IFS= read -r pick; do
+#         [[ $pick ]] && ${EDITOR:-nvim} "$pick"
+#     done
+# }
 
 readonly translate_host="127.0.0.1"
 readonly translate_port="8000"

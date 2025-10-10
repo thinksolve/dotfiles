@@ -91,8 +91,8 @@ function bindkey_zle() {
 
 # Create widgets and bind in one go
 bindkey_zle '^R' recent_pick
-bindkey_zle '^D' find_dir_from_cache
-bindkey_zle '^[^D' find_dir_then_cache
+bindkey_zle '^B' find_dir_from_cache
+bindkey_zle '^[^B' find_dir_then_cache
 bindkey_zle '^F' find_file
 
 function open_yazi_here() { yazi . }

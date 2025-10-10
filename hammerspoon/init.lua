@@ -653,10 +653,6 @@ local function launchTerminalWithCmd(opts)
 end
 
 hs.hotkey.bind({ "cmd", "alt" }, "r", function()
-	launchTerminalWithCmd({ cmd = "recent_pick" })
-end)
-
-hs.hotkey.bind({ "cmd", "alt" }, "r", function()
 	-- launchTerminalTheRunCmd({ cmd = "recent_pick" })
 	launchTerminalWithCmd({ cmd = "recent_pick" })
 end)
