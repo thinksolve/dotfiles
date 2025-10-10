@@ -1,6 +1,7 @@
 [opener]
 markdown = [
-  { run = 'nvim "$@"', block = true, for = "unix" },
+  # { run = 'nvim "$@"', block = true, for = "unix" },
+  # { run = '/Users/brightowl/.local/bin/nvim "$@"', block = true, for = "unix" },
   { run = "open -a MacDown.app \"$1\"", desc = "Open with MacDown" },
 ]
 video = [
@@ -17,14 +18,11 @@ prepend_rules = [
   { name="*.md", use = "markdown" },
   { mime = "text/markdown", use = "markdown" },
 ]
+
 [manager]
 ratio = [1, 3, 4]
 show_symlink=true
 # show_hidden=true
-prepend_keymap = [
-  # open the built-in goto picker in *history* mode
-  { on = [ "g", "r" ], run = "goto --history", desc = "Go recent directory" },
-]
 
 [preview]
 wrap = "yes"

@@ -52,6 +52,25 @@ function recent_add() {
     printf '%s\n' "$(realpath "$1")" >>"$RECENT_DB" # no -m
 }
 
+#NOTE: wrapping nvim itself to interpolate 'recent_add' rather than use wonky zshrc hooks for files vs directory (inconsistent)
+# function nvim() {
+#     local arg=$1
+#     echo "[nnvim] ARG: $arg" # Debug
+#
+#     if [[ -n "$arg" ]]; then
+#         local full_path
+#         full_path="$(/bin/realpath "$arg" 2>/dev/null)"
+#         echo "[nnvim] FULL_PATH: $full_path" # Debug
+#
+#         if [[ -f "$full_path" || -d "$full_path" ]]; then
+#             echo "[nnvim] Logging to recent_add: $full_path"
+#             recent_add "$full_path"
+#         fi
+#     fi
+#
+#     command nvim "$@"
+# }
+
 # function recent_pick_og() {
 #     local filter=${1:-.*} pick raw
 #     while IFS= read -r raw; do
@@ -667,12 +686,14 @@ function find_dir_then_cache() {
     if [[ -n "$dir" ]]; then
         # Update cache in the background
         (update_dir_cache) &
-        cd "$dir" && nvim .
+        # cd "$dir" && nvim .
+        cd "$dir" && "${EDITOR:-nvim}" .
     fi
 }
 
 function find_dir_from_cache() {
-    local open_with=${1:-nvim}
+    # local open_with=${1:-nvim}
+    # local open_with=${1:-$EDITOR}
     local dir
     # Generate cache in background if it doesn't exist, isn't readable, or is stale
     if [[ ! -f $home_dirs_cache || ! -r $home_dirs_cache || $(find $home_dirs_cache -mtime +15 2>/dev/null) ]]; then
@@ -690,7 +711,10 @@ function find_dir_from_cache() {
         # fi
 
         #nice alternative!
-        [[ -n "$dir" ]] && open_with_editor "$open_with" "$dir"
+        # recent_add "$dir"
+
+        # [[ -n "$dir" ]] && open_with_editor "$open_with" "$dir"
+        [[ -n "$dir" ]] && "${EDITOR:-nvim}" "$dir"
     fi
 }
 
@@ -719,7 +743,7 @@ function find_file() {
     local fd_cmd=(fd . "$HOME" -H)
     local is_raw=$([[ "$mode" == "raw" ]] && echo 1)
 
-    # no "raw" arugment passed then use exclusions list
+    # no "raw" argument passed then use exclusions list
     if [[ ! $is_raw ]]; then
         fd_cmd+=("${dir_exclusions[@]/#/-E}")
     fi
@@ -728,24 +752,26 @@ function find_file() {
     dir_or_file=$("${fd_cmd[@]}" | fzf --prompt="Find Files${is_raw:+ (raw)}: " --preview "$preview")
 
     if [[ -z "$dir_or_file" ]]; then
-        echo "No directory selected."
+        echo "No selection made."
         return 1
     fi
+
     if [[ -d "$dir_or_file" ]]; then
-        emacsclient -c -n "$dir"
-    else
+        # Directory: cd and open in editor
+        cd "$dir_or_file" && "${EDITOR:-nvim}" .
+    elif [[ -f "$dir_or_file" ]]; then
+        # File: check if text-like, open accordingly
         if [[ "$(file --mime-type -b "$dir_or_file")" =~ ^text/ ]]; then
-            # (cd "$(dirname "$dir_or_file")" && nvim "$dir_or_file")
-            cd "$(dirname "$dir_or_file")" && nvim "$dir_or_file"
-            # nvim "$dir_or_file"
+            cd "$(dirname "$dir_or_file")" && "${EDITOR:-nvim}" "$dir_or_file"
         else
-            open "$dir_or_file"
+            open "$dir_or_file" # Binary file, use system open
         fi
     fi
 }
 
 function open_with_editor() {
-    local editor="${1:-nvim}"
+    # local editor="${1:-nvim}"
+    local editor="${1:-$EDITOR}"
     local dir="$2"
 
     case "$editor" in

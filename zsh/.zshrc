@@ -1,5 +1,13 @@
-
 # export PATH="$HOME/.npm-global/bin:$PATH" ## changed npm prefix (npm get prefix) from readonly nix location '/nix/store/2ribxb3gi87gj4331m6k0ydn0z90zfi7-nodejs-22.14.0' to a custom writable location '~/.npm-global' .. to allow global npm installs 
+
+
+## NOTE: this custom nvim binary uses 'recent_add' logic before executing real nvim 
+readonly RECENT_NVIM="$HOME/.local/bin/nvim"
+readonly REAL_NVIM="/run/current-system/sw/bin/nvim"
+
+export EDITOR="$RECENT_NVIM"
+export VISUAL="$RECENT_NVIM"
+# alias nvim="$RECENT_NVIM"
 
 
 export LANG=en_US.UTF-8
@@ -69,6 +77,16 @@ bindkey -s '^[^D' 'find_dir_then_cache\n'
 # bindkey -s '^D' 'fcd_cached\n'    #NOTE: somehow these disappeared in shell_functions.sh??
 # bindkey -s '^[^D' 'fcd\n'         #NOTE: somehow these disappeared in shell_functions.sh??
 bindkey -s '^F' 'find_file\n'
+
+# function find_file_and_run() {
+#   local cmd
+#   cmd=$(find_file)
+#   [[ -n "$cmd" ]] && BUFFER="$cmd" && zle accept-line
+# }
+# zle -N find_file_and_run
+# bindkey '^F' find_file_and_run  # Ctrl-F for example
+
+
 bindkey -s '^[^Y' 'yazi . \n'
 bindkey -s '^[^N' 'nvim . \n'
 
@@ -265,8 +283,8 @@ export PATH="$PNPM_HOME:$PATH"
 export PATH=${PATH}:/usr/local/mysql/bin/
 
 #export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-16.0.2.jdk/Contents/Home
-export EDITOR=nvim
-export VISUAL=nvim
+
+
 # export EDITOR="code -w"
 # . "$HOME/.cargo/env"
 
@@ -278,28 +296,63 @@ export VISUAL=nvim
 
 
 #export LSCOLORS=gxBxhxDxfxhxhxhxhxcxcx
+
+
+# -------  NOTE:: old hook code didnt work when yazi opens files/dirs with nvim .. -------
+# -------  NOTE::  lso required modifying 'find_file' to return command string rather than just running command -------
+# autoload -Uz add-zsh-hook
+#
+# # 1. directory logger
+# recent_add_dir() { recent_add "$PWD"; }
+# add-zsh-hook chpwd recent_add_dir
+#
+# # 2. file logger
 #
 #
-
-# -------  bottom of .zshrc  -------
-autoload -Uz add-zsh-hook
-
-# 1. directory logger
-recent_add_dir() { recent_add "$PWD"; }
-add-zsh-hook chpwd recent_add_dir
-
-# 2. file logger
-recent_add_file() {
-  local -a words
-  words=(${(z)1})
-  for w in $words; do
-    case $w in
-      nvim|vim|vi|emacs|nano|micro|code)
-        local file=${words[-1]}
-        [[ -f $file ]] && recent_add ${file:a}
-        return
-        ;;
-    esac
-  done
-}
-add-zsh-hook preexec recent_add_file
+#
+# recent_add_file() {
+#   echo "[preexec] Command: $1" >> /tmp/preexec_debug.log
+#
+#   [[ -n $DISABLE_RECENT_LOGGING ]] && echo "[preexec] DISABLED" >> /tmp/preexec_debug.log && return
+#
+#   local -a words
+#   words=(${(z)1})
+#   echo "[preexec] Words: ${words[@]}" >> /tmp/preexec_debug.log
+#
+#   for (( i = 1; i <= $#words; i++ )); do
+#     case "${words[$i]}" in
+#       nvim|vim|vi|nano|micro|code|emacs)
+#         local rawfile="${words[$((i+1))]}"
+#         echo "[preexec] Editor: ${words[$i]}, RawFile: $rawfile" >> /tmp/preexec_debug.log
+#
+#         # Strip surrounding quotes if present
+#         local file="${rawfile%\"}"
+#         file="${file#\"}"
+#         file="${file%\'}"
+#         file="${file#\'}"
+#
+#         # Expand ~ and variables (including $HOME)
+#         file="$(eval echo "$file")"
+#
+#         echo "[preexec] Expanded File: $file" >> /tmp/preexec_debug.log
+#
+#         if [[ -e "$file" ]]; then
+#           recent_add "${file:a}"
+#           echo "[preexec] Logged: ${file:a}" >> /tmp/preexec_debug.log
+#         else
+#           echo "[preexec] File not found: $file" >> /tmp/preexec_debug.log
+#         fi
+#         return
+#         ;;
+#     esac
+#   done
+# }
+#
+#
+# autoload -Uz add-zsh-hook
+# add-zsh-hook preexec recent_add_file
+#
+#
+#
+#
+#
