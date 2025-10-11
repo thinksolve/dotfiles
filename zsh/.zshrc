@@ -17,6 +17,11 @@ export LC_ALL=en_US.UTF-8
 # Alias for convenience
 setopt HIST_IGNORE_ALL_DUPS 
 
+#ctrl-d on new empty command line closes terminal (acts like EOF), 
+# otherwise it mimics TAB completion ... overloaded so remove it
+setopt ignore_eof 
+
+
 # export DOOMDIR="$HOME/.config/doom"
 
 export PATH="$HOME/.config/emacs/bin:$PATH"
@@ -86,15 +91,17 @@ function bindkey_zle() {
     local widget_name="_${func}_widget"
     
     eval "function $widget_name() { $func; zle reset-prompt; }"
+
     zle -N $widget_name
     bindkey "$key" $widget_name
 }
 
 # Create widgets and bind in one go
-bindkey_zle '^R' recent_pick
-bindkey_zle '^B' find_dir_from_cache
-bindkey_zle '^[^B' find_dir_then_cache
+bindkey_zle '^D' find_dir_from_cache
+bindkey_zle '^[^D' find_dir_then_cache
 bindkey_zle '^F' find_file
+bindkey_zle '^R' recent_pick
+
 
 function open_yazi_here() { yazi . }
 bindkey_zle '^[^Y' open_yazi_here
@@ -323,8 +330,6 @@ export PATH=${PATH}:/usr/local/mysql/bin/
 #
 #
 # recent_add_file() {
-#   echo "[preexec] Command: $1" >> /tmp/preexec_debug.log
-#
 #   [[ -n $DISABLE_RECENT_LOGGING ]] && echo "[preexec] DISABLED" >> /tmp/preexec_debug.log && return
 #
 #   local -a words
@@ -363,7 +368,6 @@ export PATH=${PATH}:/usr/local/mysql/bin/
 #
 # autoload -Uz add-zsh-hook
 # add-zsh-hook preexec recent_add_file
-#
 #
 #
 #
