@@ -26,6 +26,10 @@ in
       source = link_dotfiles "/bin/nvim-recent"; # source in dotfiles repo
       executable = true; # chmod +x done by HM
     };
+    ".local/bin/yt-txt" = {
+      source = link_dotfiles "/bin/yt-txt";
+      executable = true;
+    };
     ".hammerspoon".source = link_dotfiles "/hammerspoon";
     ".zshrc".source = link_dotfiles "/zsh/.zshrc";
     ".tmux.conf".source = link_dotfiles "/tmux/.tmux.conf";

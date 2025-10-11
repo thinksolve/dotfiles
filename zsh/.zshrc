@@ -1,5 +1,5 @@
 # export PATH="$HOME/.npm-global/bin:$PATH" ## changed npm prefix (npm get prefix) from readonly nix location '/nix/store/2ribxb3gi87gj4331m6k0ydn0z90zfi7-nodejs-22.14.0' to a custom writable location '~/.npm-global' .. to allow global npm installs 
-
+export PATH="$HOME/.local/bin:$PATH"
 
 ## NOTE: this custom nvim binary uses 'recent_add' logic before executing real nvim 
 readonly RECENT_NVIM="$HOME/.local/bin/nvim"
