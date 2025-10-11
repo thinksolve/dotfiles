@@ -11,10 +11,34 @@ local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else command -v bat >/de
 local home_dirs_cache="$HOME/.cache/fcd_cache.gz"
 local dir_exclusions=(node_modules .git .cache .DS_Store venv __pycache__ Trash "*.bak" "*.log")
 
+# function editable_path_old() {
+#     local p=$1
+#
+#     # Short circuit pattern; returns at the first true statement
+#     # i.e. is directory OR matches extension OR is text file
+#     [[ -d $p ]] ||
+#         [[ $p =~ \.(json|toml|yaml|yml|md|txt|sh|zsh|vim|conf|ini|py|js|ts|css|html)$ ]] ||
+#         [[ $(file --mime-type -b -- "$p") == text/* ]]
+# }
+
+# used for recent_pick and find_file
+function editable_path() {
+    local p=$1
+    [[ -d $p ]] && return 0 #in shell return 0 is truthy!
+
+    case $(file --mime-type -b -- "$p") in
+    text/* | application/json | application/x-yaml | application/xml | application/x-shellscript) return 0 ;;
+    esac
+
+    return 1
+}
+
 function recent_pick() {
     local db=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
     local editor=${EDITOR:-nvim}
     local filter=${1:-.*} pick
+
+    local -a open_now edit_later
 
     <"$db" grep -E "$filter" | tac |
         while IFS= read -r path; do
@@ -22,7 +46,7 @@ function recent_pick() {
                 printf '\e[34mDIR\e[0m\t%s\n' "$path" ||
                 printf '\e[33mFILE\e[0m\t%s\n' "$path"
         done |
-        fzf --ansi \
+        fzf --ansi -m \
             --prompt="filter: ${1:-}" \
             --header="Ctrl-E → edit DB" \
             --bind "ctrl-e:execute($editor \"$db\" >/dev/tty)" \
@@ -34,10 +58,76 @@ function recent_pick() {
         else
           /run/current-system/sw/bin/bat --color=always "$path" 2>/dev/null || cat "$path" 2>/dev/null
         fi' |
-        awk -F'\t' '{print $2}' | while IFS= read -r pick; do
-        [[ $pick ]] && $editor "$pick"
+        awk -F'\t' '{print $2}' |
+        while IFS= read -r pick; do
+            [[ -e $pick ]] || continue
+            if editable_path "$pick"; then
+                edit_later+=("$pick")
+            else
+                open_now+=("$pick")
+            fi
+        done
+
+    # nothing chosen → stop recursion
+    ((${#open_now[@]} + ${#edit_later[@]})) || return 0
+
+    # 1. launch everything that detaches
+    for p in "${open_now[@]}"; do open "$p"; done
+
+    # 2. now occupy the terminal (if you want)
+    for p in "${edit_later[@]}"; do
+        if [[ -d $p ]]; then
+            cd "$p" && $editor .
+        else
+            $editor "$p"
+        fi
     done
+
+    # round finished → offer the list again
+    recent_pick "$filter"
 }
+
+# function recent_pick_old() {
+#     local db=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
+#     local editor=${EDITOR:-nvim}
+#     local filter=${1:-.*} pick
+#
+#     <"$db" grep -E "$filter" | tac |
+#         while IFS= read -r path; do
+#             [[ -d $path ]] &&
+#                 printf '\e[34mDIR\e[0m\t%s\n' "$path" ||
+#                 printf '\e[33mFILE\e[0m\t%s\n' "$path"
+#         done |
+#         fzf --ansi -m \
+#             --prompt="filter: ${1:-}" \
+#             --header="Ctrl-E → edit DB" \
+#             --bind "ctrl-e:execute($editor \"$db\" >/dev/tty)" \
+#             --with-nth=1,2 \
+#             --preview '
+#         path=$(echo {} | cut -f2-)
+#         if [[ -d $path ]]; then
+#           /run/current-system/sw/bin/tree -a -C -L 1 "$path"
+#         else
+#           /run/current-system/sw/bin/bat --color=always "$path" 2>/dev/null || cat "$path" 2>/dev/null
+#         fi' |
+#         awk -F'\t' '{print $2}' |
+#         while IFS= read -r pick; do
+#
+#             [[ -e $pick ]] || continue # exists at all (file or dir)
+#             # --- now safe to use "$pick" ---
+#
+#             if [[ -f $pick ]]; then
+#                 if [[ "$(file --mime-type -b "$pick")" =~ ^text/ ]]; then
+#                     $editor "$pick"
+#                 else
+#                     open "$pick"
+#                 fi
+#             elif [[ -d $pick ]]; then
+#                 cd "$pick" && $editor .
+#             fi
+#         done
+#
+# }
 
 function recent_add() {
     local db=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
@@ -763,16 +853,13 @@ function find_file() {
         return 1
     fi
 
-    if [[ -d "$dir_or_file" ]]; then
-        # Directory: cd and open in editor
+    if [[ -d $dir_or_file ]]; then
         cd "$dir_or_file" && "${EDITOR:-nvim}" .
-    elif [[ -f "$dir_or_file" ]]; then
-        # File: check if text-like, open accordingly
-        if [[ "$(file --mime-type -b "$dir_or_file")" =~ ^text/ ]]; then
-            cd "$(dirname "$dir_or_file")" && "${EDITOR:-nvim}" "$dir_or_file"
-        else
-            open "$dir_or_file" # Binary file, use system open
-        fi
+    elif editable_path "$dir_or_file"; then # <-- new helper
+        cd "$(dirname "$dir_or_file")" && "${EDITOR:-nvim}" "$dir_or_file"
+    else
+        recent_add "$dir_or_file"
+        open "$dir_or_file"
     fi
 }
 
