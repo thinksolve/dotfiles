@@ -160,6 +160,12 @@
           # ];
         in
         {
+          # >>>  PUT THE OPTIONS HERE  <<<
+          # <-- added oct 10-2025
+          system.primaryUser = username;
+          programs.zsh.enable = false;
+          # <-- added oct 10-2025
+
           # security.pam.enableSudoTouchIdAuth = true;
           security.pam.services.sudo_local.touchIdAuth = true;
           # users.knownUsers = [ username ]; NOTE: was supposed to delete
@@ -242,6 +248,7 @@
             home = "/Users/${username}";
             shell = pkgs.zsh;
             uid = 501;
+            ignoreShellProgramCheck = true; # <-- added oct 10-2025
           };
 
           #NOTE:  apparently this is not needed in latest flake update
@@ -249,7 +256,6 @@
 
           nix.package = pkgs.nix;
           nix.settings.experimental-features = "nix-command flakes";
-          programs.zsh.enable = true;
           system.configurationRevision = self.rev or self.dirtyRev or null;
           system.stateVersion = 5;
           nixpkgs.hostPlatform = hostPlatform;
@@ -275,6 +281,7 @@
         };
     in
     {
+
       # formatter.aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.nixfmt-rfc-style;
 
       darwinConfigurations.${hostname} = nix-darwin.lib.darwinSystem {
@@ -286,7 +293,10 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.${username} = import ./home.nix;
+            home-manager.users.${username} = {
+              imports = [ ./home.nix ];
+            };
+            # home-manager.users.${username} = import ./home.nix;
             home-manager.extraSpecialArgs = {
               inherit username;
             };

@@ -48,8 +48,8 @@ function recent_add() {
     tmp=$(mktemp) || return
 
     {
-        printf '%s\n' "$(realpath "$1")"
         [[ -f $db ]] && cat "$db"
+        printf '%s\n' "$(realpath "$1")"
     } | awk '!seen[$0]++' | head -n 75 >"$tmp" && mv "$tmp" "$db"
 }
 
@@ -1246,10 +1246,18 @@ function unship() {
 ## alias deship="git revert HEAD --no-commit && git push"
 
 ## NOTE: yet to be tested (oct 5 2025); once tested delete this message
-function ship_dotfiles() {
+function ship_config() {
     (cd "$HOME/.dotfiles" && ship "$@")
 }
 
+# function ship_config_alt() {
+#   local repo="$HOME/.dotfiles"
+#   cd "$repo" || { echo "❌  Could not cd into $repo"; return 1; }
+#   echo "📦  Shipping from $(pwd)"
+#   ship "$@"
+# }
+#
+#
 function ship() {
     # --- 1.  early exit if nothing to do ---
     if [[ -z $(git status --porcelain) ]]; then

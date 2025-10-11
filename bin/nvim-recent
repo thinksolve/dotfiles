@@ -10,11 +10,10 @@ for arg; do [ -e "$arg" ] && FILE=$(realpath "$arg") && break; done
 if [ -n "$FILE" ]; then
   tmp=$(mktemp) || exit 1
   {
-    echo "$FILE"
     [ -f "$RECENT_DB" ] && cat "$RECENT_DB"
+    echo "$FILE"
   } |
-    awk '!seen[$0]++' | head -n "$MAX" >"$tmp" && mv "$tmp" "$RECENT_DB"
+    awk '!seen[$0]++' | tail -n "$MAX" >"$tmp" && mv "$tmp" "$RECENT_DB"
 fi
 
 exec "$REAL_NVIM" "$@"
-
