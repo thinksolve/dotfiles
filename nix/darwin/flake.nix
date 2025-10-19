@@ -117,6 +117,8 @@
           pdf_and_document = [
             pkgs.poppler
             pkgs.poppler_utils
+            pkgs.viu
+            pkgs.chafa
           ];
 
           system_utilities = [
@@ -127,7 +129,9 @@
 
           terminal_and_shell_enhancements = [
             pkgs.fastfetch
+            pkgs.antidote
             pkgs.iterm2
+            pkgs.nushell
             pkgs.pure-prompt
             pkgs.yazi
             # pkgs.tmux
@@ -163,7 +167,18 @@
           # >>>  PUT THE OPTIONS HERE  <<<
           # <-- added oct 10-2025
           system.primaryUser = username;
-          programs.zsh.enable = false;
+          # programs.zsh.enable = false;
+          # programs.zsh = {
+          #   # enable = false;
+          #   # enable = true; # gives you the proper PATH
+          #   # shellInit = ""; # don’t generate any extra lines
+          #   enable = true; # ← required
+          #   initExtra = ''
+          #     # load antidote
+          #     source ${pkgs.antidote}/share/antidote/antidote.zsh
+          #   '';
+          # };
+
           # <-- added oct 10-2025
 
           # security.pam.enableSudoTouchIdAuth = true;

@@ -505,6 +505,24 @@ local function set_marko_commentstring_test()
 end
 
 require("lazy").setup({
+
+	{
+		"phaazon/hop.nvim",
+		branch = "v2",
+		config = function()
+			-- -- note: below return key (<CR>) both toggles and exists :HopWord
+
+			require("hop").setup({ quit_key = "<CR>" })
+
+			-- Keymap for normal mode: <CR> to start HopWord
+			vim.keymap.set("n", "<CR>", function()
+				require("hop").hint_words()
+			end, { noremap = true, silent = true })
+
+			-- alternate:
+			-- vim.api.nvim_set_keymap("n", "<CR>", ":HopWord<CR>", { noremap = true, silent = true })
+		end,
+	},
 	{ -- simple regex-based Marko colours (treesitter has no marko support!)
 		"Epitrochoid/marko-vim-syntax.git",
 		name = "marko-vim-syntax", -- optional, just keeps the short name
@@ -1707,7 +1725,6 @@ vim.api.nvim_create_autocmd("FileType", {
 		end, { remap = true, buffer = true })
 	end,
 })
---
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et

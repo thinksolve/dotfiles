@@ -2,39 +2,12 @@
 
 # note: due to nix-darwin managing ssl certs, i have to explicitly advertise their locations
 # otherwise other dont get proper ssl certifications (like nvim-treesitter)
-
-source /nix/store/y0a9j1zcw6lhyvsb45gflbafqb5wv7zc-antidote-1.9.10/share/antidote/antidote.zsh
-source "$HOME"/.shell_functions.sh
-export PNPM_HOME="/Users/brightowl/Library/pnpm"
-
 export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 export NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
+
 export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/.config/emacs/bin:$PATH"
-# If you come from bash you might have to change your $PATH.
-export PATH=$HOME/bin:/usr/local/bin:$PATH
-export PATH="$PNPM_HOME:$PATH"
-export PATH=${PATH}:/usr/local/mysql/bin/
 
-
-# path=(
-#   /run/current-system/sw/bin
-#   $HOME/.nix-profile/bin
-#   $HOME/.local/bin
-#   # $HOME/.config/emacs/bin
-#   $HOME/bin
-#   /usr/local/bin
-#   # /usr/local/mysql/bin
-#   $PNPM_HOME
-#   $path
-# )
-# export PATH
-
-
-
-
-## NOTE: the custom nvim binary (at ~./local/bin) uses 'recent_add' logic before executing real nvim 
+## NOTE: this custom nvim binary uses 'recent_add' logic before executing real nvim 
 readonly RECENT_NVIM="$HOME/.local/bin/nvim"
 readonly REAL_NVIM="/run/current-system/sw/bin/nvim"
 
@@ -57,24 +30,22 @@ setopt ignore_eof
 
 # export DOOMDIR="$HOME/.config/doom"
 
+export PATH="$HOME/.config/emacs/bin:$PATH"
+export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
 
 fpath+=($HOME/.zsh/pure)
 autoload -U promptinit; promptinit
 prompt pure
-#
+
 # found out the hard way that plugins (vi-mode) affect bindkeys, so bindkeys should be placed BELOW plugins
 # plugins=(vi-mode zsh-autosuggestions zsh-syntax-highlighting git)
-# VIM_MODE_NO_DEFAULT_BINDINGS=true
-
-# plugins=(zsh-vim-mode zsh-autosuggestions)
 plugins=(vi-mode zsh-autosuggestions)
 export ZSH=$HOME/.oh-my-zsh
-source $ZSH/oh-my-zsh.sh
-source $ZSH_CUSTOM/plugins/vi-motions/motions.plugin.zsh #zsh-vim-mode also works but P (paste) url strings gets escaped still
-
+source "$ZSH"/oh-my-zsh.sh
 # ZSH_THEME="robbyrussell"
 # ZSH_THEME="powerlevel10k/powerlevel10k"
 
+source "$HOME"/.shell_functions.sh
 alias config='cd ~/.dotfiles/ && yazi .'
 alias evim='emacs -nw' # not really useful now that im using emacsclient
 alias zshrc='nvim ~/.zshrc'
@@ -96,102 +67,64 @@ alias upper="tr 'a-z' 'A-Z'"
 alias lower="tr 'A-Z' 'a-z'"
 
 
+# OLD
+# alias find_files_root='fd . "$HOME" '
+# alias find_files_fuzzy_reduced='find_files_root -E "node_modules" | fzf --prompt="Find Files from $HOME (reduced): "'
+# alias find_files_fuzzy_full='find_files_root -H | fzf --prompt="Find Files from $HOME (full): "'
+#
+#
+# alias find_dirs_root='fd . "$HOME" -t d'
+# alias find_dirs_fuzzy_reduced='find_dirs_root -E "node_modules" | fzf --prompt="Find Dir from $HOME (reduced): "'
+# alias find_dirs_fuzzy_full='find_dirs_root -H | fzf --prompt="Find Dir from $HOME (full): "'
+# bindkey -s '^D' 'cd "$(find_dirs_fuzzy_reduced)"\n'
+# bindkey -s '^[^D' 'cd "$(find_dirs_fuzzy_full)"\n' #last
+# bindkey -s '^F' 'echo "$(find_files_fuzzy_reduced)" | tr -d "\n" | pbcopy\n'
+# bindkey -s '^[^F' 'echo "$(find_files_fuzzy_full)" | tr -d "\n" | pbcopy\n' #last
 
 
+##NOTE: old way; pollutes history
+# bindkey -s '^R' 'recent_pick\n'
+# bindkey -s '^D' 'find_dir_from_cache\n'
+# bindkey -s '^[^D' 'find_dir_then_cache\n'
+# bindkey -s '^F' 'find_file\n'
+# bindkey -s '^[^Y' 'yazi . \n'
+# bindkey -s '^[^N' 'nvim . \n'
+
+# Helper to create ZLE widget and bind key in one go
 function bindkey_zle() {
-  local key=$1 func=$2
-  local widget=_${func}_widget
+    local key=$1
+    local func=$2
+    local widget_name="_${func}_widget"
+    
+    eval "function $widget_name() { $func; zle reset-prompt; }"
 
-  eval "
-  $widget() {
-    local choice
-    choice=\$( $func < /dev/tty )          # try to grab stdout
-    if [[ -n \$choice ]]; then
-      # ------ text-producing function ------
-      BUFFER=\$choice                     # drop into buffer
-      # uncomment next line for instant execution
-      # zle accept-line
-    else
-      # ------ side-effect-only function ------
-      # THIS IS ACTUALLY BROKEN
-      :                                   # nothing to insert
-    fi
-    zle reset-prompt
-  }
-  "
-  zle -N  $widget
-  bindkey "$key" $widget
+    zle -N $widget_name
+    bindkey "$key" $widget_name
 }
 
-
-bindkey_zlee() {
-  local key=$1 func=$2
-  local widget=_${func}_widget
-
-  eval "
-  $widget() {
-    local choice
-    choice=\$( $func < /dev/tty )
-    [[ -n \$choice ]] && { BUFFER=\$choice; zle accept-line; }
-  }
-  "
-  zle -N  $widget
-  bindkey "$key" $widget
-}
+# Create widgets and bind in one go
+bindkey_zle '^D' find_dir_from_cache
+bindkey_zle '^[^D' find_dir_then_cache
+bindkey_zle '^F' find_file
+bindkey_zle '^R' recent_pick
 
 
+function open_yazi_here() { yazi . }
+bindkey_zle '^Y' open_yazi_here
 
-# function bindkey_zle_og() {
-#     local key=$1 
-#     local func=$2
-#     local widget=_${func}_widget
-#
-#     eval "function $widget() { $func; zle reset-prompt; }"
-#
-#
-#     zle -N  $widget
-#     bindkey "$key" $widget
-# }
-
-# fire-and-forget keybindings
-bindkey -s '^R' ' recent_pick\n'
-bindkey -s '^D' ' find_dir_from_cache\n'
-bindkey -s '^[^D' ' find_dir_then_cache\n'
-bindkey -s '^F' ' find_file\n'
-bindkey -s '^Y' ' yazi . \n'
-bindkey -s '^N' ' nvim . \n'
-#
-# #insert into buffer (command line) keybindings
-bindkey_zle '^H' get_history
-# bindkey_zle '^R' recent_pick
-# bindkey_zle '^D' find_dir_from_cache
-# bindkey_zle '^[^D' find_dir_then_cache
-# bindkey_zle '^F' find_file
-#
-# function open_yazi_here() { yazi . }
-# bindkey_zle '^Y' open_yazi_here
-#
-# function open_nvim_here() { nvim . }
-# bindkey_zle '^N' open_nvim_here
-
+function open_nvim_here() { nvim . }
+bindkey_zle '^N' open_nvim_here
 
 
 
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
 
-# if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-#   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-# fi
-#
-# export NVM_DIR=$HOME/.nvm
-# for cmd (node npm npx); do
-#   eval "$cmd(){ unset -f $cmd; [[ -s \$NVM_DIR/nvm.sh ]] && . \$NVM_DIR/nvm.sh; $cmd \$@ }"
-# done
-
-#NOTE: replaced with above block
-# export NVM_DIR="$HOME/.nvm" && [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh" && [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  
+export NVM_DIR="$HOME/.nvm" && [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh" && [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  
  
 ## source $(brew --prefix nvm)/nvm.sh 
 ## export NVM_DIR="$HOME/.nvm"
@@ -201,18 +134,29 @@ bindkey_zle '^H' get_history
 # alias mw='defaults write -g com.apple.mouse.scaling'
 # alias mr='defaults read -g com.apple.mouse.scaling'
 # alias pix='Library/Android/sdk/emulator/emulator -avd Pixel_3a_API_33_arm64-v8a'
-
+#
 ## escaping strings i.e. latex to katex (using with Alfred instead)
 #function sks(){
 #	printf "%q" "$1" | pbcopy
 #}
 
 
+
+
+## undoes the last pushed commit, but keeps log 
+
+
+#mysql
+# export PATH=${PATH}:/usr/local/mysql/bin/
+
 # python (standard) redefinitions
 alias pip=pip3
 alias python2=python
 alias python=python3
 
+
+# If you come from bash you might have to change your $PATH.
+export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 
 # Path to your oh-my-zsh installation.
@@ -332,6 +276,19 @@ alias python=python3
 
 
 
+
+
+# pnpm
+export PNPM_HOME="/Users/brightowl/Library/pnpm"
+export PATH="$PNPM_HOME:$PATH"
+# pnpm end
+
+
+# previously in bash_profile
+
+#/usr/local/mysql/bin/mysql
+export PATH=${PATH}:/usr/local/mysql/bin/
+
 #export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-16.0.2.jdk/Contents/Home
 
 
@@ -346,7 +303,6 @@ alias python=python3
 
 
 #export LSCOLORS=gxBxhxDxfxhxhxhxhxcxcx
-
 
 
 

@@ -22,6 +22,8 @@ in
   home.stateVersion = "23.11";
 
   home.file = {
+    "/Library/Application Support/com.mitchellh.ghostty/config".source =
+      link_dotfiles "/ghostty/config";
     ".local/bin/nvim" = {
       source = link_dotfiles "/bin/nvim-recent"; # source in dotfiles repo
       executable = true; # chmod +x done by HM
@@ -110,6 +112,16 @@ in
   #   '';
   #
   # };
+
+  programs.zsh = {
+    enable = true;
+    initExtra = ''
+      # Load antidote
+      source ${pkgs.antidote}/share/antidote/antidote.zsh
+      antidote load ${config.home.homeDirectory}/.zsh_plugins.txt
+    '';
+  };
+}
 
   programs.home-manager.enable = true;
 

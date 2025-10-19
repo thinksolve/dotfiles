@@ -11,6 +11,23 @@ local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else command -v bat >/de
 local home_dirs_cache="$HOME/.cache/fcd_cache.gz"
 local dir_exclusions=(node_modules .git .cache .DS_Store venv __pycache__ Trash "*.bak" "*.log")
 
+function get_history_old() {
+
+    local cmd=("$(fc -rl 1 | fzf --select-1 --exit-0 | cut -c 8-)")
+    # cmd=$(history | fzf | cut -c 8-)
+    #
+    echo "$cmd"
+    # HIST_IGNORE_SPACE=1 eval "$cmd"
+    # zsh -c "source ~/.zshrc; HIST_IGNORE_SPACE=1; $cmd"
+
+    # local pick=$(fc -rl 1 | fzf --select-1 --exit-0 | cut -c 8-)
+    # nvim "$pick"
+}
+
+function get_history() {
+    fc -rl 1 | fzf +s | sed 's/^[ *]*[0-9*]* *//'
+}
+
 # function editable_path_old() {
 #     local p=$1
 #
@@ -34,31 +51,77 @@ function editable_path() {
 }
 
 function recent_pick() {
-    local db=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
+    local recent_pick_db=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
     local editor=${EDITOR:-nvim}
-    local filter=${1:-.*} pick
-
+    local filter=${1-}
+    local pick
     local -a open_now edit_later
 
-    <"$db" grep -E "$filter" | tac |
-        while IFS= read -r path; do
-            [[ -d $path ]] &&
-                printf '\e[34mDIR\e[0m\t%s\n' "$path" ||
-                printf '\e[33mFILE\e[0m\t%s\n' "$path"
-        done |
-        fzf --ansi -m \
-            --prompt="filter: ${1:-}" \
-            --header="Ctrl-E → edit DB" \
-            --bind "ctrl-e:execute($editor \"$db\" >/dev/tty)" \
-            --with-nth=1,2 \
-            --preview '
-        path=$(echo {} | cut -f2-)
+    local fzf_preview='
+    path=$(echo {} | cut -f2-)
+    if [[ -d $path ]]; then
+      /run/current-system/sw/bin/tree -a -C -L 1 "$path"
+    elif [[ $path =~ \.(jpe?g|jpg|png|gif|webp)$ ]]; then
+      /run/current-system/sw/bin/chafa -f ansi -s 100x40 "$path"
+    else
+      /run/current-system/sw/bin/bat --color=always "$path" 2>/dev/null ||
+      /bin/cat "$path" 2>/dev/null ||
+      /usr/bin/file -b "$path"
+    fi'
+
+    # first call
+    # <"$db" tac |
+    # while IFS= read -r path; do
+    #     [[ -d $path ]] &&
+    #         printf '\e[34mDIR\e[0m\t%s\n' "$path" ||
+    #         printf '\e[33mFILE\e[0m\t%s\n' "$path"
+    # done |
+
+    # export to make it visible to reload sub-shell (i.e. when deleting entry with ctrl-d)
+    export recent_pick_db
+
+    # fzf reload() cannot serialize functions so i have to make it a command string (to eval on)
+    # in order to recreate coloured list
+    RECENT_COLOURED_LIST='
+      <"$recent_pick_db" tac | while IFS= read -r path; do
         if [[ -d $path ]]; then
-          /run/current-system/sw/bin/tree -a -C -L 1 "$path"
+          printf "\\e[34mDIR\\e[0m\t%s\n" "$path"
         else
-          /run/current-system/sw/bin/bat --color=always "$path" 2>/dev/null || cat "$path" 2>/dev/null
-        fi' |
-        awk -F'\t' '{print $2}' |
+          printf "\\e[33mFILE\\e[0m\t%s\n" "$path"
+        fi
+      done'
+
+    coloured_list() {
+        tac "$recent_pick_db" | while IFS= read -r path; do
+            if [[ -d $path ]]; then
+                printf '\e[34mDIR\e[0m\t%s\n' "$path"
+            else
+                printf '\e[33mFILE\e[0m\t%s\n' "$path"
+            fi
+        done
+    }
+    # eval "$RECENT_COLOURED_LIST" |
+    coloured_list | fzf --ansi -m \
+        --delimiter=$'\t' \
+        --query="$filter" \
+        --prompt='recent> ' \
+        --header='Ctrl-D → delete • Ctrl-E → edit DB' \
+        --bind 'ctrl-e:execute('$editor' "$db" >/dev/tty)' \
+        --bind 'ctrl-d:transform:
+  printf "%s\n%s\n" "Delete this entry?" "{2}" |
+  fzf --print-query --exit-0 --multi --prompt="Confirm> " |
+  { read -r reply && [[ $reply == "{2}" ]] && rm -f "{2}" && sed -i '\'''\'' '\''\|{2}|d'\'' "$recent_pick_db" && echo "reload(coloured_list | cat)"; }' \
+        --preview '
+    path={2}
+    if [[ -d $path ]]; then
+      /run/current-system/sw/bin/tree -a -C -L 1 "$path"
+    elif [[ $path =~ \.(jpe?g|png|gif|webp)$ ]]; then
+      /run/current-system/sw/bin/chafa -f ansi -s 100x40 "$path"
+    else
+      /run/current-system/sw/bin/bat --color=always "$path" 2>/dev/null ||
+      /bin/cat "$path" 2>/dev/null ||
+      /usr/bin/file -b "$path"
+    fi' | awk -F'\t' '{print $2}' |
         while IFS= read -r pick; do
             [[ -e $pick ]] || continue
             if editable_path "$pick"; then
