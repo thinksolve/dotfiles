@@ -113,16 +113,12 @@ in
   #
   # };
 
-  programs.zsh = {
-    enable = true;
-    initExtra = ''
-      # Load antidote
-      source ${pkgs.antidote}/share/antidote/antidote.zsh
-      antidote load ${config.home.homeDirectory}/.zsh_plugins.txt
-    '';
-  };
-}
-
   programs.home-manager.enable = true;
-
+  # programs.zsh = {
+  #   enable = true;
+  #   initExtra = ''
+  #     source ${pkgs.antidote}/share/antidote/antidote.zsh
+  #     antidote load ${config.home.homeDirectory}/.zsh_plugins.txt
+  #   '';
+  # };
 }

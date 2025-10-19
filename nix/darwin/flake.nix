@@ -168,16 +168,15 @@
           # <-- added oct 10-2025
           system.primaryUser = username;
           # programs.zsh.enable = false;
-          # programs.zsh = {
-          #   # enable = false;
-          #   # enable = true; # gives you the proper PATH
-          #   # shellInit = ""; # don’t generate any extra lines
-          #   enable = true; # ← required
-          #   initExtra = ''
-          #     # load antidote
-          #     source ${pkgs.antidote}/share/antidote/antidote.zsh
-          #   '';
-          # };
+          programs.zsh = {
+            enable = false;
+            shellInit = ""; # don’t generate any extra lines
+            # enable = true; # ← required
+            # initExtra = ''
+            #   # load antidote
+            #   source ${pkgs.antidote}/share/antidote/antidote.zsh
+            # '';
+          };
 
           # <-- added oct 10-2025
 

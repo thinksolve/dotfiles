@@ -3,19 +3,69 @@
 # note: due to nix-darwin managing ssl certs, i have to explicitly advertise their locations
 # otherwise other dont get proper ssl certifications (like nvim-treesitter)
 
-source /nix/store/y0a9j1zcw6lhyvsb45gflbafqb5wv7zc-antidote-1.9.10/share/antidote/antidote.zsh
-source "$HOME"/.shell_functions.sh
-export PNPM_HOME="/Users/brightowl/Library/pnpm"
 
+source "$HOME"/.shell_functions.sh
 export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 export NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
-export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/.config/emacs/bin:$PATH"
-# If you come from bash you might have to change your $PATH.
-export PATH=$HOME/bin:/usr/local/bin:$PATH
-export PATH="$PNPM_HOME:$PATH"
-export PATH=${PATH}:/usr/local/mysql/bin/
+
+# export PNPM_HOME="/Users/brightowl/Library/pnpm"
+# export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
+# export PATH="$HOME/.local/bin:$PATH"
+# export PATH="$HOME/.config/emacs/bin:$PATH"
+# export PATH=$HOME/bin:/usr/local/bin:$PATH
+# export PATH="$PNPM_HOME:$PATH"
+# export PATH=${PATH}:/usr/local/mysql/bin/
+
+path=(
+  /run/current-system/sw/bin
+  $HOME/.nix-profile/bin
+  $HOME/.local/bin
+  $HOME/.config/emacs/bin
+  $HOME/bin
+  /usr/local/bin
+  # /usr/local/mysql/bin
+  $PNPM_HOME
+  $path
+)
+export PATH
+
+
+#convenience settings
+HISTFILE=~/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
+
+setopt appendhistory        # Append new history instead of overwriting
+setopt sharehistory         # Share history among all sessions
+setopt incappendhistory     # Write commands incrementally as you type them
+setopt hist_ignore_dups     # Ignore duplicate entries
+setopt hist_reduce_blanks   # Remove extra spaces
+setopt extendedhistory      # Save timestamps
+setopt autocd               # Move to directories without cd
+
+autoload -U compinit; compinit
+
+
+
+
+#nix helper to find explicit pathname of a pkg
+function nixpath() {
+    if [ -z "$1" ]; then
+        echo "Usage: nixpath <package-name>"
+        return 1
+    fi
+    nix eval --raw "nixpkgs#${1}"
+}
+
+
+# NOTE: using hardcoded path is faster, otherwise recreate it at runtime
+export ANTIDOTE_ZSH="/nix/store/y0a9j1zcw6lhyvsb45gflbafqb5wv7zc-antidote-1.9.10/share/antidote/antidote.zsh"
+if [[ ! -f "$ANTIDOTE_ZSH" ]]; then
+  ANTIDOTE_ZSH="$(nixpath antidote)/share/antidote/antidote.zsh"
+  echo '[nixpath] ANTIDOTE_ZSH fallback used — update the hardcoded path in .zshrc if stable'
+fi
+source "$ANTIDOTE_ZSH"
+antidote load
 
 
 # path=(
@@ -67,11 +117,11 @@ prompt pure
 # VIM_MODE_NO_DEFAULT_BINDINGS=true
 
 # plugins=(zsh-vim-mode zsh-autosuggestions)
-plugins=(vi-mode zsh-autosuggestions)
-export ZSH=$HOME/.oh-my-zsh
-source $ZSH/oh-my-zsh.sh
-source $ZSH_CUSTOM/plugins/vi-motions/motions.plugin.zsh #zsh-vim-mode also works but P (paste) url strings gets escaped still
-
+# plugins=(vi-mode zsh-autosuggestions)
+# export ZSH=$HOME/.oh-my-zsh
+# source $ZSH/oh-my-zsh.sh
+# source $ZSH_CUSTOM/plugins/vi-motions/motions.plugin.zsh #zsh-vim-mode also works but P (paste) url strings gets escaped still
+#
 # ZSH_THEME="robbyrussell"
 # ZSH_THEME="powerlevel10k/powerlevel10k"
 
