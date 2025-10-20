@@ -1,4 +1,3 @@
-zmodload zsh/zprof
 # export PATH="$HOME/.npm-global/bin:$PATH" ## changed npm prefix (npm get prefix) from readonly nix location '/nix/store/2ribxb3gi87gj4331m6k0ydn0z90zfi7-nodejs-22.14.0' to a custom writable location '~/.npm-global' .. to allow global npm installs 
 
 # note: due to nix-darwin managing ssl certs, i have to explicitly advertise their locations
@@ -10,7 +9,7 @@ export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 export NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 # export DOOMDIR="$HOME/.config/doom"
 
-# export PNPM_HOME="/Users/brightowl/Library/pnpm"
+export PNPM_HOME="/Users/brightowl/Library/pnpm"
 # export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
 # export PATH="$HOME/.local/bin:$PATH"
 # export PATH="$HOME/.config/emacs/bin:$PATH"
@@ -18,8 +17,10 @@ export NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 # export PATH="$PNPM_HOME:$PATH"
 # export PATH=${PATH}:/usr/local/mysql/bin/
 
+export NIX_CURRENT_SYSTEM=/run/current-system/sw/
+
 path=(
-  /run/current-system/sw/bin
+  $NIX_CURRENT_SYSTEM/bin
   $HOME/.nix-profile/bin
   $HOME/.local/bin
   $HOME/.config/emacs/bin
@@ -85,44 +86,26 @@ setopt ignore_eof
 
 
 
-# export PATH_TO_PROMPT_PURE_SETUP="/nix/store/bswjh7qdqbaa5r33bijlrbiw2a6a73al-pure-prompt-1.23.0/share/zsh/site-functions/"
-# export PATH_TO_PROMPT_PURE_SETUP="$(nixpath pure-prompt)/share/zsh/site-functions/"
-#
 
- # ---------- antidote ----------
-: ${ANTIDOTE_STORE:=$(nix eval --raw nixpkgs#antidote 2>/dev/null)}
-[[ -d $ANTIDOTE_STORE/share/antidote ]] || ANTIDOTE_STORE=$(nix eval --raw nixpkgs#antidote)
-source $ANTIDOTE_STORE/share/antidote/antidote.zsh
-antidote load
 
-# ---------- pure prompt ----------
-: ${PURE_PROMPT_STORE:=$(nix eval --raw nixpkgs#pure-prompt 2>/dev/null)}
-[[ -d $PURE_PROMPT_STORE/share/zsh/site-functions ]] || PURE_PROMPT_STORE=$(nix eval --raw nixpkgs#pure-prompt)
-fpath+=($PURE_PROMPT_STORE/share/zsh/site-functions)
-autoload -U promptinit && promptinit
+
+#   export PURE_PROMPT_PATH="$(nix eval --raw 'nixpkgs#pure-prompt')/share/zsh/site-functions/"
+# export PURE_PROMPT_PATH=$HOME/.zsh/pure
+export PURE_PROMPT_PATH="$NIX_CURRENT_SYSTEM/share/zsh/site-functions/"
+fpath+=($PURE_PROMPT_PATH)
+autoload -U promptinit; promptinit
 prompt pure
 
 
 
-# # Resolve or validate PURE_PROMPT_PATH
-# if [[ ! -d "$PURE_PROMPT_PATH" ]]; then
-#   export PURE_PROMPT_PATH="$(nix eval --raw 'nixpkgs#pure-prompt')/share/zsh/site-functions/"
-# fi
-#
-# # export PURE_PROMPT_PATH=$HOME/.zsh/pure
-# fpath+=($PURE_PROMPT_PATH)
-# autoload -U promptinit; promptinit
-# prompt pure
-#
-#
-#
-#
-# # Resolve or re-resolve antidote path
+
+# Resolve or re-resolve antidote path
 # if [[ ! -d "$PATH_TO_ANTIDOTE" ]]; then
 #   export PATH_TO_ANTIDOTE="$(nix eval --raw 'nixpkgs#antidote')/share/antidote"
 # fi
-# source "$PATH_TO_ANTIDOTE/antidote.zsh"
-# antidote load
+
+source "$NIX_CURRENT_SYSTEM/share/antidote/antidote.zsh"
+antidote load
 
 #NOTE: allegedly faster alternative to 'antidote load' way
 # zsh_plugins=$HOME/.zsh_plugins
@@ -422,4 +405,3 @@ alias python=python3
 
 
 #export LSCOLORS=gxBxhxDxfxhxhxhxhxcxcx
-zprof

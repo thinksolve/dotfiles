@@ -112,8 +112,9 @@ in
   #   '';
   #
   # };
+  programs.zsh.antidote.enable = true;
+  # programs.home-manager.enable = true;
 
-  programs.home-manager.enable = true;
   # programs.zsh = {
   #   enable = true;
   #   initExtra = ''

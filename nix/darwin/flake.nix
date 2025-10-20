@@ -128,13 +128,13 @@
           ];
 
           terminal_and_shell_enhancements = [
-            pkgs.fastfetch
             pkgs.antidote
+            pkgs.fastfetch
             pkgs.iterm2
             pkgs.nushell
             pkgs.pure-prompt
             pkgs.yazi
-            # pkgs.tmux
+            pkgs.tmux
           ];
 
           # __commented_out_pkgs = [
@@ -183,6 +183,10 @@
           # security.pam.enableSudoTouchIdAuth = true;
           security.pam.services.sudo_local.touchIdAuth = true;
           # users.knownUsers = [ username ]; NOTE: was supposed to delete
+          environment.pathsToLink = [
+            "/bin"
+            "/share"
+          ];
           environment.systemPackages =
             cli
             ++ dev_tools
