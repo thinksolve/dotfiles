@@ -1,3 +1,4 @@
+zmodload zsh/zprof
 # export PATH="$HOME/.npm-global/bin:$PATH" ## changed npm prefix (npm get prefix) from readonly nix location '/nix/store/2ribxb3gi87gj4331m6k0ydn0z90zfi7-nodejs-22.14.0' to a custom writable location '~/.npm-global' .. to allow global npm installs 
 
 # note: due to nix-darwin managing ssl certs, i have to explicitly advertise their locations
@@ -7,6 +8,7 @@
 source "$HOME"/.shell_functions.sh
 export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 export NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+# export DOOMDIR="$HOME/.config/doom"
 
 # export PNPM_HOME="/Users/brightowl/Library/pnpm"
 # export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
@@ -58,29 +60,6 @@ function nixpath() {
 }
 
 
-# NOTE: using hardcoded path is faster, otherwise recreate it at runtime
-export ANTIDOTE_ZSH="/nix/store/y0a9j1zcw6lhyvsb45gflbafqb5wv7zc-antidote-1.9.10/share/antidote/antidote.zsh"
-if [[ ! -f "$ANTIDOTE_ZSH" ]]; then
-  ANTIDOTE_ZSH="$(nixpath antidote)/share/antidote/antidote.zsh"
-  echo '[nixpath] ANTIDOTE_ZSH fallback used — update the hardcoded path in .zshrc if stable'
-fi
-source "$ANTIDOTE_ZSH"
-antidote load
-
-
-# path=(
-#   /run/current-system/sw/bin
-#   $HOME/.nix-profile/bin
-#   $HOME/.local/bin
-#   # $HOME/.config/emacs/bin
-#   $HOME/bin
-#   /usr/local/bin
-#   # /usr/local/mysql/bin
-#   $PNPM_HOME
-#   $path
-# )
-# export PATH
-
 
 
 
@@ -105,23 +84,70 @@ setopt HIST_IGNORE_ALL_DUPS
 setopt ignore_eof 
 
 
-# export DOOMDIR="$HOME/.config/doom"
 
-
-fpath+=($HOME/.zsh/pure)
-autoload -U promptinit; promptinit
-prompt pure
+# export PATH_TO_PROMPT_PURE_SETUP="/nix/store/bswjh7qdqbaa5r33bijlrbiw2a6a73al-pure-prompt-1.23.0/share/zsh/site-functions/"
+# export PATH_TO_PROMPT_PURE_SETUP="$(nixpath pure-prompt)/share/zsh/site-functions/"
 #
-# found out the hard way that plugins (vi-mode) affect bindkeys, so bindkeys should be placed BELOW plugins
-# plugins=(vi-mode zsh-autosuggestions zsh-syntax-highlighting git)
-# VIM_MODE_NO_DEFAULT_BINDINGS=true
+
+ # ---------- antidote ----------
+: ${ANTIDOTE_STORE:=$(nix eval --raw nixpkgs#antidote 2>/dev/null)}
+[[ -d $ANTIDOTE_STORE/share/antidote ]] || ANTIDOTE_STORE=$(nix eval --raw nixpkgs#antidote)
+source $ANTIDOTE_STORE/share/antidote/antidote.zsh
+antidote load
+
+# ---------- pure prompt ----------
+: ${PURE_PROMPT_STORE:=$(nix eval --raw nixpkgs#pure-prompt 2>/dev/null)}
+[[ -d $PURE_PROMPT_STORE/share/zsh/site-functions ]] || PURE_PROMPT_STORE=$(nix eval --raw nixpkgs#pure-prompt)
+fpath+=($PURE_PROMPT_STORE/share/zsh/site-functions)
+autoload -U promptinit && promptinit
+prompt pure
+
+
+
+# # Resolve or validate PURE_PROMPT_PATH
+# if [[ ! -d "$PURE_PROMPT_PATH" ]]; then
+#   export PURE_PROMPT_PATH="$(nix eval --raw 'nixpkgs#pure-prompt')/share/zsh/site-functions/"
+# fi
+#
+# # export PURE_PROMPT_PATH=$HOME/.zsh/pure
+# fpath+=($PURE_PROMPT_PATH)
+# autoload -U promptinit; promptinit
+# prompt pure
+#
+#
+#
+#
+# # Resolve or re-resolve antidote path
+# if [[ ! -d "$PATH_TO_ANTIDOTE" ]]; then
+#   export PATH_TO_ANTIDOTE="$(nix eval --raw 'nixpkgs#antidote')/share/antidote"
+# fi
+# source "$PATH_TO_ANTIDOTE/antidote.zsh"
+# antidote load
+
+#NOTE: allegedly faster alternative to 'antidote load' way
+# zsh_plugins=$HOME/.zsh_plugins
+# [[ -f ${zsh_plugins}.txt ]] || touch ${zsh_plugins}.txt
+#
+# fpath+=($PATH_TO_ANTIDOTE/functions)
+# autoload -Uz antidote
+#
+# if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
+#   antidote bundle <${zsh_plugins}.txt >|${zsh_plugins}.zsh
+# fi
+# source ${zsh_plugins}.zsh
+
+
+
+bindkey -v #basic vi-mode but antidote's ~/.zsh_plugins.txt uses 'vi-more' to augment it
+
+# source /Users/brightowl/.oh-my-zsh/custom/plugins/zsh-vim-mode/zsh-vim-mode.plugin.zsh
 
 # plugins=(zsh-vim-mode zsh-autosuggestions)
 # plugins=(vi-mode zsh-autosuggestions)
 # export ZSH=$HOME/.oh-my-zsh
 # source $ZSH/oh-my-zsh.sh
 # source $ZSH_CUSTOM/plugins/vi-motions/motions.plugin.zsh #zsh-vim-mode also works but P (paste) url strings gets escaped still
-#
+
 # ZSH_THEME="robbyrussell"
 # ZSH_THEME="powerlevel10k/powerlevel10k"
 
@@ -396,7 +422,4 @@ alias python=python3
 
 
 #export LSCOLORS=gxBxhxDxfxhxhxhxhxcxcx
-
-
-
-
+zprof
