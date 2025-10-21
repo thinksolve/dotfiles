@@ -7,6 +7,8 @@ hs.alert.show("hs init.lua loaded")
 require("submodules")
 require("registerSpoons")
 
+local TG = require("termGuard")
+
 local watchers = require("watchers") -- set as variable in case want to stop a watcher
 local window_management = require("window-management")
 local space_management = require("space-management")
@@ -652,13 +654,15 @@ local function launchTerminalWithCmd(opts)
 	)
 end
 
-hs.hotkey.bind({ "cmd", "alt" }, "r", function()
+local hotkey_ctrl_r = hs.hotkey.bind({ "ctrl" }, "r", function()
+	-- hs.hotkey.bind({ "cmd", "alt" }, "r", function()
 	-- launchTerminalTheRunCmd({ cmd = "recent_pick" })
 	launchTerminalWithCmd({ cmd = "recent_pick" })
 end)
 
 -- bind keys --------------------------------------------------------------
-hs.hotkey.bind({ "cmd", "alt" }, "y", function()
+local hotkey_ctrl_y = hs.hotkey.bind({ "ctrl" }, "y", function()
+	-- hs.hotkey.bind({ "cmd", "alt" }, "y", function()
 	launchTerminalWithCmd({ cmd = "yazi" })
 	-- launchTerminalTheRunCmd({ cmd = "yazi" })
 	-- launchTerminalTheRunCmd({ cmd = "yazi", bundleID = "com.apple.Terminal" })
@@ -674,12 +678,14 @@ end)
 -- }end)
 --
 
-hs.hotkey.bind({ "cmd", "option" }, "/", function()
+local hotkey_ctrl_f = hs.hotkey.bind({ "ctrl" }, "f", function()
+	-- hs.hotkey.bind({ "cmd", "option" }, "/", function()
 	-- runCommandInItermAndHitEnter("find_file")
 	launchTerminalWithCmd({ cmd = "find_file" })
 end)
 
-hs.hotkey.bind({ "cmd" }, "/", function()
+local hotkey_ctrl_d = hs.hotkey.bind({ "ctrl" }, "d", function()
+	-- local outsideHK  = hs.hotkey.bind({ "cmd" }, "/", function()
 	-- runCommandInItermAndHitEnter("ruzzy")
 	-- runCommandInItermAndHitEnter('cd "$(find_dirs_fuzzy_full)" && nvim .')
 	-- runCommandInItermAndHitEnter('cd "$(find_dirs_fuzzy_full)" && yazi .')
@@ -696,3 +702,10 @@ hs.hotkey.bind({ "cmd" }, "/", function()
 	-- runCommandInItermAndHitEnter("find_dir_from_cache 'emacs'")
 	launchTerminalWithCmd({ cmd = "find_dir_from_cache" })
 end)
+
+local hotkey_ctrl_option_d = hs.hotkey.bind({ "ctrl", "option" }, "d", function()
+	launchTerminalWithCmd({ cmd = "find_dir_then_cache" })
+end)
+--
+
+TG.watch({ hotkey_ctrl_d, hotkey_ctrl_option_d, hotkey_ctrl_f, hotkey_ctrl_y, hotkey_ctrl_r })

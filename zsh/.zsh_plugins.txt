@@ -1,0 +1,2 @@
+zsh-vi-more/vi-motions
+zsh-users/zsh-autosuggestions

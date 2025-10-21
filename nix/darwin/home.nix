@@ -34,6 +34,8 @@ in
     };
     ".hammerspoon".source = link_dotfiles "/hammerspoon";
     ".zshrc".source = link_dotfiles "/zsh/.zshrc";
+    ".zsh_plugins.zsh".source = link_dotfiles "/zsh/.zsh_plugins.zsh";
+    ".zsh_plugins.txt".source = link_dotfiles "/zsh/.zsh_plugins.txt";
     ".tmux.conf".source = link_dotfiles "/tmux/.tmux.conf";
     ".shell_functions.sh".source = link_dotfiles "/zsh/.shell_functions.sh";
     ".config/nvim".source = link_dotfiles "/nvim";
@@ -112,14 +114,6 @@ in
   #   '';
   #
   # };
-  programs.zsh.antidote.enable = true;
-  # programs.home-manager.enable = true;
+  programs.home-manager.enable = true;
 
-  # programs.zsh = {
-  #   enable = true;
-  #   initExtra = ''
-  #     source ${pkgs.antidote}/share/antidote/antidote.zsh
-  #     antidote load ${config.home.homeDirectory}/.zsh_plugins.txt
-  #   '';
-  # };
 }

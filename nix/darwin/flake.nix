@@ -155,12 +155,9 @@
           #     };
           #   }))
           #   pkgs.glib
-          #   pkgs.oh-my-zsh
           #   pkgs.parallel
           #   pkgs.unbound
           #   pkgs.zig
-          #   pkgs.zsh-autosuggestions
-          #   pkgs.zsh-syntax-highlighting
           # ];
         in
         {

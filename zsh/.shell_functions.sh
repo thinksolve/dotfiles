@@ -11,6 +11,15 @@ local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else command -v bat >/de
 local home_dirs_cache="$HOME/.cache/fcd_cache.gz"
 local dir_exclusions=(node_modules .git .cache .DS_Store venv __pycache__ Trash "*.bak" "*.log")
 
+#nix helper to find explicit pathname of a pkg
+function nixpath() {
+    if [ -z "$1" ]; then
+        echo "Usage: nixpath <package-name>"
+        return 1
+    fi
+    nix eval --raw "nixpkgs#${1}"
+}
+
 function get_history_old() {
 
     local cmd=("$(fc -rl 1 | fzf --select-1 --exit-0 | cut -c 8-)")
@@ -464,7 +473,10 @@ function findBundleIdAndPath() {
 }
 
 function getBundleId() {
-    defaults read "$1/Contents/Info" CFBundleIdentifier 2>/dev/null
+    for app in "$@"; do
+        printf '%s → %s\n' "$app" "$(osascript -e "id of app \"$app\"" 2>/dev/null || echo "NOT_FOUND")"
+    done
+    # defaults read "$1/Contents/Info" CFBundleIdentifier 2>/dev/null
     # mdls -name kMDItemCFBundleIdentifier "$1" | cut -d '"' -f 2 #not as robust
     # mdls -name kMDItemCFBundleIdentifier -raw "$1" | cut -d '"' -f 2 #not as robust
 }

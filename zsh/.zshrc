@@ -4,11 +4,15 @@
 # otherwise other dont get proper ssl certifications (like nvim-treesitter)
 
 
+
+
 source "$HOME"/.shell_functions.sh
 export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 export NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-# export DOOMDIR="$HOME/.config/doom"
 
+export NIX_CURRENT_SYSTEM=/run/current-system/sw/
+
+# export DOOMDIR="$HOME/.config/doom"
 export PNPM_HOME="/Users/brightowl/Library/pnpm"
 # export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
 # export PATH="$HOME/.local/bin:$PATH"
@@ -17,7 +21,6 @@ export PNPM_HOME="/Users/brightowl/Library/pnpm"
 # export PATH="$PNPM_HOME:$PATH"
 # export PATH=${PATH}:/usr/local/mysql/bin/
 
-export NIX_CURRENT_SYSTEM=/run/current-system/sw/
 
 path=(
   $NIX_CURRENT_SYSTEM/bin
@@ -41,32 +44,45 @@ SAVEHIST=10000
 setopt appendhistory        # Append new history instead of overwriting
 setopt sharehistory         # Share history among all sessions
 setopt incappendhistory     # Write commands incrementally as you type them
-setopt hist_ignore_dups     # Ignore duplicate entries
+# setopt hist_ignore_dups     # Ignore consecutive duplicate entries
+setopt hist_ignore_all_dups # Ignore ALL duplicate entries
 setopt hist_reduce_blanks   # Remove extra spaces
 setopt extendedhistory      # Save timestamps
 setopt autocd               # Move to directories without cd
+setopt auto_param_slash     # Allow autocomplete to work on pathname variables
 
-autoload -U compinit; compinit
+ 
+
+#ctrl-d on new empty command line closes terminal (acts like EOF), 
+# otherwise it mimics TAB completion ... overloaded so remove it
+# setopt ignore_eof 
+
+
+autoload -U compinit
+compinit -C -d "${ZDOTDIR:-$HOME}/.zcompdump"
+zcompile "${ZDOTDIR:-$HOME}/.zcompdump" 2>/dev/null
 
 
 
 
-#nix helper to find explicit pathname of a pkg
-function nixpath() {
-    if [ -z "$1" ]; then
-        echo "Usage: nixpath <package-name>"
-        return 1
-    fi
-    nix eval --raw "nixpkgs#${1}"
-}
 
+# export PURE_PROMPT_PATH=$HOME/.zsh/pure
+export PURE_PROMPT_PATH="$NIX_CURRENT_SYSTEM/share/zsh/site-functions/"
+fpath+=($PURE_PROMPT_PATH)
+autoload -U promptinit; promptinit
+prompt pure
+
+
+source "$NIX_CURRENT_SYSTEM/share/antidote/antidote.zsh"
+antidote load
+bindkey -v #basic vi-mode but antidote's ~/.zsh_plugins.txt uses 'vi-more' to augment it
 
 
 
 
 ## NOTE: the custom nvim binary (at ~./local/bin) uses 'recent_add' logic before executing real nvim 
 readonly RECENT_NVIM="$HOME/.local/bin/nvim"
-readonly REAL_NVIM="/run/current-system/sw/bin/nvim"
+readonly REAL_NVIM="$NIX_CURRENT_SYSTEM/bin/nvim"
 
 export EDITOR="$RECENT_NVIM"
 export VISUAL="$RECENT_NVIM"
@@ -77,41 +93,14 @@ alias drs='sudo darwin-rebuild switch --flake ~/.dotfiles/nix/darwin'
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
-# Alias for convenience
-setopt HIST_IGNORE_ALL_DUPS 
-
-#ctrl-d on new empty command line closes terminal (acts like EOF), 
-# otherwise it mimics TAB completion ... overloaded so remove it
-setopt ignore_eof 
 
 
-
-
-
-
-#   export PURE_PROMPT_PATH="$(nix eval --raw 'nixpkgs#pure-prompt')/share/zsh/site-functions/"
-# export PURE_PROMPT_PATH=$HOME/.zsh/pure
-export PURE_PROMPT_PATH="$NIX_CURRENT_SYSTEM/share/zsh/site-functions/"
-fpath+=($PURE_PROMPT_PATH)
-autoload -U promptinit; promptinit
-prompt pure
-
-
-
-
-# Resolve or re-resolve antidote path
-# if [[ ! -d "$PATH_TO_ANTIDOTE" ]]; then
-#   export PATH_TO_ANTIDOTE="$(nix eval --raw 'nixpkgs#antidote')/share/antidote"
-# fi
-
-source "$NIX_CURRENT_SYSTEM/share/antidote/antidote.zsh"
-antidote load
 
 #NOTE: allegedly faster alternative to 'antidote load' way
 # zsh_plugins=$HOME/.zsh_plugins
 # [[ -f ${zsh_plugins}.txt ]] || touch ${zsh_plugins}.txt
 #
-# fpath+=($PATH_TO_ANTIDOTE/functions)
+# fpath+=($NIX_CURRENT_SYSTEM/share/antidote/functions)
 # autoload -Uz antidote
 #
 # if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
@@ -121,18 +110,8 @@ antidote load
 
 
 
-bindkey -v #basic vi-mode but antidote's ~/.zsh_plugins.txt uses 'vi-more' to augment it
 
-# source /Users/brightowl/.oh-my-zsh/custom/plugins/zsh-vim-mode/zsh-vim-mode.plugin.zsh
 
-# plugins=(zsh-vim-mode zsh-autosuggestions)
-# plugins=(vi-mode zsh-autosuggestions)
-# export ZSH=$HOME/.oh-my-zsh
-# source $ZSH/oh-my-zsh.sh
-# source $ZSH_CUSTOM/plugins/vi-motions/motions.plugin.zsh #zsh-vim-mode also works but P (paste) url strings gets escaped still
-
-# ZSH_THEME="robbyrussell"
-# ZSH_THEME="powerlevel10k/powerlevel10k"
 
 alias config='cd ~/.dotfiles/ && yazi .'
 alias evim='emacs -nw' # not really useful now that im using emacsclient
@@ -405,3 +384,29 @@ alias python=python3
 
 
 #export LSCOLORS=gxBxhxDxfxhxhxhxhxcxcx
+
+
+# ------------- OLD OMZ CODE (replaced by antidote -------------
+# plugins=(zsh-vim-mode zsh-autosuggestions)
+# export ZSH=$HOME/.oh-my-zsh
+# source $ZSH/oh-my-zsh.sh
+# # plugins=(vi-mode zsh-autosuggestions)
+# # source $ZSH_CUSTOM/plugins/vi-motions/motions.plugin.zsh #zsh-vim-mode also works but P (paste) url strings gets escaped still
+# # source /Users/brightowl/.oh-my-zsh/custom/plugins/zsh-vim-mode/zsh-vim-mode.plugin.zsh
+# # ZSH_THEME="robbyrussell"
+# # ZSH_THEME="powerlevel10k/powerlevel10k"
+# ------------- OLD OMZ CODE (replaced by antidote -------------
+
+
+# alias zsh-recompile-funcs='zcompile ~/.shell_functions.zwc ~/.shell_functions.sh && echo "Compiled! Restart shell."'
+function compile_zsh() {
+  setopt extendedglob
+  local repo=${ZDOTDIR:-$HOME}/.dotfiles/zsh
+
+  for src in $repo/.zshrc(N) $repo/*.sh(N) $repo/*.zsh(N); do
+    zcompile -U -z $src
+  done
+
+  # compile the dump only where compinit expects it
+  zcompile -U -z ~/.zcompdump 2>/dev/null
+}

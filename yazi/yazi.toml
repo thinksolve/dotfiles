@@ -21,7 +21,7 @@ prepend_rules = [
 [mgr]
 ratio = [1, 3, 4]
 show_symlink=true
-# show_hidden=true
+show_hidden=true
 
 [preview]
 wrap = "yes"
