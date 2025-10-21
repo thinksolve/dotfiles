@@ -4,6 +4,8 @@
 # otherwise other dont get proper ssl certifications (like nvim-treesitter)
 
 
+#I now source this into ALL shell scripts (including zshrc); source of truth for PATH
+source ~/.config/path.sh 
 
 
 source "$HOME"/.shell_functions.sh
@@ -13,7 +15,7 @@ export NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 export NIX_CURRENT_SYSTEM=/run/current-system/sw/
 
 # export DOOMDIR="$HOME/.config/doom"
-export PNPM_HOME="/Users/brightowl/Library/pnpm"
+# export PNPM_HOME="/Users/brightowl/Library/pnpm"
 # export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
 # export PATH="$HOME/.local/bin:$PATH"
 # export PATH="$HOME/.config/emacs/bin:$PATH"
@@ -22,18 +24,32 @@ export PNPM_HOME="/Users/brightowl/Library/pnpm"
 # export PATH=${PATH}:/usr/local/mysql/bin/
 
 
-path=(
-  $NIX_CURRENT_SYSTEM/bin
-  $HOME/.nix-profile/bin
-  $HOME/.local/bin
-  $HOME/.config/emacs/bin
-  $HOME/bin
-  /usr/local/bin
-  # /usr/local/mysql/bin
-  $PNPM_HOME
-  $path
-)
-export PATH
+# path=(
+#   $NIX_CURRENT_SYSTEM/bin
+#   $HOME/.nix-profile/bin
+#   $HOME/.local/bin
+#   $HOME/.config/emacs/bin
+#   $HOME/bin
+#   /usr/local/bin
+#   # /usr/local/mysql/bin
+#   $PNPM_HOME
+#   $path
+# )
+# export PATH
+#
+
+
+# antidote essentially replaces my uses for OMZ
+source "$NIX_CURRENT_SYSTEM/share/antidote/antidote.zsh"
+antidote load
+bindkey -v #basic vi-mode but antidote's ~/.zsh_plugins.txt uses 'vi-more' to augment it
+
+
+# export PURE_PROMPT_PATH=$HOME/.zsh/pure
+export PURE_PROMPT_PATH="$NIX_CURRENT_SYSTEM/share/zsh/site-functions/"
+fpath+=($PURE_PROMPT_PATH)
+autoload -U promptinit; promptinit
+prompt pure
 
 
 #convenience settings
@@ -51,31 +67,19 @@ setopt extendedhistory      # Save timestamps
 setopt autocd               # Move to directories without cd
 setopt auto_param_slash     # Allow autocomplete to work on pathname variables
 
- 
-
 #ctrl-d on new empty command line closes terminal (acts like EOF), 
 # otherwise it mimics TAB completion ... overloaded so remove it
-# setopt ignore_eof 
+setopt ignore_eof 
 
 
 autoload -U compinit
 compinit -C -d "${ZDOTDIR:-$HOME}/.zcompdump"
 zcompile "${ZDOTDIR:-$HOME}/.zcompdump" 2>/dev/null
 
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
 
 
-
-
-# export PURE_PROMPT_PATH=$HOME/.zsh/pure
-export PURE_PROMPT_PATH="$NIX_CURRENT_SYSTEM/share/zsh/site-functions/"
-fpath+=($PURE_PROMPT_PATH)
-autoload -U promptinit; promptinit
-prompt pure
-
-
-source "$NIX_CURRENT_SYSTEM/share/antidote/antidote.zsh"
-antidote load
-bindkey -v #basic vi-mode but antidote's ~/.zsh_plugins.txt uses 'vi-more' to augment it
 
 
 

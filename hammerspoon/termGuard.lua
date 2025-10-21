@@ -3,9 +3,9 @@ local M = {}
 
 -- default terminal list; caller can override
 M.defaultIDs = {
-	["com.googlecode.itterm2"] = true,
-	["com.apple.Terminal"] = true,
 	["com.mitchellh.ghostty"] = true,
+	["com.googlecode.iterm2"] = true,
+	["com.apple.Terminal"] = true,
 }
 
 -- enable/disable *one* hotkey object

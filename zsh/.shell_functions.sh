@@ -34,7 +34,8 @@ function get_history_old() {
 }
 
 function get_history() {
-    fc -rl 1 | fzf +s | sed 's/^[ *]*[0-9*]* *//'
+    # fc -rl 1 | fzf +s | sed 's/^[ *]*[0-9*]* *//' # +s garbles first return
+    fc -rl 1 | fzf --layout=reverse --height=~30 | sed 's/^[ *]*[0-9*]* *//'
 }
 
 # function editable_path_old() {
