@@ -6,14 +6,26 @@ MAX=75
 # first real file/dir argument
 for arg; do [ -e "$arg" ] && FILE=$(realpath "$arg") && break; done
 
-# atomic deduping write
+# # atomic deduping write (keeps old)
+# if [ -n "$FILE" ]; then
+#   tmp=$(mktemp) || exit 1
+#   {
+#     [ -f "$RECENT_DB" ] && cat "$RECENT_DB"
+#     echo "$FILE"
+#   } |
+#     awk '!seen[$0]++' | tail -n "$MAX" >"$tmp" && mv "$tmp" "$RECENT_DB"
+# fi
+
+# # atomic deduping write (keeps latest)
 if [ -n "$FILE" ]; then
   tmp=$(mktemp) || exit 1
-  {
-    [ -f "$RECENT_DB" ] && cat "$RECENT_DB"
-    echo "$FILE"
-  } |
-    awk '!seen[$0]++' | tail -n "$MAX" >"$tmp" && mv "$tmp" "$RECENT_DB"
+  # 1. copy everything except the duplicate
+  [ -f "$RECENT_DB" ] && grep -Fxv "$FILE" "$RECENT_DB" >"$tmp"
+  # 2. append the new hit → now at bottom
+  echo "$FILE" >>"$tmp"
+  # 3. keep only MAX lines (trim from the top, preserve order)
+  tail -n "$MAX" "$tmp" >"$tmp.2" && mv "$tmp.2" "$RECENT_DB"
+  rm -f "$tmp"
 fi
 
 exec "$REAL_NVIM" "$@"
