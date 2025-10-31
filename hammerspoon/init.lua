@@ -661,12 +661,6 @@ local hotkey_ctrl_r = hs.hotkey.bind({ "ctrl" }, "r", function()
 end)
 
 -- bind keys --------------------------------------------------------------
-local hotkey_ctrl_y = hs.hotkey.bind({ "ctrl" }, "y", function()
-	-- hs.hotkey.bind({ "cmd", "alt" }, "y", function()
-	launchTerminalWithCmd({ cmd = "yazi" })
-	-- launchTerminalTheRunCmd({ cmd = "yazi" })
-	-- launchTerminalTheRunCmd({ cmd = "yazi", bundleID = "com.apple.Terminal" })
-end)
 
 -- hs.hotkey.bind({"cmd","alt"}, "r",
 --   function() launchTerminalThenRunCmd{
@@ -707,5 +701,60 @@ local hotkey_ctrl_option_d = hs.hotkey.bind({ "ctrl", "option" }, "d", function(
 	launchTerminalWithCmd({ cmd = "find_dir_then_cache" })
 end)
 --
+local hotkey_ctrl_y = hs.hotkey.bind({ "ctrl" }, "y", function()
+	-- hs.hotkey.bind({ "cmd", "alt" }, "y", function()
+	launchTerminalWithCmd({ cmd = "yazi" })
+end)
 
 TG.watch({ hotkey_ctrl_d, hotkey_ctrl_option_d, hotkey_ctrl_f, hotkey_ctrl_y, hotkey_ctrl_r })
+
+--------------------------------------------------------------------------------
+-- 100 % self-contained silent capture → clipboard
+-- ⌘⌥C  : start
+-- Enter: finish & copy
+-- Esc  : cancel
+--------------------------------------------------------------------------------
+hs.hotkey.bind({ "cmd", "alt" }, "c", function()
+	local seq = "" -- text being built
+	local enterKeys = { [36] = true, [76] = true } -- Return / keypad Enter
+	local stopper -- forward-declare
+
+	local function handler(ev)
+		local k = ev:getKeyCode()
+		local f = ev:getFlags()
+
+		if enterKeys[k] then -- finish
+			hs.pasteboard.setContents(seq)
+			stopper()
+			hs.alert("Copied: " .. seq)
+			return true
+		end
+		if k == 53 then -- Esc → cancel
+			stopper()
+			hs.alert("Capture cancelled")
+			return true
+		end
+		if k == 51 then
+			seq = seq:sub(1, -2)
+			return true
+		end -- Back-space
+		if k == 49 then
+			seq = seq .. " "
+			return true
+		end -- Space
+
+		local name = hs.keycodes.map[k]
+		if name and #name == 1 and not (f.ctrl or f.cmd or f.alt) then
+			seq = seq .. (f.shift and name:upper() or name)
+			return true
+		end
+		return true -- swallow rest
+	end
+
+	local tap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, handler)
+	stopper = function()
+		tap:stop()
+	end -- stop function
+	tap:start()
+	hs.alert("Type…  ⏎ copy  ⎋ cancel")
+end)

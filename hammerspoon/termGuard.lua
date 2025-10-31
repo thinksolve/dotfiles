@@ -19,12 +19,26 @@ M.toggle = function(hk, bundleSet)
 	end
 end
 
+local log = hs.logger.new("termGuard", "info")
 -- wire up the watcher for a list of hotkeys
 M.watch = function(hotkeys, bundleSet)
 	bundleSet = bundleSet or M.defaultIDs
 	local function check()
-		for _, hk in ipairs(hotkeys) do
-			M.toggle(hk, bundleSet)
+		-- for _, hk in ipairs(hotkeys) do
+		-- 	M.toggle(hk, bundleSet)
+		-- end
+		-- NOTE: this pcall wrap useful when analyzing console to see if it crashed
+		local ok, err = pcall(function()
+			for _, hk in ipairs(hotkeys) do
+				M.toggle(hk, bundleSet)
+			end
+		end)
+
+		--
+		-- log.i("Initializing")
+		--
+		if not ok then
+			log.e(err)
 		end
 	end
 	hs.application.watcher.new(check):start()

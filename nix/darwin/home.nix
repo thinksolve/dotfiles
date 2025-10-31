@@ -24,6 +24,7 @@ in
   home.file = {
     "/Library/Application Support/com.mitchellh.ghostty/config".source =
       link_dotfiles "/ghostty/config";
+
     ".local/bin/nvim" = {
       source = link_dotfiles "/bin/nvim-recent"; # source in dotfiles repo
       executable = true; # chmod +x done by HM
@@ -50,15 +51,21 @@ in
     # ".doom.d/config.el".source = link_dotfiles "/doom/config.el";
     # ".doom.d/packages.el".source = link_dotfiles "/doom/packages.el";
   };
+  home.activation.zcompile = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    ${pkgs.zsh}/bin/zsh -c '
+      [[ -f $HOME/.zshrc ]] && zcompile -Uz $HOME/.zshrc
+    '
+  '';
 
   # home.sessionVariables =
   #   {
   #   };
   #
-  # home.sessionPath = [
-  #   "/run/current-system/sw/bin"
-  #   "$HOME/.nix-profile/bin"
-  # ];
+  home.sessionPath = [
+    # "/run/current-system/sw/bin"
+    # "$HOME/.nix-profile/bin"
+    "${config.home.homeDirectory}/.local/bin"
+  ];
 
   programs.git = {
     enable = true;
@@ -70,6 +77,7 @@ in
       };
     };
   };
+
   #NOTE: testing
   # programs.zsh = {
   #   enable = true;

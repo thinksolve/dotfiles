@@ -5,6 +5,70 @@
 # local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else cat {} 2>/dev/null; fi"
 #local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else head -n 20 {} 2>/dev/null; fi"
 
+#searchable difft
+function difft_less() {
+    if [[ $# -ne 2 ]]; then
+        echo "Usage: difft_less <file1> <file2>" >&2
+        return 1
+    fi
+
+    local file1="$1"
+    local file2="$2"
+
+    difft --color=always "$file1" "$file2" | less -R
+}
+
+#diff_sym is pure symmetric difference; better for config files
+function diff_sym() {
+    if [[ $# -ne 2 ]]; then
+        echo "Usage: zdiffcolor <file1> <file2>" >&2
+        return 1
+    fi
+
+    local file1="$1"
+    local file2="$2"
+
+    {
+        #outputs in green
+        if grep -Fxqvf "$file1" "$file2"; then
+            echo -e "\033[32m[Only in $file2]\033[0m"
+            grep -Fxvf "$file1" "$file2" | sed $'s/^/\033[32m/; s/$/\033[0m/'
+            echo
+        fi
+
+        #outputs in red
+        if grep -Fxqvf "$file2" "$file1"; then
+            echo -e "\033[31m[Only in $file1]\033[0m"
+            grep -Fxvf "$file2" "$file1" | sed $'s/^/\033[31m/; s/$/\033[0m/'
+        fi
+
+    } | less -R -S
+}
+
+#NOTE: WIP but idea is to keep modular zsh files but also create a flattened zshrc final file
+# whis utility allows to see 'live changes' to the modular file while still seeing
+# the final flat output zshrc file
+demo-watch() {
+    local dir=/tmp/demo-zsh
+    local preview=$dir/flat.zsh
+
+    mkdir -p "$dir"/{env.d,zshrc.d}
+    echo 'export FOO=bar' >"$dir/env.d/10-env.zsh"
+    echo 'alias ll=ls -l' >"$dir/zshrc.d/20-alias.zsh"
+
+    build() {
+        {
+            echo "# PREVIEW $(date)"
+            cat "$dir"/env.d/* "$dir"/zshrc.d/*
+        } >"$preview"
+        echo "---- $preview ----"
+        cat "$preview"
+    }
+
+    build
+    fswatch -o "$dir"/env.d "$dir/zshrc.d" | while read; do build; done
+}
+
 export RECENT_DB="${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent"
 
 local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else command -v bat >/dev/null && bat --color=always {} || cat {} 2>/dev/null; fi"
@@ -887,7 +951,7 @@ function find_dir_from_cache() {
         # recent_add "$dir"
 
         # [[ -n "$dir" ]] && open_with_editor "$open_with" "$dir"
-        [[ -n "$dir" ]] && "${EDITOR:-nvim}" "$dir"
+        [[ -n "$dir" ]] && cd "$dir" && "${EDITOR:-nvim}" "$dir"
     fi
 }
 

@@ -110,7 +110,7 @@
       )
 
 (setq doom-theme
-      'tango
+      ;; 'tango
       ;; 'leuven
       ;; 'ef-owl
       ;; 'ef-light
@@ -118,7 +118,7 @@
       ;; 'doom-rouge
       ;; 'doom-moonlight
       ;; 'doom-palenight
-      ;; 'doom-tokyo-night
+      'doom-tokyo-night
       ;; 'doom-henna
       ;; 'doom-city-lights
       ;; 'doom-one ;;default

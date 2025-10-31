@@ -40,6 +40,7 @@
             });
 
           cli = [
+            pkgs.coreutils
             pkgs.bat
             pkgs.fd
             pkgs.fzf
@@ -83,6 +84,8 @@
               ]
             ))
           ];
+
+          file_system = [ pkgs.fswatch ];
 
           media_tools = [
             pkgs.ffmpeg
@@ -129,6 +132,7 @@
 
           terminal_and_shell_enhancements = [
             pkgs.antidote
+            pkgs.difftastic
             pkgs.fastfetch
             pkgs.iterm2
             pkgs.nushell
@@ -164,16 +168,7 @@
           # >>>  PUT THE OPTIONS HERE  <<<
           # <-- added oct 10-2025
           system.primaryUser = username;
-          # programs.zsh.enable = false;
-          programs.zsh = {
-            enable = false;
-            shellInit = ""; # don’t generate any extra lines
-            # enable = true; # ← required
-            # initExtra = ''
-            #   # load antidote
-            #   source ${pkgs.antidote}/share/antidote/antidote.zsh
-            # '';
-          };
+          programs.zsh.enable = false;
 
           # <-- added oct 10-2025
 
@@ -187,6 +182,7 @@
           environment.systemPackages =
             cli
             ++ dev_tools
+            ++ file_system
             ++ media_tools
             ++ networking
             ++ pdf_and_document
@@ -271,6 +267,19 @@
 
           nix.package = pkgs.nix;
           nix.settings.experimental-features = "nix-command flakes";
+          # nix.settings = {
+          #   experimental-features = "nix-command flakes";
+          #
+          #   #allegedly below will make build speeds faster since using all cores on my mac??
+          #   #  # NOTE: remove
+          #   # cores = 0;
+          #   # max-jobs = "auto";
+          #   # sandbox = false; # Optional: Speeds up local builds if you trust your env
+          #   # # ... any other settings you had
+          # };
+
+          nix.optimise.automatic = true; # Dedupes store paths safely post-build; NOTE: remove
+
           system.configurationRevision = self.rev or self.dirtyRev or null;
           system.stateVersion = 5;
           nixpkgs.hostPlatform = hostPlatform;
