@@ -212,6 +212,7 @@ alias python=python3
 # export ZSH=$HOME/.oh-my-zsh
 # source $ZSH/oh-my-zsh.sh
 # # plugins=(vi-mode zsh-autosuggestions)
+
 # # source $ZSH_CUSTOM/plugins/vi-motions/motions.plugin.zsh #zsh-vim-mode also works but P (paste) url strings gets escaped still
 # # source /Users/brightowl/.oh-my-zsh/custom/plugins/zsh-vim-mode/zsh-vim-mode.plugin.zsh
 # # ZSH_THEME="robbyrussell"
@@ -235,3 +236,5 @@ function compile_zsh() {
 
 # NOTE: THIS CODE SAVED HERE BUT FOR EXTRACTING CONTENT FROM HTML (not related to zshrc)
 # xmllint --html --recover --xpath "//td/text()" input.html > output.txt
+#
+#

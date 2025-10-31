@@ -5,45 +5,126 @@
 # local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else cat {} 2>/dev/null; fi"
 #local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else head -n 20 {} 2>/dev/null; fi"
 
-#searchable difft
-function difft_less() {
+# Unified diff viewer: defaults to side-by-side difft, --sym for pure symmetric uniques
+#
+
+#this allows symmetric uniqes; intersection; full (default); and difft variants
+function diffy() {
+    local mode="full"
+    local file1 file2
+    local side_by_side=false
+
+    # --- Parse options ---
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+        -s | --symmetric) mode="sym" ;;
+        -i | --intersection) mode="int" ;;
+        -t | --tastic | -c | --code) side_by_side=true ;;
+        -h | --help)
+            echo "Usage: diffy [-s|--symmetric | -i|--intersection | -t|--tastic|-c|--code] <file1> <file2>"
+            echo
+            echo "Modes:"
+            echo "  (default)      Full: common (white) + uniques (green/red)"
+            echo "  -s, --symmetric  Only symmetric uniques (green/red)"
+            echo "  -i, --intersection  Only intersection (common lines only)"
+            echo "  -t, --tastic      Side-by-side diff (like difft)"
+            return 0
+            ;;
+        -*)
+            echo "diffy: unknown option '$1'" >&2
+            return 1
+            ;;
+        *)
+            break
+            ;;
+        esac
+        shift
+    done
+
     if [[ $# -ne 2 ]]; then
-        echo "Usage: difft_less <file1> <file2>" >&2
+        echo "Usage: diffy [-s|--symmetric | -i|--intersection | -t|--tastic|-c|--code] <file1> <file2>" >&2
         return 1
     fi
 
-    local file1="$1"
-    local file2="$2"
+    file1=$1
+    file2=$2
 
-    difft --color=always "$file1" "$file2" | less -R
+    if [[ ! -f $file1 || ! -f $file2 ]]; then
+        echo "diffy: both arguments must be valid files" >&2
+        return 1
+    fi
+
+    if [[ "$side_by_side" == true ]]; then
+        # Use standard side-by-side diff for code-friendly view
+        difft --color=always "$file1" "$file2" | less -R
+        return
+    fi
+
+    local red=$'\033[31m'
+    local green=$'\033[32m'
+    local reset=$'\033[0m'
+
+    awk -v mode="$mode" -v red="$red" -v green="$green" -v reset="$reset" '
+        # Pass 1: read file1
+        NR==FNR {
+            seenA[$0]=1
+            order[++n]=$0
+            next
+        }
+
+        # Pass 2: read file2, line by line
+        {
+            if ($0 in seenA) {
+                if (mode != "sym") print reset $0 reset
+            } else {
+                if (mode != "int") print green $0 reset
+            }
+            seenB[$0]=1
+        }
+
+        # After processing file2, handle lines unique to file1
+        END {
+            if (mode != "int") {
+                printed=0
+                for (i=1; i<=n; i++) {
+                    line = order[i]
+                    if (!(line in seenB)) {
+                        if (!printed++) print ""
+                        print red line reset
+                    }
+                }
+            }
+        }
+    ' "$file1" "$file2" | less -R -S
 }
 
 #diff_sym is pure symmetric difference; better for config files
-function diff_sym() {
-    if [[ $# -ne 2 ]]; then
-        echo "Usage: zdiffcolor <file1> <file2>" >&2
-        return 1
-    fi
-
-    local file1="$1"
-    local file2="$2"
-
-    {
-        #outputs in green
-        if grep -Fxqvf "$file1" "$file2"; then
-            echo -e "\033[32m[Only in $file2]\033[0m"
-            grep -Fxvf "$file1" "$file2" | sed $'s/^/\033[32m/; s/$/\033[0m/'
-            echo
-        fi
-
-        #outputs in red
-        if grep -Fxqvf "$file2" "$file1"; then
-            echo -e "\033[31m[Only in $file1]\033[0m"
-            grep -Fxvf "$file2" "$file1" | sed $'s/^/\033[31m/; s/$/\033[0m/'
-        fi
-
-    } | less -R -S
-}
+#NOTE: this is inferior to `diffy --symmetric` now
+# function diff_sym() {
+#     if [[ $# -ne 2 ]]; then
+#         echo "Usage: diff_sym <file1> <file2>" >&2
+#         return 1
+#     fi
+#
+#     local file1="$1"
+#     local file2="$2"
+#
+#     {
+#         #outputs in green
+#         if grep -Fxqvf "$file1" "$file2"; then
+#             echo -e "\033[32m[Only in $file2]\033[0m"
+#             grep -Fxvf "$file1" "$file2" | sed $'s/^/\033[32m/; s/$/\033[0m/'
+#             echo
+#         fi
+#
+#         #outputs in red
+#         if grep -Fxqvf "$file2" "$file1"; then
+#             echo -e "\033[31m[Only in $file1]\033[0m"
+#             grep -Fxvf "$file2" "$file1" | sed $'s/^/\033[31m/; s/$/\033[0m/'
+#         fi
+#
+#     } | less -R -S
+# }
 
 #NOTE: WIP but idea is to keep modular zsh files but also create a flattened zshrc final file
 # whis utility allows to see 'live changes' to the modular file while still seeing
