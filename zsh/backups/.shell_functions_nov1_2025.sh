@@ -208,7 +208,6 @@ function editable_path() {
 function recent_pick() {
 	local recent_pick_db=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
 	local editor=${EDITOR:-nvim}
-	local dir_viewer=${DIRVIEWER:-$editor}
 	local filter=${1-}
 	local pick
 	local -a open_now edit_later
@@ -257,28 +256,27 @@ function recent_pick() {
 		done
 	}
 	# eval "$RECENT_COLOURED_LIST" |
-	# NOTE: dangerous code using /r/m/ with potential improper escaping ... previously deleted this file:
-	#--bind 'ctrl-d:transform:  printf "%s\n%s\n" "Delete this entry?" "{2}" |
-	# fzf --print-query --exit-0 --multi --prompt="Confirm> " |
-	# { read -r reply && [[ $reply == "{2}" ]] && rm -f "{2}" && sed -i '\'''\'' '\''\|{2}|d'\'' "$recent_pick_db" && echo "reload(coloured_list | cat)"; }' \
-
 	coloured_list | fzf --ansi -m \
 		--delimiter=$'\t' \
 		--query="$filter" \
 		--prompt='recent> ' \
 		--header='Ctrl-D → delete • Ctrl-E → edit DB' \
-		--bind 'ctrl-e:execute('$editor' "$recent_pick_db" >/dev/tty)' \
+		--bind 'ctrl-e:execute('$editor' "$db" >/dev/tty)' \
+		--bind 'ctrl-d:transform:
+  printf "%s\n%s\n" "Delete this entry?" "{2}" |
+  fzf --print-query --exit-0 --multi --prompt="Confirm> " |
+  { read -r reply && [[ $reply == "{2}" ]] && rm -f "{2}" && sed -i '\'''\'' '\''\|{2}|d'\'' "$recent_pick_db" && echo "reload(coloured_list | cat)"; }' \
 		--preview '
-		    path={2}
-		    if [[ -d $path ]]; then
-		      /run/current-system/sw/bin/tree -a -C -L 1 "$path"
-		    elif [[ $path =~ \.(jpe?g|png|gif|webp)$ ]]; then
-		      /run/current-system/sw/bin/chafa -f ansi -s 100x40 "$path"
-		    else
-		      /run/current-system/sw/bin/bat --color=always "$path" 2>/dev/null ||
-		      /bin/cat "$path" 2>/dev/null ||
-		      /usr/bin/file -b "$path"
-		    fi' | awk -F'\t' '{print $2}' |
+    path={2}
+    if [[ -d $path ]]; then
+      /run/current-system/sw/bin/tree -a -C -L 1 "$path"
+    elif [[ $path =~ \.(jpe?g|png|gif|webp)$ ]]; then
+      /run/current-system/sw/bin/chafa -f ansi -s 100x40 "$path"
+    else
+      /run/current-system/sw/bin/bat --color=always "$path" 2>/dev/null ||
+      /bin/cat "$path" 2>/dev/null ||
+      /usr/bin/file -b "$path"
+    fi' | awk -F'\t' '{print $2}' |
 		while IFS= read -r pick; do
 			[[ -e $pick ]] || continue
 			if editable_path "$pick"; then
@@ -297,7 +295,7 @@ function recent_pick() {
 	# 2. now occupy the terminal (if you want)
 	for p in "${edit_later[@]}"; do
 		if [[ -d $p ]]; then
-			cd "$p" && $dir_viewer .
+			cd "$p" && $editor .
 		else
 			$editor "$p"
 		fi

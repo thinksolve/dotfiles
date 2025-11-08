@@ -110,7 +110,7 @@
       )
 
 (setq doom-theme
-      ;; 'tango
+      'tango
       ;; 'leuven
       ;; 'ef-owl
       ;; 'ef-light
@@ -118,7 +118,7 @@
       ;; 'doom-rouge
       ;; 'doom-moonlight
       ;; 'doom-palenight
-      'doom-tokyo-night
+      ;; 'doom-tokyo-night
       ;; 'doom-henna
       ;; 'doom-city-lights
       ;; 'doom-one ;;default
@@ -447,3 +447,30 @@ In writable buffers, allow normal left movement unless at line start."
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
+
+;; ;; NOTE: not really doing anything
+;; ;; throttle memory after 15 min of no visible frames
+;; (setq my-idle-timeout (* 15 60))
+
+;; (defun my-idle-throttle ()
+;;   (unless (or (> (length (visible-frame-list)) 0) (null (daemonp)))
+;;     (garbage-collect)
+;;     (setq gc-cons-threshold (* 8 1024 1024))   ; 8 MB while idle
+;;     (global-auto-revert-mode -1)
+;;     (message "Emacs throttled (memory saved)")))
+
+;; (defun my-idle-resume ()
+;;   (setq gc-cons-threshold (* 20 1024 1024))  ; your normal value
+;;   (global-auto-revert-mode 1)
+;;   (message "Emacs resumed"))
+
+;; (add-hook 'after-make-frame-functions
+;;           (lambda (_) (when (display-graphic-p) (my-idle-resume))))
+
+;; (add-hook 'delete-frame-functions
+;;           (lambda (_)
+;;             (when (and (daemonp) (null (visible-frame-list)))
+;;               (run-with-timer my-idle-timeout nil #'my-idle-throttle))))
+
+;; ;; initial timer in case user closes the first frame later
+;; (run-with-timer my-idle-timeout nil #'my-idle-throttle)

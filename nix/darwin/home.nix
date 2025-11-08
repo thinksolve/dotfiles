@@ -10,8 +10,10 @@ let
   link_dotfiles = path: config.lib.file.mkOutOfStoreSymlink "${dotfiles_dir}/${path}";
 in
 {
-  home.username = lib.mkForce username;
-  home.homeDirectory = lib.mkForce "/Users/${username}";
+  home.username = "brightowl";
+  home.homeDirectory = "/Users/brightowl";
+  # home.username = lib.mkForce username;
+  # home.homeDirectory = lib.mkForce "/Users/${username}";
 
   # home.username = username;
   # home.homeDirectory = "/Users/${username}";  <-- commented out oct 2025
@@ -21,7 +23,16 @@ in
   # home.stateVersion = "24.11";
   home.stateVersion = "23.11";
 
+  home.packages = [ pkgs.nil ];
+
   home.file = {
+    ".local/bin/sg" = {
+      text = ''
+        #!/usr/bin/env bash
+        exec ${pkgs.ast-grep}/bin/ast-grep "$@"
+      '';
+      executable = true;
+    };
     "/Library/Application Support/com.mitchellh.ghostty/config".source =
       link_dotfiles "/ghostty/config";
 
@@ -62,14 +73,14 @@ in
   #   };
   #
   home.sessionPath = [
-    # "/run/current-system/sw/bin"
-    # "$HOME/.nix-profile/bin"
+    "/run/current-system/sw/bin"
+    "$HOME/.nix-profile/bin"
     "${config.home.homeDirectory}/.local/bin"
   ];
 
   programs.git = {
     enable = true;
-    extraConfig = {
+    settings = {
       url = {
         "ssh://git@github.com/" = {
           insteadOf = "https://github.com/";

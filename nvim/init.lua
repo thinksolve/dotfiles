@@ -523,11 +523,12 @@ require("lazy").setup({
 			-- vim.api.nvim_set_keymap("n", "<CR>", ":HopWord<CR>", { noremap = true, silent = true })
 		end,
 	},
-	{ -- simple regex-based Marko colours (treesitter has no marko support!)
-		"Epitrochoid/marko-vim-syntax.git",
-		name = "marko-vim-syntax", -- optional, just keeps the short name
-		ft = "marko",
-	},
+	-- NOTE: broke in the latest `:Lazy sync` on nov-2-2025
+	-- { -- simple regex-based Marko colours (treesitter has no marko support!)
+	-- 	"Epitrochoid/marko-vim-syntax.git",
+	-- 	name = "marko-vim-syntax", -- optional, just keeps the short name
+	-- 	ft = "marko",
+	-- },
 	{
 		"brianhuster/live-preview.nvim",
 		cmd = "LP", -- load plugin on this command; init function below also starts live preview server
@@ -1330,6 +1331,16 @@ require("lazy").setup({
 					{ name = "path" },
 				},
 			})
+
+			-- NEW: LSP Configuration Section (add this after cmp.setup)
+			-- Migrate nil_ls to new vim.lsp.config API (replaces old require("lspconfig").nil_ls.setup)
+			require("lspconfig").nil_ls.setup({
+				settings = {
+					nixd = {
+						flake = { autoEvalInputs = true },
+					},
+				},
+			})
 		end,
 	},
 	--
@@ -1427,6 +1438,7 @@ require("lazy").setup({
 				additional_vim_regex_highlighting = { "ruby" },
 			},
 			indent = { enable = true, disable = { "ruby" } },
+			fold = { enable = false },
 		},
 		-- There are additional nvim-treesitter modules that you can use to interact
 		-- with nvim-treesitter. You should go explore a few and see what interests you:
@@ -1728,4 +1740,9 @@ vim.api.nvim_create_autocmd("FileType", {
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+
+-- NOTE: testing
+-- vim.keymap.set("n", "<leader>bc", [["_c]])
+-- vim.keymap.set("n", "<leader>bd", [["_d]])
+vim.keymap.set("n", "<leader>p", [["_viwP]])
 --

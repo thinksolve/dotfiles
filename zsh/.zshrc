@@ -1,4 +1,7 @@
 
+
+export FLAKE_DIR=~/.dotfiles/nix/darwin/
+export SYSTEM_FLAKE=~/.dotfiles/nix/darwin/flake.nix
 #convenience settings
 HISTFILE=~/.zsh_history
 HISTSIZE=10000
@@ -30,6 +33,7 @@ readonly REAL_NVIM="$NIX_CURRENT_SYSTEM/bin/nvim"
 
 export EDITOR="$RECENT_NVIM"
 export VISUAL="$RECENT_NVIM"
+export DIRVIEWER="yazi"
 
 #I now source this into ALL shell scripts (including zshrc); source of truth for PATH
 source ~/.config/path.sh 
@@ -192,6 +196,7 @@ bindkey_zle '^H' get_history
 #
 # function open_nvim_here() { nvim . }
 # bindkey_zle '^N' open_nvim_here
+#
 
 
 

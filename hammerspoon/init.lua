@@ -40,10 +40,11 @@ local function merge_modifiers(base_mods, ...)
 	return new_mods
 end
 
-local space_mod = { "ctrl" }
-hs.hotkey.bind(space_mod, "q", space_management.close_all_spaces_but_two)
-hs.hotkey.bind(space_mod, "-", space_management.close_this_space)
-hs.hotkey.bind(merge_modifiers(space_mod, "shift"), "-", space_management.add_new_space)
+-- NOTE: not really useful to me anymore with cycling windows
+-- local space_mod = { "ctrl" }
+-- hs.hotkey.bind(space_mod, "q", space_management.close_all_spaces_but_two)
+-- hs.hotkey.bind(space_mod, "-", space_management.close_this_space)
+-- hs.hotkey.bind(merge_modifiers(space_mod, "shift"), "-", space_management.add_new_space)
 
 local screen_position_mod = { "command", "option" }
 hs.hotkey.bind(screen_position_mod, "Left", window_management.LeftHalf)
@@ -66,7 +67,6 @@ hs.hotkey.bind(goto_app_mod, "b", function()
 	window_management.toggle_app("Brave Browser")
 end)
 
--- local terminal_app = "iterm2"
 local terminal_app = "ghostty"
 local terminal_app_id = "com.mitchellh.ghostty"
 hs.hotkey.bind(goto_app_mod, "t", function()
@@ -97,7 +97,11 @@ end
 -- end)
 
 hs.hotkey.bind(goto_app_mod, "s", function()
-	window_management.toggle_app("Spotify")
+	-- window_management.toggle_app("Spotify")
+
+	--NOTE: using bundle id is less buggy for PWAs
+	local spotify_bundle_id = "com.brave.Browser.app.pjibgclleladliembfgfagdaldikeohf"
+	window_management.toggle_app_bundle_id(spotify_bundle_id)
 end)
 
 hs.hotkey.bind(goto_app_mod, "m", function()
@@ -337,52 +341,67 @@ hs.hotkey.bind({ "ctrl", "option" }, "z", function()
 	-- runCommandInGhostty("get_latex")
 end)
 
-local function start_emacs_client()
-	-- os.execute([[/bin/zsh -l -c "/opt/homebrew/bin/emacsclient -c -n" &]])
-	-- -- why not hs.execute?
-	-- -- why background process way with '&' problematic?
-	os.execute([[/bin/zsh -l -c "/opt/homebrew/bin/emacsclient -c -n -a '' "]])
-end
-local function get_emacs_app()
-	return hs.application.get("org.gnu.Emacs")
-end
+--NOTE: blocking version
+--
+-- hs.hotkey.bind(goto_app_mod, "d", function()
+-- 	local function start_emacs_client()
+-- 		os.execute([[/bin/zsh -l -c "/opt/homebrew/bin/emacsclient -c -n -a '' "]])
+-- 	end
+-- 	local serverRunning =
+-- 		os.execute([[/bin/zsh -l -c "/opt/homebrew/bin/emacsclient -e '(server-running-p)' > /dev/null 2>&1"]])
+--
+-- 	local emacsApp = hs.application.get("org.gnu.Emacs")
+--
+-- 	if serverRunning then
+-- 		if emacsApp and #emacsApp:allWindows() > 0 then
+-- 			emacsApp:activate()
+-- 		else
+-- 			start_emacs_client()
+-- 			emacsApp:activate()
+-- 		end
+-- 	else
+-- 		hs.alert.show("Starting Emacs daemon and creating frame")
+--
+-- 		os.execute(string.format('/bin/zsh -l -c "/opt/homebrew/bin/emacs --daemon"'))
+-- 		start_emacs_client()
+-- 	end
+-- end)
 
-hs.hotkey.bind(goto_app_mod, "d", function()
-	-- Try to find if Emacs server is running; os.execute seems to be needed over hs.execute here
-	-- local serverRunning = os.execute("pgrep -f 'emacs.*daemon'" .. " > /dev/null 2>&1")
-	-- -- this pgrep way finds other emacs daemons not responsible for emacsclient; problematic
+-- async/non-blocking version
+hs.hotkey.bind({ "cmd", "option" }, "d", function()
+	local emacsclient = "/opt/homebrew/bin/emacsclient"
+	local emacs = "/opt/homebrew/bin/emacs"
 
-	local serverRunning =
-		os.execute([[/bin/zsh -l -c "/opt/homebrew/bin/emacsclient -e '(server-running-p)' > /dev/null 2>&1"]])
+	--NOTE: this keybind uses async logic and hence we need to
+	--handle stale references ... thats why we need 'getEmacsApp'
+	local function getEmacsApp()
+		return hs.application.get("org.gnu.Emacs")
+	end
 
-	if serverRunning then
-		-- Server is running, check if there are visible Emacs frames
-		-- "org.gnu.Emacs" seems to reliably get the emacsclient frame
+	local function startClient()
+		hs.task
+			.new(emacsclient, function()
+				local _emacsApp = getEmacsApp()
+				if _emacsApp then
+					_emacsApp:activate()
+				end
+			end, { "-c", "-n", "-a", "" })
+			:start()
+	end
 
-		local emacsApp = get_emacs_app()
-		-- appears if check not really needed if you start_emacs_client (which falls back to already started one if active?)
-		if emacsApp and #emacsApp:allWindows() > 0 then
-			-- Emacs application exists with visible windows, focus it
-			emacsApp:activate()
-		else
-			-- Server running but no visible windows, create a new client frame
-			start_emacs_client()
-			-- hs.timer.doAfter(0.1, function()
-			emacsApp:activate()
+	local emacsApp = getEmacsApp()
 
-			-- end)
-		end
+	-- if emacsApp and #emacsApp:allWindows() > 0 then
+	if emacsApp and #emacsApp:allWindows() > 0 then
+		emacsApp:activate()
 	else
-		-- Server not running, start server and create a frame
-		hs.alert.show("Starting Emacs server and creating frame")
-
-		-- -- Guess i dont need to explicitly start the daemon?
-		-- os.execute("/bin/zsh -l -c '/opt/homebrew/bin/emacs --daemon' ")
-
-		start_emacs_client()
-		-- hs.timer.doAfter(0.4, function()
-		get_emacs_app():activate()
-		-- end)
+		local daemon_running = os.execute(emacsclient .. " -e '(server-running-p)' > /dev/null 2>&1")
+		if daemon_running then
+			startClient()
+		else
+			hs.alert.show("Starting Emacs daemon …")
+			hs.task.new(emacs, startClient, { "--daemon" }):start()
+		end
 	end
 end)
 
@@ -640,18 +659,73 @@ local function launchTerminalWithCmd_og(opts)
 	hs.execute(string.format("open -b %s --args -e zsh -c 'source ~/.zshrc && %s; exec zsh'", bundleID, cmd), true)
 end
 
-local function launchTerminalWithCmd(opts)
+local function launchTerminalWithCmd_old(opts)
 	opts = opts or {}
 	local cmd = opts.cmd or error("opts.cmd required")
 	local bundleID = opts.bundleID or "com.mitchellh.ghostty"
 
 	local app = hs.application.get(bundleID)
-	local newWindow = (app and app:isRunning()) and "n" or ""
+	local newWindow = (app and app:isRunning()) and "" or "n"
+	-- doesnt actually open a newWindow when app is running
 
 	hs.execute(
 		string.format("open -%sb %s --args -e zsh -c 'source ~/.zshrc && %s; exec zsh'", newWindow, bundleID, cmd),
 		true
 	)
+end
+
+local function launchTerminalWithCmd(opts)
+	opts = opts or {}
+	local cmd = opts.cmd or error("opts.cmd required")
+	local bundleID = opts.bundleID or "com.mitchellh.ghostty"
+	-- local bundleID = opts.bundleID or "com.googlecode.iterm2"
+
+	local app = hs.application.get(bundleID)
+	-- local app = hs.application.get(bundleID) or hs.application.launchOrFocusByBundleID(bundleID)
+	local terminalApp = "Ghostty"
+
+	-- local app = hs.application.find(terminalApp)
+	local isRunning = app and app:isRunning()
+
+	if not isRunning then
+		-- #NOTE: 'open -n ..' creates a _new instance_ with the new window (not a problem here since app is not started)
+		--  Previously this was an issue since i couldnt cycle through various windows with 'cmd + .' since that only works
+		--  for many windows beloning to the _same_ instance
+		--
+		-- hs.execute(string.format("open -nb %s --args -e zsh -c 'source ~/.zshrc && %s; exec zsh'", bundleID, cmd), true)
+
+		hs.execute(
+			string.format("open -a %s --args -e zsh -c 'source ~/.zshrc && %s; exec zsh'", terminalApp, cmd),
+			true
+		)
+	else
+		local applescript = string.format(
+			[[
+			    tell application "%s"
+				activate
+			    end tell
+			    delay 0.1
+			    tell application "System Events"
+				keystroke "n" using {command down}
+			    end tell
+			    delay 0.1
+			    tell application "System Events"
+				tell process "%s"
+				    keystroke "%s"
+				    keystroke return
+				end tell
+			    end tell
+			]],
+			terminalApp,
+			terminalApp,
+			cmd
+		)
+
+		local ok, result = hs.osascript.applescript(applescript)
+		if not ok then
+			hs.alert.show("Failed to open Ghostty window: " .. tostring(result))
+		end
+	end
 end
 
 local hotkey_ctrl_r = hs.hotkey.bind({ "ctrl" }, "r", function()
@@ -706,7 +780,13 @@ local hotkey_ctrl_y = hs.hotkey.bind({ "ctrl" }, "y", function()
 	launchTerminalWithCmd({ cmd = "yazi" })
 end)
 
-TG.watch({ hotkey_ctrl_d, hotkey_ctrl_option_d, hotkey_ctrl_f, hotkey_ctrl_y, hotkey_ctrl_r })
+local hotkey_ctrl_h = hs.hotkey.bind({ "ctrl" }, "h", function()
+	launchTerminalWithCmd({ cmd = "send_key control h" })
+	-- zle widgets cannot be called directly; need to simulate pressing
+	-- the associated bindkey; send_key helper uses osascript to do so
+end)
+
+TG.watch({ hotkey_ctrl_d, hotkey_ctrl_option_d, hotkey_ctrl_f, hotkey_ctrl_y, hotkey_ctrl_r, hotkey_ctrl_h })
 
 --------------------------------------------------------------------------------
 -- 100 % self-contained silent capture → clipboard

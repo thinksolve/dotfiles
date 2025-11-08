@@ -59,7 +59,17 @@
             pkgs.git
             pkgs.gh
             pkgs.neovim
-            pkgs.nixd
+            # pkgs.nixd
+            # pkgs.nil
+            # (pkgs.symlinkJoin {
+            #   name = "nil-with-options";
+            #   paths = [ pkgs.nil ];
+            #   buildInputs = [ pkgs.makeWrapper ];
+            #   postBuild = ''
+            #     wrapProgram $out/bin/nil \
+            #       --set-default NIX_OPTIONS_JSON ${pkgs.nil}/lib/nil/nixpkgs/share/nix/options.json
+            #   '';
+            # })
             pkgs.nixfmt-rfc-style
             pkgs.shellcheck
             pkgs.shfmt
@@ -132,8 +142,10 @@
 
           terminal_and_shell_enhancements = [
             pkgs.antidote
+            pkgs.ast-grep # TEST: might remove this (also remove the wrapper in home.nix)
             pkgs.difftastic
             pkgs.fastfetch
+            # pkgs.ghostty ## isnt supported??
             pkgs.iterm2
             pkgs.nushell
             pkgs.pure-prompt
@@ -194,7 +206,8 @@
             onActivation = {
               autoUpdate = false; # Avoid auto-updating during activation
               # cleanup = "zap"; # Remove unlisted formulae/casks
-              cleanup = "uninstall"; # Remove unlisted formulae/casks
+              # cleanup = "uninstall"; # Remove unlisted formulae/casks #NOTE: currently headache error message
+              cleanup = "none";
             };
             casks = [
               "ghostty@tip"
@@ -253,13 +266,16 @@
 
           home-manager.backupFileExtension = "backup";
 
-          # this required otherwise home.nix breaks build until i use lib.mkForce prefix on homeDirectory
+          # # this required otherwise home.nix breaks build until i use lib.mkForce prefix on homeDirectory
           users.users.${username} = {
             name = username;
             home = "/Users/${username}";
+
             shell = pkgs.zsh;
-            uid = 501;
-            ignoreShellProgramCheck = true; # <-- added oct 10-2025
+            ignoreShellProgramCheck = true;
+
+            ## NOTE: are these needed anymore?
+            # uid = 501;
           };
 
           #NOTE:  apparently this is not needed in latest flake update
@@ -316,7 +332,8 @@
           home-manager.darwinModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
+            # home-manager.useUserPackages = true;
+            home-manager.useUserPackages = false; # TEST: test
             home-manager.users.${username} = {
               imports = [ ./home.nix ];
             };
