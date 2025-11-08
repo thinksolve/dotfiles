@@ -236,16 +236,16 @@ function recent_pick() {
 	# export to make it visible to reload sub-shell (i.e. when deleting entry with ctrl-d)
 	export recent_pick_db
 
-	# fzf reload() cannot serialize functions so i have to make it a command string (to eval on)
-	# in order to recreate coloured list
-	RECENT_COLOURED_LIST='
-      <"$recent_pick_db" tac | while IFS= read -r path; do
-        if [[ -d $path ]]; then
-          printf "\\e[34mDIR\\e[0m\t%s\n" "$path"
-        else
-          printf "\\e[33mFILE\\e[0m\t%s\n" "$path"
-        fi
-      done'
+	# # fzf reload() cannot serialize functions so i have to make it a command string (to eval on)
+	# # in order to recreate coloured list
+	# RECENT_COLOURED_LIST='
+	#      <"$recent_pick_db" tac | while IFS= read -r path; do
+	#        if [[ -d $path ]]; then
+	#          printf "\\e[34mDIR\\e[0m\t%s\n" "$path"
+	#        else
+	#          printf "\\e[33mFILE\\e[0m\t%s\n" "$path"
+	#        fi
+	#      done'
 
 	coloured_list() {
 		tac "$recent_pick_db" | while IFS= read -r path; do
@@ -266,7 +266,7 @@ function recent_pick() {
 		--delimiter=$'\t' \
 		--query="$filter" \
 		--prompt='recent> ' \
-		--header='Ctrl-D → delete • Ctrl-E → edit DB' \
+		--header='Ctrl-E → edit DB' \
 		--bind 'ctrl-e:execute('$editor' "$recent_pick_db" >/dev/tty)' \
 		--preview '
 		    path={2}

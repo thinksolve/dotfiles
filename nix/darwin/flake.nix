@@ -102,6 +102,7 @@
             pkgs.ffmpegthumbnailer
             pkgs.imagemagick
             pkgs.pngpaste
+            pkgs.sigtop
             pkgs.tesseract
             pkgs.vips
             pkgs.yt-dlp
@@ -232,9 +233,11 @@
             taps = [
               "d12frosted/emacs-plus"
               # "railwaycat/emacsmacport" # For macOS-optimized Emacs
+              # "tbvdm/tap" # <-- for sigtop  NOTE: sigtop now available in nixpkgs
             ];
 
             brews = [
+              # "sigtop" NOTE: sigtop now available in nixpkgs
               "mas"
               # {
               #   name = "emacs-plus@30";
