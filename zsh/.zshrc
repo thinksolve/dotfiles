@@ -31,6 +31,8 @@ export NIX_CURRENT_SYSTEM=/run/current-system/sw/
 readonly RECENT_NVIM="$HOME/.local/bin/nvim"
 readonly REAL_NVIM="$NIX_CURRENT_SYSTEM/bin/nvim"
 
+
+alias wvim="$RECENT_NVIM"
 export EDITOR="$RECENT_NVIM"
 export VISUAL="$RECENT_NVIM"
 export DIRVIEWER="yazi"
@@ -88,17 +90,10 @@ bindkey '^[[A' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
 
 
+export TRASH_BIN=~/.local/share/Trash/
+alias rm='trash-put' #deletes to ~/.local/share/Trash/; other commands trash-restore, trash-empty
+# alias rm='rm -I --preserve-root' #safeguard, but permanent deletion
 
-
-
-
-
-
-
-
-
-
-alias rvim="$RECENT_NVIM"
 alias drs='sudo darwin-rebuild switch --flake ~/.dotfiles/nix/darwin'
 alias config='cd ~/.dotfiles/ && yazi .'
 alias config-nix='cd ~/.dotfiles/nix/darwin && yazi .'

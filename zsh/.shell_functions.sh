@@ -664,7 +664,7 @@ function generate_icns() {
 }
 
 # old way; new way with 'rat'
-function rem() {
+function rat() {
 	local comment_char="$1"
 	local file="$2"
 
@@ -683,7 +683,7 @@ function rem() {
 	fi
 }
 
-function rat() {
+function rat_test() {
 	local comment=
 	local opt OPTIND
 	while getopts 'c:' opt; do

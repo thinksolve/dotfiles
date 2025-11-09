@@ -368,6 +368,67 @@ end)
 -- end)
 
 -- async/non-blocking version
+
+--TEST: tiny, fast, corner alert ---------------------------------------------------
+-- NOTE: do end version of iife
+-- local cornerAlert
+-- do
+-- 	local alertObj, timerObj
+--
+-- 	function cornerAlert(text, secs)
+-- 		secs = secs or 2
+-- 		if alertObj then
+-- 			alertObj:delete()
+-- 		end
+-- 		if timerObj then
+-- 			timerObj:stop()
+-- 		end
+--
+-- 		local f = hs.screen.mainScreen():frame()
+-- 		alertObj = hs.canvas.new({ x = f.w - 210, y = 25, w = 200, h = 30 })
+-- 		alertObj[1] = { type = "rectangle", action = "fill", fillColor = { hex = "#000", alpha = 0.75 } }
+-- 		alertObj[2] = { type = "text", text = text, textColor = { white = 1 }, textSize = 14 }
+-- 		alertObj:behavior("canJoinAllSpaces"):level(hs.canvas.windowLevels.floating):show()
+--
+-- 		timerObj = hs.timer.doAfter(secs, function()
+-- 			if alertObj then
+-- 				alertObj:delete()
+-- 				alertObj = nil
+-- 			end
+-- 		end)
+-- 	end
+-- end
+
+-- NOTE: classic js-style iife version
+local cornerAlert = (function()
+	local alertObj, timerObj -- private up-values
+
+	return function(text, secs)
+		secs = secs or 2
+
+		if alertObj then
+			alertObj:delete()
+		end
+		if timerObj then
+			timerObj:stop()
+		end
+
+		local f = hs.screen.mainScreen():frame()
+		alertObj = hs.canvas.new({ x = f.w - 210, y = 25, w = 200, h = 30 })
+		alertObj[1] = { type = "rectangle", action = "fill", fillColor = { hex = "#000", alpha = 0.75 } }
+		alertObj[2] = { type = "text", text = text, textColor = { white = 1 }, textSize = 14 }
+		alertObj:behavior("canJoinAllSpaces"):level(hs.canvas.windowLevels.floating):show()
+
+		timerObj = hs.timer.doAfter(secs, function()
+			if alertObj then
+				alertObj:delete()
+				alertObj = nil
+			end
+		end)
+	end
+end)()
+--TEST: tiny, fast, corner alert ---------------------------------------------------
+
 hs.hotkey.bind({ "cmd", "option" }, "d", function()
 	local emacsclient = "/opt/homebrew/bin/emacsclient"
 	local emacs = "/opt/homebrew/bin/emacs"
@@ -399,7 +460,9 @@ hs.hotkey.bind({ "cmd", "option" }, "d", function()
 		if daemon_running then
 			startClient()
 		else
-			hs.alert.show("Starting Emacs daemon …")
+			-- hs.alert.show("Doom Emacs starting", 0.7)
+			cornerAlert("Starting Doom Emacs daemon …")
+			--
 			hs.task.new(emacs, startClient, { "--daemon" }):start()
 		end
 	end

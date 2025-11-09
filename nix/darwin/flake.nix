@@ -47,6 +47,7 @@
             pkgs.rename
             pkgs.ripgrep
             pkgs.tree
+            pkgs.trash-cli
             (unbreak pkgs.jp2a)
             # pkgs.jq
             # pkgs.yq
@@ -186,7 +187,8 @@
           # <-- added oct 10-2025
 
           # security.pam.enableSudoTouchIdAuth = true;
-          security.pam.services.sudo_local.touchIdAuth = true;
+          # security.pam.services.sudo_local.touchIdAuth = true;
+          security.pam.services.sudo.touchIdAuth = true;
           # users.knownUsers = [ username ]; NOTE: was supposed to delete
           environment.pathsToLink = [
             "/bin"
@@ -233,11 +235,9 @@
             taps = [
               "d12frosted/emacs-plus"
               # "railwaycat/emacsmacport" # For macOS-optimized Emacs
-              # "tbvdm/tap" # <-- for sigtop  NOTE: sigtop now available in nixpkgs
             ];
 
             brews = [
-              # "sigtop" NOTE: sigtop now available in nixpkgs
               "mas"
               # {
               #   name = "emacs-plus@30";
