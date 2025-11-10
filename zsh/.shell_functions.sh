@@ -1,4 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# zshrc this is bound as a widget to ctrl-l=k ... possibly the most useful thing in the terminal
+function copylast() {
+	local out
+	out=$(eval $history[$((HISTCMD - 1))] 2>/dev/null) &&
+		[[ -n $out ]] && print -n $out | pbcopy && return
+
+	# fall-through: nothing useful happened
+	zle -M "copylast: last command gave no output or failed"
+}
 
 #local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else less {} 2>/dev/null; fi"
 #local preview="tree -a -C -L 1 {}"
@@ -9,6 +19,119 @@
 #
 
 #this allows symmetric uniqes; intersection; full (default); and difft variants
+
+# ~/.zshrc or wherever you keep functions
+
+# function signal_backup_og() {
+# 	dest=~/Backups/signal/
+# 	mkdir -p "$dest"
+#
+# 	tar -czf "$dest/signal-$(date +%F-%H%M).tgz" \
+# 		-C ~/Library \
+# 		"Application Support/Signal" \
+# 		Keychains/login.keychain-db
+# }
+
+# use: some_zsh_fn() { _bash_to_zsh some_bash_fn }
+# _bash_to_zsh() {
+# 	bash -c "$(declare -f "$1"); $1"
+# }
+
+#doesnt work in zsh .. due to 'read -rp'
+function signal_backup() {
+	local base_1=Signal base_2=login.keychain-db
+	local path1 path2 out yes
+
+	path1=$(fd -g "$base_1" --max-results 1 "$HOME")
+	path2=$(fd -g "$base_2" --max-results 1 "$HOME")
+
+	printf 'Archive:\n  %s\n  %s\n' "$path1" "$path2"
+	printf 'Type YES to continue: '
+	read -r yes
+	[[ $yes == YES ]] || {
+		echo Aborted
+		return 1
+	}
+	[[ $yes == YES ]] || {
+		echo Aborted
+		return 1
+	}
+
+	mkdir -p ~/Backups/signal
+	out=~/Backups/signal/signal-"$(date +%F-%H%M)".tgz
+
+	tar -czf "$out" \
+		-C "$(dirname "$path1")" "$(basename "$path1")" \
+		-C "$(dirname "$path2")" "$(basename "$path2")"
+}
+
+# zsh style breaks format-on-save in this file
+# signal_backupp () {
+# 	 emulate -L zsh
+#     local base_1=Signal base_2=login.keychain-db
+#     local path1 path2 out yes
+#
+#     path1=$(fd -g "$base_1" --max-results 1 "$HOME")
+#     path2=$(fd -g "$base_2" --max-results 1 "$HOME")
+#
+#     print -l "Archive:" "  $path1" "  $path2"
+#     print -n "Type YES to continue: "
+#     read -r yes
+#     [[ $yes == YES ]] || { print Aborted; return 1 }
+#
+#     mkdir -p ~/Backups/signal
+#     out=~/Backups/signal/signal-$(date +%F-%H%M).tgz
+#
+#     tar -czf "$out" \
+#         -C ${path1:h} ${path1:t} \
+#         -C ${path2:h} ${path2:t}
+# }
+
+function signal_keychain_checks() {
+	local live
+	local backup_key
+	local tgz
+	local unpack_dir="$HOME/Backups/signal"
+
+	#  # find the newest tarball (works even if name changes)
+	tgz=$(ls -t "$unpack_dir"/signal-*.tgz 2>/dev/null | head -n1)
+
+	# if we have a tarball but the keychain file is missing, unpack
+	if [[ -n $tgz && ! -f $unpack_dir/Users/brightowl/Library/Keychains/login.keychain-db ]]; then
+		echo "Unpacking $tgz …"
+		tar -xzf "$tgz" -C "$unpack_dir"
+	fi
+
+	# this doesnt exist unless i uncompress the tarball at ~/Backups/signal/
+	local backup_chain="$HOME/Backups/signal/Users/brightowl/Library/Keychains/login.keychain-db"
+
+	live=$(security find-generic-password -s "Signal Safe Storage" -a "Signal Key" -w 2>/dev/null) ||
+		{
+			echo "Could not read live keychain (cancelled or locked)"
+			return 1
+		}
+
+	if [[ -f $backup_chain ]]; then
+		backup_key=$(security find-generic-password -s "Signal Safe Storage" -a "Signal Key" -w "$backup_chain" 2>/dev/null) ||
+			{
+				echo "Could not read backup keychain"
+				return 1
+			}
+	else
+		backup_key="(backup not found)"
+	fi
+
+	printf "live   : %s\nbackup : %s\n" "$live" "$backup_key"
+	[[ $live == "$backup_key" ]] && echo "Keys MATCH" || echo "Keys DIFFER"
+
+	#remove the unpacked backup files (tarball is source of truth anyway)
+	if trash "$unpack_dir/Users" 2>/dev/null; then
+		echo "Moved unpacked files to trash."
+	else
+		echo "Trash failed – please delete manually: $unpack_dir/Users"
+	fi
+}
+
 function diffy() {
 	local mode="full"
 	local file1 file2
@@ -1072,7 +1195,7 @@ function find_file() {
 	dir_or_file=$("${fd_cmd[@]}" | fzf --prompt="Find Files${is_raw:+ (raw)}: " --preview "$preview")
 
 	if [[ -z "$dir_or_file" ]]; then
-		echo "No selection made."
+		# echo "No selection made."
 		return 1
 	fi
 

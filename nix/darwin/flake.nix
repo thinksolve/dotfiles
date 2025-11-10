@@ -187,8 +187,7 @@
           # <-- added oct 10-2025
 
           # security.pam.enableSudoTouchIdAuth = true;
-          # security.pam.services.sudo_local.touchIdAuth = true;
-          security.pam.services.sudo.touchIdAuth = true;
+          security.pam.services.sudo_local.touchIdAuth = true;
           # users.knownUsers = [ username ]; NOTE: was supposed to delete
           environment.pathsToLink = [
             "/bin"

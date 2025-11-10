@@ -1,7 +1,7 @@
-
-
 export FLAKE_DIR=~/.dotfiles/nix/darwin/
 export SYSTEM_FLAKE=~/.dotfiles/nix/darwin/flake.nix
+
+
 #convenience settings
 HISTFILE=~/.zsh_history
 HISTSIZE=10000
@@ -32,7 +32,7 @@ readonly RECENT_NVIM="$HOME/.local/bin/nvim"
 readonly REAL_NVIM="$NIX_CURRENT_SYSTEM/bin/nvim"
 
 
-alias wvim="$RECENT_NVIM"
+alias wvim="$RECENT_NVIM"    # <-- 'w' for 'wrapper'
 export EDITOR="$RECENT_NVIM"
 export VISUAL="$RECENT_NVIM"
 export DIRVIEWER="yazi"
@@ -41,31 +41,6 @@ export DIRVIEWER="yazi"
 source ~/.config/path.sh 
 source "$HOME"/.shell_functions.sh
 
-
-
-# export DOOMDIR="$HOME/.config/doom"
-# export PNPM_HOME="/Users/brightowl/Library/pnpm"
-# export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
-# export PATH="$HOME/.local/bin:$PATH"
-# export PATH="$HOME/.config/emacs/bin:$PATH"
-# export PATH=$HOME/bin:/usr/local/bin:$PATH
-# export PATH="$PNPM_HOME:$PATH"
-# export PATH=${PATH}:/usr/local/mysql/bin/
-
-
-# path=(
-#   $NIX_CURRENT_SYSTEM/bin
-#   $HOME/.nix-profile/bin
-#   $HOME/.local/bin
-#   $HOME/.config/emacs/bin
-#   $HOME/bin
-#   /usr/local/bin
-#   # /usr/local/mysql/bin
-#   $PNPM_HOME
-#   $path
-# )
-# export PATH
-#
 
 
 # antidote essentially replaces my uses for OMZ
@@ -90,8 +65,10 @@ bindkey '^[[A' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
 
 
-export TRASH_BIN=~/.local/share/Trash/
-alias rm='trash-put' #deletes to ~/.local/share/Trash/; other commands trash-restore, trash-empty
+export TRASHDIR=~/.local/share/Trash/
+alias rm='trash-put' 
+#deletes to ~/.local/share/Trash/; other commands trash-restore, trash-empty; accepts -r -f flags 
+
 # alias rm='rm -I --preserve-root' #safeguard, but permanent deletion
 
 alias drs='sudo darwin-rebuild switch --flake ~/.dotfiles/nix/darwin'
@@ -100,105 +77,59 @@ alias config-nix='cd ~/.dotfiles/nix/darwin && yazi .'
 alias evim='emacs -nw' # not really useful now that im using emacsclient
 alias zshrc='nvim ~/.zshrc'
 alias hist='nvim ~/.zsh_history'
-alias shell_functions='nvim $HOME/.shell_functions.sh'
-# alias gitignore_test='git rm -r --cached -f . && git add . && git ls-files | wc -l'
+alias shell_functions='nvim ~/.shell_functions.sh'
 alias SCREENSAVERS='cd "/Library/Application Support/com.apple.idleassetsd/Customer/4KSDR240FPS"'
 alias BRAVE='cd ${HOME}/Library/Application\ Support/BraveSoftware/Brave-Browser/afalakplffnnnlkncjhbmahjfjhmlkal/1.0.904/1/'
-# alias BRAVE='/Users/brightowl/Library/Application\ Support/BraveSoftware/Brave-Browser/afalakplffnnnlkncjhbmahjfjhmlkal/1.0.904/1/'
 
 
-
-alias snake="tr '[ ]-' '_'"
-alias kebab="tr '[ ]_' '-'"
-alias upper="tr 'a-z' 'A-Z'"
-alias lower="tr 'A-Z' 'a-z'"
-
+# alias snake="tr '[ ]-' '_'"
+# alias kebab="tr '[ ]_' '-'"
+# alias upper="tr 'a-z' 'A-Z'"
+# alias lower="tr 'A-Z' 'a-z'"
 
 
+# Avoids polluting session & zsh history as with `bindkey -s ...`
+function bindkey_minimal() {
+    local key=$1 
+    local func=$2
+    local widget=_${func}_widget
 
-function bindkey_zle() {
-  local key=$1 func=$2
-  local widget=_${func}_widget
+    # dynamic function definition (at runtime; other way uses eval "$widget(){...}")
+    functions[$widget]="() { $func; }" 
 
-  eval "
-  $widget() {
-    local choice
-    choice=\$( $func < /dev/tty )          # try to grab stdout
-    if [[ -n \$choice ]]; then
-      # ------ text-producing function ------
-      BUFFER=\$choice                     # drop into buffer
-      # uncomment next line for instant execution
-      # zle accept-line
-    else
-      # ------ side-effect-only function ------
-      # THIS IS ACTUALLY BROKEN
-      :                                   # nothing to insert
-    fi
-    zle reset-prompt
-  }
-  "
-  zle -N  $widget
-  bindkey "$key" $widget
+    zle -N  $widget
+    bindkey "$key" $widget
 }
 
-
-bindkey_zlee() {
+function bindkey_picker_to_buffer() {
   local key=$1 func=$2
   local widget=_${func}_widget
 
-  eval "
-  $widget() {
+  functions[$widget]="
     local choice
     choice=\$( $func < /dev/tty )
-    [[ -n \$choice ]] && { BUFFER=\$choice; zle accept-line; }
-  }
+    [[ -n \$choice ]] && { BUFFER=\$choice; CURSOR=\$#BUFFER; }
+    zle reset-prompt
   "
-  zle -N  $widget
+
+  zle -N $widget
   bindkey "$key" $widget
 }
 
+yazi_here() { yazi . }
+nvim_here() { nvim . }
+
+bindkey_minimal '^Y' yazi_here
+bindkey_minimal '^N' nvim_here
+bindkey_minimal '^K' copylast
+bindkey_minimal '^R' recent_pick
+bindkey_minimal '^D' find_dir_from_cache
+bindkey_minimal '^[^D' find_dir_then_cache
+bindkey_minimal '^F' find_file
+
+bindkey_picker_to_buffer '^H' get_history
 
 
-# function bindkey_zle_og() {
-#     local key=$1 
-#     local func=$2
-#     local widget=_${func}_widget
-#
-#     eval "function $widget() { $func; zle reset-prompt; }"
-#
-#
-#     zle -N  $widget
-#     bindkey "$key" $widget
-# }
-
-# fire-and-forget keybindings
-bindkey -s '^R' ' recent_pick\n'
-bindkey -s '^D' ' find_dir_from_cache\n'
-bindkey -s '^[^D' ' find_dir_then_cache\n'
-bindkey -s '^F' ' find_file\n'
-bindkey -s '^Y' ' yazi . \n'
-bindkey -s '^N' ' nvim . \n'
-#
-# #insert into buffer (command line) keybindings
-bindkey_zle '^H' get_history
-# bindkey_zle '^R' recent_pick
-# bindkey_zle '^D' find_dir_from_cache
-# bindkey_zle '^[^D' find_dir_then_cache
-# bindkey_zle '^F' find_file
-#
-# function open_yazi_here() { yazi . }
-# bindkey_zle '^Y' open_yazi_here
-#
-# function open_nvim_here() { nvim . }
-# bindkey_zle '^N' open_nvim_here
-#
-
-
-
-
-#NOTE: replaced with above block
-# export NVM_DIR="$HOME/.nvm" && [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh" && [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  
- 
 
 # python (standard) redefinitions
 alias pip=pip3
@@ -234,7 +165,27 @@ function compile_zsh() {
 }
 
 
-# NOTE: THIS CODE SAVED HERE BUT FOR EXTRACTING CONTENT FROM HTML (not related to zshrc)
-# xmllint --html --recover --xpath "//td/text()" input.html > output.txt
-#
+
+# export DOOMDIR="$HOME/.config/doom"
+# export PNPM_HOME="/Users/brightowl/Library/pnpm"
+# export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
+# export PATH="$HOME/.local/bin:$PATH"
+# export PATH="$HOME/.config/emacs/bin:$PATH"
+# export PATH=$HOME/bin:/usr/local/bin:$PATH
+# export PATH="$PNPM_HOME:$PATH"
+# export PATH=${PATH}:/usr/local/mysql/bin/
+
+
+# path=(
+#   $NIX_CURRENT_SYSTEM/bin
+#   $HOME/.nix-profile/bin
+#   $HOME/.local/bin
+#   $HOME/.config/emacs/bin
+#   $HOME/bin
+#   /usr/local/bin
+#   # /usr/local/mysql/bin
+#   $PNPM_HOME
+#   $path
+# )
+# export PATH
 #
