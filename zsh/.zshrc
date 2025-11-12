@@ -145,9 +145,16 @@ bindkey_minimal '^N' nvim_here
 bindkey_minimal '^K' copylast
 bindkey_minimal '^R' recent_pick
 # bindkey_minimal '^D' find_dir_from_cache
-# bindkey_minimal '^[^D' find_dir_then_cache
+fzd_dir() { fzd 'dir' }
+bindkey_minimal '^D' fzd_dir
+
+
+fzd_file() { fzd 'file' }
+bindkey_minimal '^F' fzd_file 
 # bindkey_minimal '^F' find_file
-bindkey_minimal '^F' deep-fzf 
+# bindkey_minimal '^[^D' find_dir_then_cache
+bindkey_minimal '^[^D' fzd
+
 
 bindkey_picker_to_buffer '^H' get_history
 

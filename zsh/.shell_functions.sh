@@ -13,11 +13,12 @@ function editable_path() {
 }
 
 
-# Cleanup function for session caches; called in zshrc 'trap ... exit'
 fzd.cleanup() {
-    	rm -f "/tmp/deep-fzf-full"-*  
-    	rm -f "/tmp/deep-fzf-file"-*
+    [[ $SHLVL -eq 1 ]] || return  # Run only in top-level shell
 
+    rm -f "/tmp/deep-fzf-full"-* || true
+    rm -f "/tmp/deep-fzf-file"-* || true
+    # Optional: rm -f "/tmp/deep-fzf-dir"-* || true  # If cleaning persistent
 }
 
 
@@ -53,6 +54,7 @@ fzd() {
     local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else command -v bat >/dev/null && bat --color=always {} || cat {} 2>/dev/null; fi"
     # local dir_exclusions=(node_modules .git .cache .DS_Store venv __pycache__ Trash "*.bak" "*.log")
     local fd_args=(-H -L . "$root" --exclude 'node_modules' --exclude '.git' --max-depth 5)
+    local fzf_args=(--preview "$preview" --bind "alt-d:become(zsh -ic 'fzd full {}')")
 
     # makes using while loop below tolerable, otherwise have to interpolate `||break` everywhere 
     menu_cycle() {
@@ -61,15 +63,15 @@ fzd() {
         if [[ -f $cache && -s $cache ]]; then
             # Re-check before cat (race-proof)
             if [[ -f $cache && -s $cache ]]; then
-                cat "$cache" | fzf --preview "$preview" | IFS= read -r chosen
+                cat "$cache" | fzf "${fzf_args[@]}" | IFS= read -r chosen
             else
                 # Fallback live if vanished
-                fd "${type_flags[@]}" "${fd_args[@]}" | fzf --preview "$preview" | IFS= read -r chosen
+                fd "${type_flags[@]}" "${fd_args[@]}" | fzf "${fzf_args[@]}" | IFS= read -r chosen
             fi
         else
             # Bg cache: Silent, no job prints
-            (fd "${fd_args[@]}" > "$cache") &>/dev/null &!
-            fd "${type_flags[@]}" "${fd_args[@]}"  | fzf --preview "$preview" | IFS= read -r chosen
+            (fd "${type_flags[@]}" "${fd_args[@]}" > "$cache") &>/dev/null &!
+            fd "${type_flags[@]}" "${fd_args[@]}"  | fzf "${fzf_args[@]}" | IFS= read -r chosen
         fi
         [[ $? -ne 0 || -z $chosen ]] && return 1
         if [[ -d $chosen ]]; then
