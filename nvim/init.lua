@@ -1745,4 +1745,15 @@ vim.api.nvim_create_autocmd("FileType", {
 -- vim.keymap.set("n", "<leader>bc", [["_c]])
 -- vim.keymap.set("n", "<leader>bd", [["_d]])
 vim.keymap.set("n", "<leader>p", [["_viwP]])
---
+--o
+-- opening urls
+vim.keymap.set({ "n", "x" }, "gx", function()
+	-- grab the whole WORD, then cut out the http(s) part
+	local word = vim.fn.expand("<cWORD>")
+	local url = word:match("(https?://%S+)") or word:match("(ftp://%S+)")
+	if url then
+		vim.ui.open(url)
+	else
+		vim.notify("No URL found under cursor", vim.log.levels.WARN)
+	end
+end, { desc = "open URL under cursor" })

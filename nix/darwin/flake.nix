@@ -44,6 +44,7 @@
             pkgs.bat
             pkgs.fd
             pkgs.fzf
+            pkgs.eza
             pkgs.rename
             pkgs.ripgrep
             pkgs.tree
@@ -102,6 +103,7 @@
             pkgs.ffmpeg
             pkgs.ffmpegthumbnailer
             pkgs.imagemagick
+            pkgs.mpv
             pkgs.pngpaste
             pkgs.sigtop
             pkgs.tesseract

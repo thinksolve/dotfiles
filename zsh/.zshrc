@@ -1,3 +1,26 @@
+#I now source this into ALL shell scripts (including zshrc); source of truth for PATH
+source ~/.config/path.sh 
+source "$HOME"/.shell_functions.sh
+
+
+do_exit_cleanup() {
+    fzd.cleanup
+    # other.cleanup
+    echo "Shell exit: Cleanups complete" >&2
+}
+
+trap do_exit_cleanup EXIT
+
+
+# use nvim for manpage, else fallback to regular behaviour
+man() {
+    if command -v nvim >/dev/null 2>&1; then
+        MANPAGER='nvim +Man!' command man "$@"
+    else
+        MANPAGER=less command man "$@"
+    fi
+}
+
 export FLAKE_DIR=~/.dotfiles/nix/darwin/
 export SYSTEM_FLAKE=~/.dotfiles/nix/darwin/flake.nix
 
@@ -37,9 +60,7 @@ export EDITOR="$RECENT_NVIM"
 export VISUAL="$RECENT_NVIM"
 export DIRVIEWER="yazi"
 
-#I now source this into ALL shell scripts (including zshrc); source of truth for PATH
-source ~/.config/path.sh 
-source "$HOME"/.shell_functions.sh
+
 
 
 
@@ -70,7 +91,7 @@ alias rm='trash-put'
 #deletes to ~/.local/share/Trash/; other commands trash-restore, trash-empty; accepts -r -f flags 
 
 # alias rm='rm -I --preserve-root' #safeguard, but permanent deletion
-
+alias lz="eza"
 alias drs='sudo darwin-rebuild switch --flake ~/.dotfiles/nix/darwin'
 alias config='cd ~/.dotfiles/ && yazi .'
 alias config-nix='cd ~/.dotfiles/nix/darwin && yazi .'
@@ -123,9 +144,10 @@ bindkey_minimal '^Y' yazi_here
 bindkey_minimal '^N' nvim_here
 bindkey_minimal '^K' copylast
 bindkey_minimal '^R' recent_pick
-bindkey_minimal '^D' find_dir_from_cache
-bindkey_minimal '^[^D' find_dir_then_cache
-bindkey_minimal '^F' find_file
+# bindkey_minimal '^D' find_dir_from_cache
+# bindkey_minimal '^[^D' find_dir_then_cache
+# bindkey_minimal '^F' find_file
+bindkey_minimal '^F' deep-fzf 
 
 bindkey_picker_to_buffer '^H' get_history
 
@@ -189,3 +211,6 @@ function compile_zsh() {
 # )
 # export PATH
 #
+
+
+
