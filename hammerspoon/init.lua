@@ -793,63 +793,31 @@ end
 
 local hotkey_ctrl_r = hs.hotkey.bind({ "ctrl" }, "r", function()
 	-- hs.hotkey.bind({ "cmd", "alt" }, "r", function()
-	-- launchTerminalTheRunCmd({ cmd = "recent_pick" })
+	-- launchTerminalWithCmd({ cmd = "send_key control r" })
+	-- --NOTE: for some reason doesnt work .. feels like timing
+
 	launchTerminalWithCmd({ cmd = "recent_pick" })
 end)
 
--- bind keys --------------------------------------------------------------
-
--- hs.hotkey.bind({"cmd","alt"}, "r",
---   function() launchTerminalThenRunCmd{
---   bundleID = "com.apple.Terminal",
---   cmd      = "ranger",
---   poll     = 0.01,   -- 10 ms
---   pause    = 0.05,   -- 50 ms
---   timeout  = 5,
--- }end)
---
-
 local hotkey_ctrl_f = hs.hotkey.bind({ "ctrl" }, "f", function()
-	-- hs.hotkey.bind({ "cmd", "option" }, "/", function()
-	-- runCommandInItermAndHitEnter("find_file")
-	-- launchTerminalWithCmd({ cmd = "find_file" })
-	launchTerminalWithCmd({ cmd = "send_key control f" })
+	launchTerminalWithCmd({ cmd = "send_key control f" }) -- find_file
 end)
 
 local hotkey_ctrl_d = hs.hotkey.bind({ "ctrl" }, "d", function()
-	-- local outsideHK  = hs.hotkey.bind({ "cmd" }, "/", function()
-	-- runCommandInItermAndHitEnter("ruzzy")
-	-- runCommandInItermAndHitEnter('cd "$(find_dirs_fuzzy_full)" && nvim .')
-	-- runCommandInItermAndHitEnter('cd "$(find_dirs_fuzzy_full)" && yazi .')
-	-- runCommandInItermAndHitEnter("cd $(fzf) && nvim .")
-	--
-	-- local command = 'cd "$(fd . "$HOME" --type d -H --max-depth 3 | fzf --prompt="Find Dir: ")" && nvim .'
-	-- local command = "fcd_1_level"
-	-- os.execute("cd ~ && find_dir_from_cache && exit")
-	-- runCommandInItermAndHitEnter("find_dir_from_cache")
-
-	-- runCommandInItermAndHitEnter("find_dir_from_cache 'emacs' && exit && killall ghostty")
-	-- runCommandInItermAndHitEnter(string.format("find_dir_from_cache 'emacs' && killall %s", terminal_app_id))
-
 	-- runCommandInItermAndHitEnter("find_dir_from_cache 'emacs'")
-	-- launchTerminalWithCmd({ cmd = "find_dir_from_cache" })
-	launchTerminalWithCmd({ cmd = "send_key control d" })
+	launchTerminalWithCmd({ cmd = "send_key control d" }) -- find_dir_from_cache
 end)
 
 local hotkey_ctrl_option_d = hs.hotkey.bind({ "ctrl", "option" }, "d", function()
-	-- launchTerminalWithCmd({ cmd = "find_dir_then_cache" })
-	launchTerminalWithCmd({ cmd = "send_key control option d" })
+	launchTerminalWithCmd({ cmd = "send_key control option d" }) -- find_dir_then_cache
 end)
 --
 local hotkey_ctrl_y = hs.hotkey.bind({ "ctrl" }, "y", function()
-	-- hs.hotkey.bind({ "cmd", "alt" }, "y", function()
-	launchTerminalWithCmd({ cmd = "yazi" })
+	launchTerminalWithCmd({ cmd = "send_key control y" }) -- yazi
 end)
 
 local hotkey_ctrl_h = hs.hotkey.bind({ "ctrl" }, "h", function()
 	launchTerminalWithCmd({ cmd = "send_key control h" })
-	-- zle widgets cannot be called directly; need to simulate pressing
-	-- the associated bindkey; send_key helper uses osascript to do so
 end)
 
 TG.watch({ hotkey_ctrl_d, hotkey_ctrl_option_d, hotkey_ctrl_f, hotkey_ctrl_y, hotkey_ctrl_r, hotkey_ctrl_h })

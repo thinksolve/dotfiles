@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 
-
+search_commits() {
+  local git_dir search_term
+  if [ $# -eq 1 ]; then
+    git_dir="$HOME/.dotfiles"
+    search_term="$1"
+  elif [ $# -eq 2 ]; then
+    git_dir="$1"
+    search_term="$2"
+  else
+    echo "Usage: search_commits [git_dir] <search_term>" >&2
+    return 1
+  fi
+  (cd "$git_dir" && git grep "$search_term" $(git rev-list --all))
+}
 
 # used for recent_pick and find_file
 function editable_path() {
