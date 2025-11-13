@@ -1,15 +1,19 @@
+
 #I now source this into ALL shell scripts (including zshrc); source of truth for PATH
 source ~/.config/path.sh 
 source "$HOME"/.shell_functions.sh
 
 
+export FZD_MAXDEPTH=5
 do_exit_cleanup() {
     fzd.cleanup
     # other.cleanup
     echo "Shell exit: Cleanups complete" >&2
 }
 
-trap do_exit_cleanup EXIT
+if [[ -z $(trap -p EXIT | grep fzd.cleanup) ]]; then
+    trap fzd.cleanup EXIT
+fi
 
 
 # use nvim for manpage, else fallback to regular behaviour

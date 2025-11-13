@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+
+
 # used for recent_pick and find_file
 function editable_path() {
 	local p=$1
@@ -53,7 +55,7 @@ fzd() {
     local dir_viewer=${DIRVIEWER:-$editor}
     local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else command -v bat >/dev/null && bat --color=always {} || cat {} 2>/dev/null; fi"
     # local dir_exclusions=(node_modules .git .cache .DS_Store venv __pycache__ Trash "*.bak" "*.log")
-    local fd_args=(-H -L . "$root" --exclude 'node_modules' --exclude '.git' --max-depth 5)
+    local fd_args=(-H -L . "$root" --exclude 'node_modules' --exclude '.git' --max-depth ${FZD_MAXDEPTH:-3})
     local fzf_args=(--preview "$preview" --bind "alt-d:become(zsh -ic 'fzd full {}')")
 
     # makes using while loop below tolerable, otherwise have to interpolate `||break` everywhere 
@@ -298,6 +300,28 @@ function deep-fzf-og() {
 		[[ -d $chosen ]] && yazi $chosen
 		[[ -f $chosen ]] && nvim $chosen
 	done
+}
+
+# function send_key_og() {
+#       local modifiers=$1
+#       local key=$2
+#       osascript -e "tell application \"System Events\" to keystroke \"$key\" using {$modifiers down}"
+# }
+
+# handles multiple modifiers
+function send_key() {
+  local args=("$@")
+  local key="${args[$#]}"
+  local len=$(( $# - 1 ))
+  local mods=("${args[@]:0:$len}")
+  local script="tell application \"System Events\" to keystroke \"$key\""
+  if ((${#mods[@]})); then
+    local joined=$(printf "%s down, " "${mods[@]}")
+    joined="${joined%, }"  # Portable trim (bash/zsh substring removal)
+    script+=" using {$joined}"
+  fi
+  # echo "$script"
+  osascript -e "$script"
 }
 
 # zshrc this is bound as a widget to ctrl-l=k ... possibly the most useful thing in the terminal
