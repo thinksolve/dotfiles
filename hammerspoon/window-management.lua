@@ -95,6 +95,8 @@ function LeftHalf()
 	local win, f, sf = GetWinScreenData()
 	f.w = sf.w / 2
 	win:setFrame(f)
+
+	hs.alert("yo")
 end
 
 function RightHalf()

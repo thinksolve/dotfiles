@@ -505,7 +505,6 @@ local function set_marko_commentstring_test()
 end
 
 require("lazy").setup({
-
 	{
 		"phaazon/hop.nvim",
 		branch = "v2",
@@ -1491,6 +1490,7 @@ require("lazy").setup({
 		},
 	},
 })
+
 --NOTE: transparent code ...
 local is_transparent_file = vim.fn.stdpath("config") .. "/is_transparent"
 

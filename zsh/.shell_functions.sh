@@ -1,18 +1,40 @@
 #!/usr/bin/env bash
 
-search_commits() {
-  local git_dir search_term
-  if [ $# -eq 1 ]; then
-    git_dir="$HOME/.dotfiles"
-    search_term="$1"
-  elif [ $# -eq 2 ]; then
-    git_dir="$1"
-    search_term="$2"
-  else
-    echo "Usage: search_commits [git_dir] <search_term>" >&2
-    return 1
-  fi
-  (cd "$git_dir" && git grep "$search_term" $(git rev-list --all))
+function whence_path() {
+	local func="$1"
+	[[ -z $func ]] && {
+		echo ""
+		return 1
+	}
+	local whence_out
+	whence_out=$(whence -v "$func")
+	if [[ $whence_out == *"$func not found"* ]]; then
+		echo ""
+		return 1
+	fi
+	echo "$whence_out" | sed 's/.* from //'
+}
+
+open_if_exists() {
+ local func="$1"
+ local path
+ path=$(whence_path "$func")
+ [[ -n $path ]] && nvim "$path"
+}
+
+function search_commits() {
+	local git_dir search_term
+	if [ $# -eq 1 ]; then
+		git_dir="$HOME/.dotfiles"
+		search_term="$1"
+	elif [ $# -eq 2 ]; then
+		git_dir="$1"
+		search_term="$2"
+	else
+		echo "Usage: search_commits [git_dir] <search_term>" >&2
+		return 1
+	fi
+	(cd "$git_dir" && git grep "$search_term" $(git rev-list --all))
 }
 
 # used for recent_pick and find_file
@@ -27,16 +49,13 @@ function editable_path() {
 	return 1
 }
 
-
 fzd.cleanup() {
-    [[ $SHLVL -eq 1 ]] || return  # Run only in top-level shell
-
-    rm -f "/tmp/deep-fzf-full"-* || true
-    rm -f "/tmp/deep-fzf-file"-* || true
-    # Optional: rm -f "/tmp/deep-fzf-dir"-* || true  # If cleaning persistent
+	[[ $SHLVL -eq 1 ]] || return # Run only in top-level shell
+	rm -f "/tmp/deep-fzf-full"-* || true
+	rm -f "/tmp/deep-fzf-file"-* || true
 }
 
-
+# not nash friendly (breaks format-on-save in this sh file)
 fzd() {
     local mode=${1:-full}
     local root=${2:-$HOME}
@@ -54,7 +73,7 @@ fzd() {
         *)    echo "Usage: fzd-new {file|full|dir}" >&2; return 1 ;;
     esac
 
-   
+
 
     # fd type flags
     local type_flags=()
@@ -69,9 +88,9 @@ fzd() {
     local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else command -v bat >/dev/null && bat --color=always {} || cat {} 2>/dev/null; fi"
     # local dir_exclusions=(node_modules .git .cache .DS_Store venv __pycache__ Trash "*.bak" "*.log")
     local fd_args=(-H -L . "$root" --exclude 'node_modules' --exclude '.git' --max-depth ${FZD_MAXDEPTH:-3})
-    local fzf_args=(--preview "$preview" --bind "alt-d:become(zsh -ic 'fzd full {}')")
+    local fzf_args=(--preview "$preview" --bind "ctrl-d:become(zsh -ic 'fzd full {}')")
 
-    # makes using while loop below tolerable, otherwise have to interpolate `||break` everywhere 
+    # makes using while loop below tolerable, otherwise have to interpolate `||break` everywhere
     menu_cycle() {
         local chosen
 
@@ -101,218 +120,6 @@ fzd() {
     }
 
     while menu_cycle; do :; done
-
-
-    # local chosen
-
-    # while true; do
-    #          # Use cache for menu if it exists, or fresh search for dir/persistent
-    #     if [[ -f $cache ]]; then
-    #         # chosen=$(cat "$cache" | fzf --preview $preview) || break
-    #         cat "$cache" | fzf --preview "$preview"  | IFS= read -r chosen || break
-    #     else
-    #         # nohup fd "${type_flags[@]}" -H -L . "$root" --max-depth 6 > "$cache" &
-    #         # (fd "${type_flags[@]}" -H -L . "$root" --max-depth 5 > "$cache") &>/dev/null & disown
-    #         (fd "${type_flags[@]}" -H -L . "$root" --max-depth 5 > "$cache") &>/dev/null &!
-    #
-    #         # chosen=$(fd "${type_flags[@]}" -H -L . "$root" --max-depth 5 | fzf --preview $preview) || break
-    #         fd "${type_flags[@]}" -H -L . "$root" --max-depth 5 | fzf --preview "$preview"  | IFS= read -r chosen || break
-    #     fi
-    #
-    #     [[ -z $chosen ]] && break
-    #
-    #     if [[ -d $chosen ]]; then
-    #         "$dir_viewer" "$chosen" || break
-    #     elif editable_path "$chosen"; then
-    #         "$editor" "$chosen" || break
-    #     else
-    #         open "$chosen" || break
-    #     fi
-    #
-    # done
-}
-
-fzd-old() {
-    local mode=${1:-full}
-    local root=${2:-$HOME}
-    local hash=$(md5sum <<<"$root" | cut -d' ' -f1)
-
-    # distinguish between session and persistent caches
-    local cache
-    case $mode in
-        file)
-            cache="/tmp/deep-fzf-file-${hash}-${BASHPID}.gz" ;;
-        full)
-            cache="/tmp/deep-fzf-full-${hash}-${BASHPID}.gz" ;;
-        dir)
-            cache="/tmp/deep-fzf-dir-${hash}.gz" ;;
-        *)
-            echo "Usage: deep-fzf {file|full|dir}" >&2
-            return 1 ;;
-    esac
-
-    # choose fd search type
-    local type_flags=()
-    case $mode in
-        file) type_flags=(-t f) ;;
-        dir)  type_flags=(-t d) ;;
-        full) type_flags=() ;; # both files and dirs
-    esac
-
-    # Reuse cache if it exists
-    if [[ -f $cache ]]; then
-        gunzip -c "$cache" | fzf --preview 'tree -a -C -L 1 "{}"'
-        return
-    fi
-
-    # Otherwise build cache on first call
-    fd "${type_flags[@]}" -H -L . "$root" --max-depth 6 |
-        tee >(gzip >"$cache") |
-        fzf --preview 'tree -a -C -L 1 "{}"'
-}
-
-
-
-
-function deep-fzf.cleanup_deep_fzf { 
-	rm -f "/tmp/deep-fzf-cache"-* 
-} 
-
-function deep-fzf() {
-
-    local root=${1:-$HOME}
-    local root_hash=$(md5sum <<<"$root" | cut -d' ' -f1)
-    local cache="/tmp/deep-fzf-cache-${root_hash}"
-    local chosen tmp
-    local session_cache="$cache-$$"
-
-    local fd_args=(-H -L . "$root" --max-depth 6)
-
-
-    old_caches=(/tmp/deep-fzf-cache-${root_hash}-!($$)(N))
-
-    # only trash if there are files
-    [[ ${#old_caches[@]} -gt 0 ]] && rm -f "${old_caches[@]}"
-
-    
-    # build session cache in background if not exists
-    if [[ ! -s $session_cache ]]; then
-        (fd "${fd_args[@]}" > "$session_cache") &|
-    fi
-
-    while true; do
-        # --- stream fd instantly if session cache not ready ---
-        if [[ -s $session_cache ]]; then
-            # use session cache for menu
-            chosen=$(
-                fzf --bind "alt-d:become(zsh -ic 'deep-fzf {}')" \
-                    --preview 'tree -a -C -L 1 {}' \
-                    --prompt "Search $root: " < "$session_cache"
-            )
-        else
-            # stream live fd into fzf immediately
-            chosen=$(
-                fd "${fd_args[@]}" |
-                fzf --bind "alt-d:become(zsh -ic 'deep-fzf {}')" \
-                    --preview 'tree -a -C -L 1 {}' \
-                    --prompt "Search $root: "
-            )
-        fi
-
-        [[ -z $chosen ]] && return
-
-        if [[ -d $chosen ]]; then
-            "${DIRVIEWER:-yazi}" "$chosen"
-        elif editable_path "$chosen"; then
-            "${EDITOR:-nvim}" "$chosen"
-        else
-            open "$chosen"
-        fi
-
-        # refresh session cache asynchronously
-        (
-            tmp=$(mktemp "/tmp/deep-fzf-cache-${root_hash}-XXXXXX") || exit
-            fd "${fd_args[@]}" > "$tmp" && [[ -s $tmp ]] && mv "$tmp" "$session_cache"
-        ) &|
-    done
-    
-
-}
-
-
-# ... was accumulating too many tmp files
-function deep-fzf-old() {
-  local root=${1:-$HOME}
-  local root_hash=$(md5sum <<<"$root" | cut -d' ' -f1)
-  local cache="/tmp/deep-fzf-cache-${root_hash}"
-
-  rm -f "$cache-"*.tmp(N) # safe cleanup of orphaned temp files
-
-  local chosen tmp
-
-  while true; do
-    if [[ -s $cache ]]; then
-      chosen=$(
-        fzf --bind "alt-d:become(zsh -ic 'deep-fzf-new {}')" \
-            --preview 'tree -a -C -L 1 {}' \
-            --prompt "Search (cached) $root: " < "$cache"
-      )
-      # Background refresh — run from correct directory, unique tmp
-      (
-        local r="$root"
-        tmp=$(mktemp "${cache}.XXXXXX") || exit
-        cd "$r" || exit
-        fd -H -L . --max-depth 7 > "$tmp" &&
-        [[ -s $tmp ]] && mv "$tmp" "$cache"
-      ) &>/dev/null &!
-    else
-      # First-time live listing with streaming + caching
-      tmp=$(mktemp "${cache}.XXXXXX") || return
-      chosen=$(
-        fd -H -L . "$root" --max-depth 7 |
-          tee >(cat >"$tmp") |
-          fzf --bind "alt-d:become(zsh -ic 'deep-fzf-new {}')" \
-              --preview 'tree -a -C -L 1 {}' \
-              --prompt "Search (live) $root: "
-      )
-      [[ -s $tmp ]] && mv "$tmp" "$cache" 2>/dev/null
-    fi
-
-    [[ -z $chosen ]] && return
-
-    if [[ -d $chosen ]]; then
-      "${DIRVIEWER:-yazi}" "$chosen"
-    elif editable_path "$chosen"; then
-      "${EDITOR:-nvim}" "$chosen"
-    else
-      open "$chosen"
-      # if command -v xdg-open &>/dev/null; then
-      #   xdg-open "$chosen"
-      # else
-      #   open "$chosen"
-      # fi
-    fi
-  done
-}
-
-
-# unnecessarily rebuilds list on every while loop (returning from nvim/yazi)
-function deep-fzf-og() {
-	local root=${1:-$HOME}
-	local chosen
-
-	while true; do
-		chosen=$(
-			fd -H -L . "$root" --max-depth 7 |
-				fzf --bind "alt-d:become(zsh -ic 'deep-fzf {}')" \
-					--preview 'tree -a -C -L 1 {}' \
-					--prompt "Search $root: "
-		)
-
-		[[ -z $chosen ]] && return
-		[[ -d $chosen ]] && yazi $chosen
-		[[ -f $chosen ]] && nvim $chosen
-	done
 }
 
 # function send_key_og() {
@@ -320,21 +127,48 @@ function deep-fzf-og() {
 #       local key=$2
 #       osascript -e "tell application \"System Events\" to keystroke \"$key\" using {$modifiers down}"
 # }
+#
+#
+function send_key() {
+    local args=("$@")
+    local key="${args[$#]}"
+    local len=$(($# - 1))
+    local mods=("${args[@]:0:$len}")
+    
+    # Get the frontmost terminal app (or specify explicitly)
+    local app_name="Ghostty"  # or get dynamically
+    
+    local script="tell application \"System Events\"
+        tell process \"$app_name\"
+            keystroke \"$key\""
+    
+    if ((${#mods[@]})); then
+        local joined=$(printf "%s down, " "${mods[@]}")
+        joined="${joined%, }"
+        script+=" using {$joined}"
+    fi
+    
+    script+="
+        end tell
+    end tell"
+    
+    osascript -e "$script" 2>&1
+}
 
 # handles multiple modifiers
-function send_key() {
-  local args=("$@")
-  local key="${args[$#]}"
-  local len=$(( $# - 1 ))
-  local mods=("${args[@]:0:$len}")
-  local script="tell application \"System Events\" to keystroke \"$key\""
-  if ((${#mods[@]})); then
-    local joined=$(printf "%s down, " "${mods[@]}")
-    joined="${joined%, }"  # Portable trim (bash/zsh substring removal)
-    script+=" using {$joined}"
-  fi
-  # echo "$script"
-  osascript -e "$script"
+function send_key_og() {
+	local args=("$@")
+	local key="${args[$#]}"
+	local len=$(($# - 1))
+	local mods=("${args[@]:0:$len}")
+	local script="tell application \"System Events\" to keystroke \"$key\""
+	if ((${#mods[@]})); then
+		local joined=$(printf "%s down, " "${mods[@]}")
+		joined="${joined%, }" # Portable trim (bash/zsh substring removal)
+		script+=" using {$joined}"
+	fi
+	# echo "$script"
+	osascript -e "$script"
 }
 
 # zshrc this is bound as a widget to ctrl-l=k ... possibly the most useful thing in the terminal
@@ -631,7 +465,11 @@ function get_history_old() {
 }
 
 function get_history() {
-	# fc -rl 1 | fzf +s | sed 's/^[ *]*[0-9*]* *//' # +s garbles first return
+	# fc -R ~/.zsh_history &&
+	#
+	# [[ -f $HISTFILE ]] && fc -R
+	
+	fc -R #alert: when calling function from hs/init.lua need to read history file in advance
 	fc -rl 1 | fzf --layout=reverse --height=~30 | sed 's/^[ *]*[0-9*]* *//'
 }
 
@@ -644,8 +482,6 @@ function get_history() {
 #         [[ $p =~ \.(json|toml|yaml|yml|md|txt|sh|zsh|vim|conf|ini|py|js|ts|css|html)$ ]] ||
 #         [[ $(file --mime-type -b -- "$p") == text/* ]]
 # }
-
-
 
 function recent_pick() {
 	local recent_pick_db=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
@@ -2003,6 +1839,7 @@ function unship() {
 ## NOTE: yet to be tested (oct 5 2025); once tested delete this message
 function ship_config() {
 	(cd "$HOME/.dotfiles" && ship "$@")
+	history -d $((HISTCMD - 1))
 }
 
 # function ship_config_alt() {

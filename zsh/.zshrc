@@ -1,20 +1,15 @@
 
-#I now source this into ALL shell scripts (including zshrc); source of truth for PATH
 source ~/.config/path.sh 
 source "$HOME"/.shell_functions.sh
 
 
+
+# trap do_exit_cleanup EXIT
+# if [[ -z $(trap -p EXIT | grep fzd.cleanup) ]]; then
+#     trap fzd.cleanup EXIT
+# fi
+
 export FZD_MAXDEPTH=5
-do_exit_cleanup() {
-    fzd.cleanup
-    # other.cleanup
-    echo "Shell exit: Cleanups complete" >&2
-}
-
-if [[ -z $(trap -p EXIT | grep fzd.cleanup) ]]; then
-    trap fzd.cleanup EXIT
-fi
-
 
 # use nvim for manpage, else fallback to regular behaviour
 man() {
@@ -143,24 +138,32 @@ function bindkey_picker_to_buffer() {
 
 yazi_here() { yazi . }
 nvim_here() { nvim . }
+# bindkey -r '^K'
+# bindkey -r '^R'
 
-bindkey_minimal '^Y' yazi_here
-bindkey_minimal '^N' nvim_here
-bindkey_minimal '^K' copylast
-bindkey_minimal '^R' recent_pick
+bindkey_minimal '^[y' yazi_here
+bindkey_minimal '^[n' nvim_here
+bindkey_minimal '^[k' copylast
+
+
+
+# bindkey_minimal '^R' recent_pick
+bindkey_minimal '^[r' recent_pick
+
+
 # bindkey_minimal '^D' find_dir_from_cache
 fzd_dir() { fzd 'dir' }
-bindkey_minimal '^D' fzd_dir
+bindkey_minimal '^[d' fzd_dir
 
 
 fzd_file() { fzd 'file' }
-bindkey_minimal '^F' fzd_file 
+bindkey_minimal '^[f' fzd_file 
 # bindkey_minimal '^F' find_file
 # bindkey_minimal '^[^D' find_dir_then_cache
 bindkey_minimal '^[^D' fzd
 
 
-bindkey_picker_to_buffer '^H' get_history
+bindkey_picker_to_buffer '^[h' get_history
 
 
 
@@ -221,7 +224,10 @@ function compile_zsh() {
 #   $path
 # )
 # export PATH
-#
 
+do_exit_cleanup() {
+    fzd.cleanup
+    echo "Shell exit: Cleanups complete" >&2
+}
 
-
+trap do_exit_cleanup EXIT

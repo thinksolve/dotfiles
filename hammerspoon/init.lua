@@ -47,6 +47,7 @@ end
 -- hs.hotkey.bind(merge_modifiers(space_mod, "shift"), "-", space_management.add_new_space)
 
 local screen_position_mod = { "command", "option" }
+
 hs.hotkey.bind(screen_position_mod, "Left", window_management.LeftHalf)
 hs.hotkey.bind(screen_position_mod, "Right", window_management.RightHalf)
 hs.hotkey.bind(screen_position_mod, "Up", window_management.TopHalf)
@@ -757,17 +758,16 @@ local function launchTerminalWithCmd(opts)
 		--
 		-- hs.execute(string.format("open -nb %s --args -e zsh -c 'source ~/.zshrc && %s; exec zsh'", bundleID, cmd), true)
 
-		hs.execute(
-			string.format("open -a %s --args -e zsh -c 'source ~/.zshrc && %s; exec zsh'", terminalApp, cmd),
-			true
-		)
+		-- string.format("open -a %s --args -e zsh -il -c 'source ~/.zshrc && %s; exec zsh'", terminalApp, cmd),
+
+		hs.execute(string.format("open -a %s --args -e zsh -il -c '%s; exec zsh'", terminalApp, cmd), true)
 	else
 		local applescript = string.format(
 			[[
 			    tell application "%s"
 				activate
 			    end tell
-			    delay 0.1
+			    delay 0.5
 			    tell application "System Events"
 				keystroke "n" using {command down}
 			    end tell
@@ -791,36 +791,48 @@ local function launchTerminalWithCmd(opts)
 	end
 end
 
-local hotkey_ctrl_r = hs.hotkey.bind({ "ctrl" }, "r", function()
-	-- hs.hotkey.bind({ "cmd", "alt" }, "r", function()
-	-- launchTerminalWithCmd({ cmd = "send_key control r" })
-	-- --NOTE: for some reason doesnt work .. feels like timing
+local hotkey_option_r = hs.hotkey.bind({ "option" }, "r", function()
+	-- launchTerminalWithCmd({ cmd = "recent_pick" })
+	launchTerminalWithCmd({ cmd = "send_key option r" })
 
-	launchTerminalWithCmd({ cmd = "recent_pick" })
+	-- NOTE: simulated control r, whether with osascript or hs.eventtap.keyStroke is somehow intercepted by macos,
+	-- havent figured it out
 end)
 
-local hotkey_ctrl_f = hs.hotkey.bind({ "ctrl" }, "f", function()
-	launchTerminalWithCmd({ cmd = "send_key control f" }) -- find_file
+local hotkey_option_f = hs.hotkey.bind({ "option" }, "f", function()
+	launchTerminalWithCmd({ cmd = "send_key option f" })
+	-- launchTerminalWithCmd({ cmd = "fzd file" })
 end)
 
-local hotkey_ctrl_d = hs.hotkey.bind({ "ctrl" }, "d", function()
+local hotkey_option_d = hs.hotkey.bind({ "option" }, "d", function()
 	-- runCommandInItermAndHitEnter("find_dir_from_cache 'emacs'")
-	launchTerminalWithCmd({ cmd = "send_key control d" }) -- find_dir_from_cache
+	launchTerminalWithCmd({ cmd = "send_key option d" })
+	-- launchTerminalWithCmd({ cmd = "fzd dir" })
 end)
 
 local hotkey_ctrl_option_d = hs.hotkey.bind({ "ctrl", "option" }, "d", function()
-	launchTerminalWithCmd({ cmd = "send_key control option d" }) -- find_dir_then_cache
+	launchTerminalWithCmd({ cmd = "send_key control option d" })
+	-- launchTerminalWithCmd({ cmd = "fzd" })
 end)
 --
-local hotkey_ctrl_y = hs.hotkey.bind({ "ctrl" }, "y", function()
-	launchTerminalWithCmd({ cmd = "send_key control y" }) -- yazi
+local hotkey_option_y = hs.hotkey.bind({ "option" }, "y", function()
+	launchTerminalWithCmd({ cmd = "send_key option y" })
+	-- launchTerminalWithCmd({ cmd = "yazi" })
 end)
 
-local hotkey_ctrl_h = hs.hotkey.bind({ "ctrl" }, "h", function()
-	launchTerminalWithCmd({ cmd = "send_key control h" })
+local hotkey_option_h = hs.hotkey.bind({ "option" }, "h", function()
+	launchTerminalWithCmd({ cmd = "send_key option h" })
+	-- launchTerminalWithCmd({ cmd = "get_history" })
 end)
 
-TG.watch({ hotkey_ctrl_d, hotkey_ctrl_option_d, hotkey_ctrl_f, hotkey_ctrl_y, hotkey_ctrl_r, hotkey_ctrl_h })
+TG.watch({
+	hotkey_ctrl_option_d,
+	hotkey_option_d,
+	hotkey_option_f,
+	hotkey_option_y,
+	hotkey_option_r,
+	hotkey_option_h,
+})
 
 --------------------------------------------------------------------------------
 -- 100 % self-contained silent capture → clipboard
