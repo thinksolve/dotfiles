@@ -1,5 +1,14 @@
 hs.alert.show("hs init.lua loaded")
 
+local function withHotkeyDisabled(hotkey, fn)
+	hotkey:disable()
+	local ok, result = pcall(fn)
+	hs.timer.doAfter(0.2, function()
+		hotkey:enable()
+	end)
+	return ok, result
+end
+
 --Commmented these 2 out on 4-25-25 since not really using
 -- hs.ipc.cliInstall()
 -- hs.loadSpoon("EmmyLua")
@@ -8,6 +17,7 @@ require("submodules")
 require("registerSpoons")
 
 local TG = require("termGuard")
+local LSB = require("loopSafeBind")
 
 local watchers = require("watchers") -- set as variable in case want to stop a watcher
 local window_management = require("window-management")
@@ -738,36 +748,31 @@ local function launchTerminalWithCmd_old(opts)
 	)
 end
 
-local function launchTerminalWithCmd(opts)
+-- NOTE: this function works with ghostty not iterm or terminal since the 'not running block uses ghostty specific
+-- command line syntax!!!
+local function launchGhosttyWithCmd(opts)
 	opts = opts or {}
 	local cmd = opts.cmd or error("opts.cmd required")
 	local bundleID = opts.bundleID or "com.mitchellh.ghostty"
-	-- local bundleID = opts.bundleID or "com.googlecode.iterm2"
-
-	local app = hs.application.get(bundleID)
-	-- local app = hs.application.get(bundleID) or hs.application.launchOrFocusByBundleID(bundleID)
 	local terminalApp = "Ghostty"
 
+	local app = hs.application.get(bundleID)
 	-- local app = hs.application.find(terminalApp)
-	local isRunning = app and app:isRunning()
 
-	if not isRunning then
+	if not (app and app:isRunning()) then
 		-- #NOTE: 'open -n ..' creates a _new instance_ with the new window (not a problem here since app is not started)
 		--  Previously this was an issue since i couldnt cycle through various windows with 'cmd + .' since that only works
 		--  for many windows beloning to the _same_ instance
-		--
-		-- hs.execute(string.format("open -nb %s --args -e zsh -c 'source ~/.zshrc && %s; exec zsh'", bundleID, cmd), true)
-
-		-- string.format("open -a %s --args -e zsh -il -c 'source ~/.zshrc && %s; exec zsh'", terminalApp, cmd),
 
 		hs.execute(string.format("open -a %s --args -e zsh -il -c '%s; exec zsh'", terminalApp, cmd), true)
+	-- elseif app:isHidden() then  -- why didnt this work
 	else
 		local applescript = string.format(
 			[[
 			    tell application "%s"
 				activate
 			    end tell
-			    delay 0.5
+			    delay 0.2
 			    tell application "System Events"
 				keystroke "n" using {command down}
 			    end tell
@@ -786,43 +791,164 @@ local function launchTerminalWithCmd(opts)
 
 		local ok, result = hs.osascript.applescript(applescript)
 		if not ok then
-			hs.alert.show("Failed to open Ghostty window: " .. tostring(result))
+			hs.alert.show("Failed to open terminal window: " .. tostring(result))
 		end
 	end
 end
 
-local hotkey_option_r = hs.hotkey.bind({ "option" }, "r", function()
-	-- launchTerminalWithCmd({ cmd = "recent_pick" })
-	launchTerminalWithCmd({ cmd = "send_key option r" })
+-- local hotkey_option_r = hs.hotkey.bind({ "option" }, "r", function()
+LSB.bind({ "option" }, "r", function()
+	launchGhosttyWithCmd({ cmd = "recent_pick" })
+	-- launchGhosttyWithCmd({ cmd = "send_key option r" })
 
 	-- NOTE: simulated control r, whether with osascript or hs.eventtap.keyStroke is somehow intercepted by macos,
 	-- havent figured it out
 end)
 
-local hotkey_option_f = hs.hotkey.bind({ "option" }, "f", function()
-	launchTerminalWithCmd({ cmd = "send_key option f" })
-	-- launchTerminalWithCmd({ cmd = "fzd file" })
+-- local hotkey_option_h = hs.hotkey.bind({ "option" }, "h", function()
+-- 	-- 1.  ensure Ghostty is **running** (start if needed)
+-- 	local app = hs.application.get("com.mitchellh.ghostty")
+-- 	if not app then
+-- 		hs.execute("open -a Ghostty", true)
+-- 		hs.timer.doAfter(0.4, function()
+-- 			hs.osascript([[tell application "Ghostty" to activate]])
+-- 			hs.timer.doAfter(0.1, function()
+-- 				hs.eventtap.keyStroke({ "cmd" }, "n") -- Ghostty default: new window
+-- 				hs.timer.doAfter(0.15, function()
+-- 					hs.eventtap.keyStroke({ "option" }, "h")
+-- 				end)
+-- 			end)
+-- 		end)
+-- 	else
+-- 		-- already running → just new window + inject
+-- 		hs.osascript([[tell application "Ghostty" to activate]])
+-- 		hs.timer.doAfter(0.1, function()
+-- 			hs.eventtap.keyStroke({ "cmd" }, "n")
+-- 			hs.timer.doAfter(0.15, function()
+-- 				hs.eventtap.keyStroke({ "option" }, "h")
+-- 			end)
+-- 		end)
+-- 	end
+-- end)
+--
+
+-- NOTE: works with terminal/ghostty but not with iterm2
+local function open_terminal_and_run_callback(opts)
+	local terminal = opts.terminal or "Ghostty"
+	hs.execute(string.format("open -a %s", terminal), true)
+
+	local app = hs.application.get(terminal)
+	local isRunning = app and app:isRunning()
+
+	if isRunning then
+		hs.timer.doAfter(0.15, function()
+			hs.eventtap.keyStroke({ "cmd" }, "n")
+		end)
+	end
+
+	hs.timer.doAfter(isRunning and 0.3 or 0.4, function()
+		opts.callback()
+	end)
+end
+
+-- local hotkey_option_y = hs.hotkey.bind({ "option" }, "y", function()
+LSB.bind({ "option" }, "y", function()
+	-- launchGhosttyWithCmd({ cmd = "send_key option y" })
+	launchGhosttyWithCmd({ cmd = "yazi" })
 end)
 
-local hotkey_option_d = hs.hotkey.bind({ "option" }, "d", function()
+-- local hotkey_option_f = hs.hotkey.bind({ "option" }, "f", function()
+LSB.bind({ "option" }, "f", function()
+	-- launchGhosttyWithCmd({ cmd = "send_key option f" })
+	launchGhosttyWithCmd({ cmd = "fzd file" })
+end)
+
+-- local hotkey_option_d = hs.hotkey.bind({ "option" }, "d", function()
+LSB.bind({ "option" }, "d", function()
 	-- runCommandInItermAndHitEnter("find_dir_from_cache 'emacs'")
-	launchTerminalWithCmd({ cmd = "send_key option d" })
-	-- launchTerminalWithCmd({ cmd = "fzd dir" })
+	-- launchGhosttyWithCmd({ cmd = "send_key option d" })
+	launchGhosttyWithCmd({ cmd = "fzd dir" })
 end)
 
-local hotkey_ctrl_option_d = hs.hotkey.bind({ "ctrl", "option" }, "d", function()
-	launchTerminalWithCmd({ cmd = "send_key control option d" })
-	-- launchTerminalWithCmd({ cmd = "fzd" })
+LSB.bind({ "ctrl", "option" }, "d", function()
+	-- local hotkey_ctrl_option_d = hs.hotkey.bind({ "ctrl", "option" }, "d", function()
+	-- launchGhosttyWithCmd({ cmd = "send_key control option d" })
+	launchGhosttyWithCmd({ cmd = "fzd" })
 end)
 --
-local hotkey_option_y = hs.hotkey.bind({ "option" }, "y", function()
-	launchTerminalWithCmd({ cmd = "send_key option y" })
-	-- launchTerminalWithCmd({ cmd = "yazi" })
-end)
 
-local hotkey_option_h = hs.hotkey.bind({ "option" }, "h", function()
-	launchTerminalWithCmd({ cmd = "send_key option h" })
-	-- launchTerminalWithCmd({ cmd = "get_history" })
+--
+-- TEST: works but opens dummy window when app is not running
+-- and focuses terminal app rather than create new window
+local function open_terminal_and_run_cmd_kimi(opts)
+	local term = opts.terminal or "ghostty"
+	local cmd = opts.cmd or error("cmd required")
+
+	if term:lower() == "ghostty" then
+		-- Ghostty: native --command flag (race-free)
+		hs.execute(string.format("open -a Ghostty --args -e zsh -il -c ' %s; exec zsh'", cmd), true)
+	elseif term:lower() == "kitty" then
+		-- Kitty: --session flag
+		hs.execute(string.format("open -a Kitty --args -e zsh -il -c ' %s; exec zsh'", cmd), true)
+	else
+		-- iTerm2 / Terminal / others: AppleScript
+		local script = string.format(
+			[[
+			    tell application "%s"
+				if not running then launch
+				activate
+				set newWin to (create window with default profile)
+				tell current session of newWin
+				    write text "%s"
+				end tell
+			    end tell
+			]],
+			term:gsub("^%l", string.upper),
+			cmd:gsub('"', '\\"')
+		)
+		hs.timer.doAfter(0.3, function()
+			hs.osascript.applescript(script)
+		end)
+	end
+end
+
+-- local hotkey_option_h
+-- hotkey_option_h = hs.hotkey.bind({ "option" }, "h", function()
+-- 	-- open_terminal_and_run_callback({
+-- 	-- 	callback = function()
+-- 	-- 		hs.eventtap.keyStroke({ "option" }, "h")
+-- 	-- 	end,
+-- 	-- 	terminal = "Terminal",
+-- 	-- 	-- terminal = "Ghostty",
+-- 	-- 	-- terminal = "iterm2", --NOTE: doesnt work ... why???
+-- 	-- })
+--
+-- 	local command_string = "send_key option h"
+--
+-- 	-- open_terminal_and_run_cmd_kimi({
+-- 	-- 	cmd = command_string,
+-- 	-- 	-- terminal = "iterm2",
+-- 	-- 	terminal = "ghostty",
+-- 	-- 	-- terminal = "terminal", -- didnt work
+-- 	-- })
+-- 	withHotkeyDisabled(hotkey_option_h, function()
+-- 		launchGhosttyWithCmd({ cmd = "send_key option h" })
+-- 	end)
+--
+-- 	-- 	--NOTE: works but sometimes spawns many terminals at once
+-- 	-- launchGhosttyWithCmd({ cmd = "send_key option h" })
+-- 	--
+-- 	-- 	--NOTE: calling 'get_history' nor the run-time generated
+-- 	-- 	--'_get_history_widget' works; quirk of buffer manipulation
+-- 	-- 	--in this case launchGhosttyWithCmd({ cmd = "get_history" })
+-- 	-- 	--
+-- 	-- 	--NOTE: lol even this doesnt work yet calling 'insert_history_to_buffer'
+-- 	-- 	--in the terminal directly does what the zle bindkey does
+-- 	-- 	-- launchGhosttyWithCmd({ cmd = "insert_history_to_buffer" })
+-- end)
+
+LSB.bind({ "option" }, "h", function()
+	launchGhosttyWithCmd({ cmd = "send_key option h" })
 end)
 
 TG.watch({
@@ -831,7 +957,7 @@ TG.watch({
 	hotkey_option_f,
 	hotkey_option_y,
 	hotkey_option_r,
-	hotkey_option_h,
+	-- hotkey_option_h,
 })
 
 --------------------------------------------------------------------------------

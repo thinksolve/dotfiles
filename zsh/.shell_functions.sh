@@ -1,5 +1,29 @@
 #!/usr/bin/env bash
 
+function toggle_desktop() {
+	if $(defaults read com.apple.finder CreateDesktop); then
+		defaults write com.apple.finder CreateDesktop false
+		killall Finder
+
+	else
+		defaults write com.apple.finder CreateDesktop true
+		killall Finder
+	fi
+
+}
+
+# need error handling, for instance iterm2 vs iTerm2
+function toggle_service() {
+	local SERVICE="${1:-Activity Monitor}"
+
+	if pgrep -xq -- "$SERVICE"; then
+		osascript -e 'tell application "'$SERVICE'" to quit'
+	else
+		open -a "$SERVICE"
+	fi
+}
+#
+
 function whence_path() {
 	local func="$1"
 	[[ -z $func ]] && {
@@ -16,10 +40,10 @@ function whence_path() {
 }
 
 open_if_exists() {
- local func="$1"
- local path
- path=$(whence_path "$func")
- [[ -n $path ]] && nvim "$path"
+	local func="$1"
+	local path
+	path=$(whence_path "$func")
+	[[ -n $path ]] && nvim "$path"
 }
 
 function search_commits() {
@@ -122,37 +146,63 @@ fzd() {
     while menu_cycle; do :; done
 }
 
-# function send_key_og() {
-#       local modifiers=$1
-#       local key=$2
-#       osascript -e "tell application \"System Events\" to keystroke \"$key\" using {$modifiers down}"
-# }
-#
-#
+
 function send_key() {
-    local args=("$@")
-    local key="${args[$#]}"
-    local len=$(($# - 1))
-    local mods=("${args[@]:0:$len}")
-    
-    # Get the frontmost terminal app (or specify explicitly)
-    local app_name="Ghostty"  # or get dynamically
-    
-    local script="tell application \"System Events\"
+	local mods=()
+	local key="${@: -1}"
+	local args=("$@")
+	local i
+
+	for ((i = 1; i < $#; i++)); do
+		case "${args[i]}" in
+		shift) mods+=("shift down") ;;
+		control | ctrl) mods+=("control down") ;;
+		option | alt) mods+=("option down") ;;
+		command | cmd) mods+=("command down") ;;
+		*)
+			echo "Unknown modifier: ${args[i]}" >&2
+			return 1
+			;;
+		esac
+	done
+
+	local as_mods=$(
+		IFS=','
+		echo "${mods[*]}"
+	)
+	
+	command_string="tell application \"System Events\" to keystroke \"$key\" using {$as_mods}"
+
+	# echo "$command_string" # debug
+	osascript -e "$command_string" 2>&1
+
+	# osascript -e "tell application \"System Events\" to keystroke \"$key\" using {$as_mods}"
+}
+
+function send_key_og() {
+	local args=("$@")
+	local key="${args[$#]}"
+	local len=$(($# - 1))
+	local mods=("${args[@]:0:$len}")
+
+	# Get the frontmost terminal app (or specify explicitly)
+	local app_name="Ghostty" # or get dynamically
+
+	local script="tell application \"System Events\"
         tell process \"$app_name\"
             keystroke \"$key\""
-    
-    if ((${#mods[@]})); then
-        local joined=$(printf "%s down, " "${mods[@]}")
-        joined="${joined%, }"
-        script+=" using {$joined}"
-    fi
-    
-    script+="
+
+	if ((${#mods[@]})); then
+		local joined=$(printf "%s down, " "${mods[@]}")
+		joined="${joined%, }"
+		script+=" using {$joined}"
+	fi
+
+	script+="
         end tell
     end tell"
-    
-    osascript -e "$script" 2>&1
+
+	osascript -e "$script" 2>&1
 }
 
 # handles multiple modifiers
@@ -468,7 +518,7 @@ function get_history() {
 	# fc -R ~/.zsh_history &&
 	#
 	# [[ -f $HISTFILE ]] && fc -R
-	
+
 	fc -R #alert: when calling function from hs/init.lua need to read history file in advance
 	fc -rl 1 | fzf --layout=reverse --height=~30 | sed 's/^[ *]*[0-9*]* *//'
 }

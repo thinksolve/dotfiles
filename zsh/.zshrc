@@ -166,7 +166,6 @@ bindkey_minimal '^[^D' fzd
 bindkey_picker_to_buffer '^[h' get_history
 
 
-
 # python (standard) redefinitions
 alias pip=pip3
 alias python2=python
@@ -231,3 +230,13 @@ do_exit_cleanup() {
 }
 
 trap do_exit_cleanup EXIT
+
+
+insert_history_to_buffer() {
+    local choice
+    choice=$(get_history < /dev/tty)  # Your fzf picker (needs TTY, fine at prompt)
+    if [[ -n $choice ]]; then
+        print -z "$choice"  # Inserts to BUFFER, cursor at end—no advance
+    fi
+}
+
