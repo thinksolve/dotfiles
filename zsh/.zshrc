@@ -2,13 +2,6 @@
 source ~/.config/path.sh 
 source "$HOME"/.shell_functions.sh
 
-
-
-# trap do_exit_cleanup EXIT
-# if [[ -z $(trap -p EXIT | grep fzd.cleanup) ]]; then
-#     trap fzd.cleanup EXIT
-# fi
-
 export FZD_MAXDEPTH=5
 
 # use nvim for manpage, else fallback to regular behaviour
@@ -61,8 +54,6 @@ export DIRVIEWER="yazi"
 
 
 
-
-
 # antidote essentially replaces my uses for OMZ
 source "$NIX_CURRENT_SYSTEM/share/antidote/antidote.zsh"
 antidote load
@@ -107,7 +98,6 @@ alias BRAVE='cd ${HOME}/Library/Application\ Support/BraveSoftware/Brave-Browser
 # alias upper="tr 'a-z' 'A-Z'"
 # alias lower="tr 'A-Z' 'a-z'"
 
-
 # Avoids polluting session & zsh history as with `bindkey -s ...`
 function bindkey_minimal() {
     local key=$1 
@@ -138,14 +128,10 @@ function bindkey_picker_to_buffer() {
 
 yazi_here() { yazi . }
 nvim_here() { nvim . }
-# bindkey -r '^K'
-# bindkey -r '^R'
 
 bindkey_minimal '^[y' yazi_here
 bindkey_minimal '^[n' nvim_here
 bindkey_minimal '^[k' copylast
-
-
 
 # bindkey_minimal '^R' recent_pick
 bindkey_minimal '^[r' recent_pick
@@ -162,7 +148,6 @@ bindkey_minimal '^[f' fzd_file
 # bindkey_minimal '^[^D' find_dir_then_cache
 bindkey_minimal '^[^D' fzd
 
-
 bindkey_picker_to_buffer '^[h' get_history
 
 
@@ -170,8 +155,6 @@ bindkey_picker_to_buffer '^[h' get_history
 alias pip=pip3
 alias python2=python
 alias python=python3
-
-
 
 # ------------- OLD OMZ CODE (replaced by antidote -------------
 # plugins=(zsh-vim-mode zsh-autosuggestions)
@@ -198,7 +181,6 @@ function compile_zsh() {
   # compile the dump only where compinit expects it
   zcompile -U -z ~/.zcompdump 2>/dev/null
 }
-
 
 
 # export DOOMDIR="$HOME/.config/doom"
@@ -230,13 +212,4 @@ do_exit_cleanup() {
 }
 
 trap do_exit_cleanup EXIT
-
-
-insert_history_to_buffer() {
-    local choice
-    choice=$(get_history < /dev/tty)  # Your fzf picker (needs TTY, fine at prompt)
-    if [[ -n $choice ]]; then
-        print -z "$choice"  # Inserts to BUFFER, cursor at end—no advance
-    fi
-}
 
