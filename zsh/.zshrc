@@ -1,4 +1,6 @@
 
+
+
 source ~/.config/path.sh 
 source "$HOME"/.shell_functions.sh
 
@@ -111,6 +113,26 @@ function bindkey_minimal() {
     bindkey "$key" $widget
 }
 
+
+bindkey_minimal '^[k' copylast
+bindkey_minimal '^[r' recent_pick
+
+fzd_file() { fzd 'file' }
+bindkey_minimal '^[f' fzd_file #old: find_dir_then_cache 
+
+fzd_dir() { fzd 'dir' }
+bindkey_minimal '^[d' fzd_dir #old: find_dir_from_cache
+bindkey_minimal '^[^D' fzd
+
+
+yazi_here() { yazi . }
+bindkey_minimal '^[y' yazi_here
+
+nvim_here() { nvim . }
+bindkey_minimal '^[n' nvim_here
+
+
+
 function bindkey_picker_to_buffer() {
   local key=$1 func=$2
   local widget=_${func}_widget
@@ -125,28 +147,6 @@ function bindkey_picker_to_buffer() {
   zle -N $widget
   bindkey "$key" $widget
 }
-
-yazi_here() { yazi . }
-nvim_here() { nvim . }
-
-bindkey_minimal '^[y' yazi_here
-bindkey_minimal '^[n' nvim_here
-bindkey_minimal '^[k' copylast
-
-# bindkey_minimal '^R' recent_pick
-bindkey_minimal '^[r' recent_pick
-
-
-# bindkey_minimal '^D' find_dir_from_cache
-fzd_dir() { fzd 'dir' }
-bindkey_minimal '^[d' fzd_dir
-
-
-fzd_file() { fzd 'file' }
-bindkey_minimal '^[f' fzd_file 
-# bindkey_minimal '^F' find_file
-# bindkey_minimal '^[^D' find_dir_then_cache
-bindkey_minimal '^[^D' fzd
 
 bindkey_picker_to_buffer '^[h' get_history
 
@@ -271,7 +271,8 @@ fzd() {
         elif editable_path "$chosen"; then
             "$editor" "$chosen"
         else
-            open "$chosen"
+            echo "OPEN WOULD RUN: $chosen" >&2
+            # open "$chosen"
         fi
         [[ $? -ne 0 ]] && return 1
         return 0

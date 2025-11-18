@@ -7,6 +7,7 @@ local termIDs = {
 	["com.mitchellh.ghostty"] = true,
 	["com.googlecode.iterm2"] = true,
 	["com.apple.Terminal"] = true,
+	["net.kovidgoyal.kitty"] = true,
 }
 
 -- create a hot-key that is automatically disabled

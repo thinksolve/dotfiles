@@ -151,6 +151,7 @@
             pkgs.fastfetch
             # pkgs.ghostty ## isnt supported??
             pkgs.iterm2
+            pkgs.kitty
             pkgs.nushell
             pkgs.pure-prompt
             pkgs.yazi
