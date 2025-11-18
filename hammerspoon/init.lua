@@ -69,9 +69,8 @@ hs.hotkey.bind(goto_app_mod, "b", function()
 	window_management.toggle_app("Brave Browser")
 end)
 
--- local terminal_app_id = "com.mitchellh.ghostty"
-
-local terminal_app_id = "net.kovidgoyal.kitty"
+local terminal_app_id = "com.mitchellh.ghostty"
+-- local terminal_app_id = "net.kovidgoyal.kitty"
 
 hs.hotkey.bind(goto_app_mod, "t", function()
 	window_management.toggle_app_bundle_id(terminal_app_id)
@@ -606,59 +605,26 @@ end
 local function open_term_and_run(opts)
 	local cmd = opts.cmd or error("cmd required")
 	local default_term = (terminal_app_id ~= "" and terminal_app_id) or "com.mitchellh.ghostty"
+	-- local default_term = "Terminal" -- NOTE: works with direct names too, because of term_name logic
 	--
 	local term_name = (opts.terminal or default_term):lower():match("[^.]+$")
 	--NOTE: the match portion ensures if bundle id is passed then it extracts name
-	--	-- print(("com.mitchellh.ghostty"):match("[^.]+$"))
+	--	--e.g.: print(("com.mitchellh.ghostty"):match("[^.]+$"))
 
-	-- local terminals = {
-	-- 	ghostty = "com.mitchellh.ghostty",
-	-- 	kitty = "net.kovidgoyal.kitty",
-	-- 	iterm2 = "com.googlecode.iterm2",
-	-- 	terminal = "com.apple.Terminal",
-	-- }
-	--
-
-	local bundle = {
+	local bundle_ids = {
 		ghostty = "com.mitchellh.ghostty",
 		kitty = "net.kovidgoyal.kitty",
 		iterm2 = "com.googlecode.iterm2",
 		terminal = "com.apple.Terminal",
 	}
-	local bundleID = bundle[term_name] or error("unsupported terminal")
-	local app = hs.application.get(bundleID)
-	local appName = term_name
 
-	-- local appName
-	-- if terminals[term] then
-	-- 	appName = term
-	-- else
-	-- 	for k, v in pairs(terminals) do
-	-- 		if term == v then
-	-- 			appName = k
-	-- 			break
-	-- 		end
-	-- 	end
-	-- end
+	-- uses matched bundle id, if found
+	local app = hs.application.get(bundle_ids[term_name] or error("unsupported terminal"))
 
-	-- local bundleID = (terminals)[term] or term or error("unsupported terminal") -- this before the reverse map!
-
-	-- ------ Create the reverse map
-	-- for k, v in pairs(terminals) do
-	-- 	terminals[v] = k
-	-- end
-	-- local app = hs.application.get(bundleID)
-	--
-	-- local function isTerm(t)
-	-- 	return (term == t) or (terminals[term] == t)
-	-- end
-
-	-- ---------- native-flag terminals ----------
-	-- if isTerm("ghostty") or isTerm("kitty") then
 	if term_name == "ghostty" or term_name == "kitty" then
 		if not (app and app:isRunning()) then
 			-- start + run command in first window
-			hs.execute(string.format("open -a %s --args -e zsh -il -c '%s; exec zsh'", appName, cmd), true)
+			hs.execute(string.format("open -a %s --args -e zsh -il -c '%s; exec zsh'", term_name, cmd), true)
 		else
 			local applescript = string.format(
 				[[
@@ -677,8 +643,8 @@ local function open_term_and_run(opts)
 					end tell
 				    end tell
 				]],
-				appName,
-				appName,
+				term_name,
+				term_name,
 				cmd
 			)
 
