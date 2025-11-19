@@ -1,6 +1,4 @@
 
-
-
 source ~/.config/path.sh 
 source "$HOME"/.shell_functions.sh
 

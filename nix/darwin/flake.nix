@@ -40,27 +40,28 @@
             });
 
           cli = [
-            pkgs.coreutils
             pkgs.bat
+            pkgs.coreutils
+            pkgs.eza
             pkgs.fd
             pkgs.fzf
-            pkgs.eza
             pkgs.rename
             pkgs.ripgrep
-            pkgs.tree
             pkgs.trash-cli
+            pkgs.tree
             (unbreak pkgs.jp2a)
             # pkgs.jq
             # pkgs.yq
           ];
 
           dev_tools = [
-            pkgs.nodejs
-            pkgs.math-preview
-            #instead of 'npm install -g git+https://gitlab.com/matsievskiysv/math-preview' and change npm prefix .. due to nix immutability
-            pkgs.git
             pkgs.gh
+            pkgs.git
+            pkgs.lua5_4
+            pkgs.lua54Packages.luasocket
+            pkgs.math-preview # instead of 'npm install -g git+https://gitlab.com/matsievskiysv/math-preview' and change npm prefix .. due to nix immutability
             pkgs.neovim
+            pkgs.nodejs
             # pkgs.nixd
             # pkgs.nil
             # (pkgs.symlinkJoin {
@@ -72,11 +73,11 @@
             #       --set-default NIX_OPTIONS_JSON ${pkgs.nil}/lib/nil/nixpkgs/share/nix/options.json
             #   '';
             # })
+            pkgs.htmlq
             pkgs.nixfmt-rfc-style
+            pkgs.pandoc
             pkgs.shellcheck
             pkgs.shfmt
-            pkgs.pandoc
-            pkgs.htmlq
             # pkgs.helix
             (pkgs.python3.withPackages (
               ps: with ps; [
@@ -132,10 +133,10 @@
           ];
 
           pdf_and_document = [
+            pkgs.chafa
             pkgs.poppler
             pkgs.poppler_utils
             pkgs.viu
-            pkgs.chafa
           ];
 
           system_utilities = [
@@ -154,8 +155,8 @@
             pkgs.kitty
             pkgs.nushell
             pkgs.pure-prompt
-            pkgs.yazi
             pkgs.tmux
+            pkgs.yazi
           ];
 
           # __commented_out_pkgs = [

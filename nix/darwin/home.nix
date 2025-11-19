@@ -47,7 +47,6 @@ in
     ".hammerspoon".source = link_dotfiles "/hammerspoon";
     ".config/path.sh".source = link_dotfiles "/zsh/path.sh";
     ".zshrc".source = link_dotfiles "/zsh/.zshrc";
-    ".zsh_plugins.zsh".source = link_dotfiles "/zsh/.zsh_plugins.zsh";
     ".zsh_plugins.txt".source = link_dotfiles "/zsh/.zsh_plugins.txt";
     ".tmux.conf".source = link_dotfiles "/tmux/.tmux.conf";
     ".shell_functions.sh".source = link_dotfiles "/zsh/.shell_functions.sh";

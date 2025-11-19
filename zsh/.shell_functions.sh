@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 
+function nix_search() {
+        # made by kimik2 <3
+        local -a words
+        words=($*)
+        local pattern=$(printf '(?i)')
+        for w in "${words[@]}"; do
+                pattern+="(?=.*$w)"
+        done
+        nix search --json nixpkgs '.*' | jq -r --arg p "$pattern" '
+      to_entries[]
+      | select(.key | test($p))
+      | "* \(.key)  (\(.value.version))\n  \(.value.description)"'
+}
+
 function toggle_desktop() {
         if $(defaults read com.apple.finder CreateDesktop); then
                 defaults write com.apple.finder CreateDesktop false
@@ -46,7 +60,7 @@ function open_if_exists() {
         [[ -n $path ]] && nvim "$path"
 }
 
-function search_commits() {
+function search_commits_diff() {
         local git_dir term
 
         if [ $# -eq 1 ]; then
@@ -73,14 +87,44 @@ function search_commits() {
                         echo "https://github.com/thinksolve/dotfiles/commit/$commit_id"
                         git grep -n "$term" "$commit_id" 2>/dev/null | sed 's/^/  /'
                         echo
-                done < <(git log --pretty=format:"%H" -G"$term")
+
+                done < <(git log --all --pretty=format:"%H" -S"$term")
+                # done < <(git log --all --pretty=format:"%H" -- hammerspoon/init.lua)
 
         )
 
 }
 
-# not useful, only diffs should matter
-# function search_commits_all() {
+function search_commits() {
+        local git_dir term
+        if [ $# -eq 1 ]; then
+                git_dir="$HOME/.dotfiles"
+                term="$1"
+        elif [ $# -eq 2 ]; then
+                git_dir="$1"
+                term="$2"
+        else
+                echo "Usage: search_commits_4 [git_dir] <search_term>" >&2
+                return 1
+        fi
+        [[ -z "$term" ]] && {
+                echo "Usage: search_commits_4 <term>"
+                return 1
+        }
+        (
+                cd "$git_dir" || exit
+                while IFS= read -r commit_id || [[ -n "$commit_id" ]]; do
+                        git show --pretty=format:"" "$commit_id" | grep -q "$term" && {
+                                git log -1 --format="%ci | %s" "$commit_id"
+                                echo "https://github.com/thinksolve/dotfiles/commit/$commit_id"
+                                git grep -n "$term" "$commit_id" 2>/dev/null | sed 's/^/  /'
+                                echo
+                        }
+                done < <(git log --all --pretty=format:"%H")
+        )
+}
+
+# function search_commits_broken() {
 #         local git_dir search_term repo_url
 #         if [ $# -eq 1 ]; then
 #                 git_dir="$HOME/.dotfiles"
