@@ -1,5 +1,23 @@
 #!/usr/bin/env bash
 
+function nix-generations() {
+        local cmd="${1---help}"
+        case "$cmd" in
+        --list | -l) sudo darwin-rebuild --list-generations ;;
+        --delete-gt | -d)
+                if [[ -n $2 ]]; then
+                        sudo nix-collect-garbage --delete-older-than "$2"
+                else
+                        echo "Age required: nix-generations --delete-gt 30d"
+                        return 1
+                fi
+                ;;
+        *)
+                echo "Usage: nix-generations --list | --delete-gt <age>"
+                return 1
+                ;;
+        esac
+}
 function nix_search() {
         # made by kimik2 <3
         local -a words

@@ -1,5 +1,17 @@
 hs.alert.show("hs init.lua loaded")
 
+-- default terminal across hotkey binds below
+local TERM = {
+	ghostty = "com.mitchellh.ghostty",
+	kitty = "net.kovidgoyal.kitty",
+	iterm2 = "com.googlecode.iterm2",
+	terminal = "com.apple.Terminal",
+}
+local DEFAULT_TERM_ID = TERM.ghostty
+local DEFAULT_TERM_NAME = DEFAULT_TERM_ID:match("[^.]+$")
+--NOTE: the match portion ensures if bundle id is passed then it extracts name
+--e.g.: print(("com.mitchellh.ghostty"):match("[^.]+$"))
+
 --Commmented these 2 out on 4-25-25 since not really using
 -- hs.ipc.cliInstall()
 -- hs.loadSpoon("EmmyLua")
@@ -8,7 +20,6 @@ require("submodules")
 require("registerSpoons")
 
 local TG = require("termGuard")
-local LSB = require("loopSafeBind")
 
 local watchers = require("watchers") -- set as variable in case want to stop a watcher
 local window_management = require("window-management")
@@ -69,11 +80,8 @@ hs.hotkey.bind(goto_app_mod, "b", function()
 	window_management.toggle_app("Brave Browser")
 end)
 
-local terminal_app_id = "com.mitchellh.ghostty"
--- local terminal_app_id = "net.kovidgoyal.kitty"
-
 hs.hotkey.bind(goto_app_mod, "t", function()
-	window_management.toggle_app_bundle_id(terminal_app_id)
+	window_management.toggle_app_bundle_id(DEFAULT_TERM_ID)
 	-- window_management.toggle_app(terminal_app)
 end)
 
@@ -604,22 +612,9 @@ end
 
 local function open_term_and_run(opts)
 	local cmd = opts.cmd or error("cmd required")
-	local default_term = (terminal_app_id ~= "" and terminal_app_id) or "com.mitchellh.ghostty"
-	-- local default_term = "Terminal" -- NOTE: works with direct names too, because of term_name logic
-	--
-	local term_name = (opts.terminal or default_term):lower():match("[^.]+$")
-	--NOTE: the match portion ensures if bundle id is passed then it extracts name
-	--	--e.g.: print(("com.mitchellh.ghostty"):match("[^.]+$"))
 
-	local bundle_ids = {
-		ghostty = "com.mitchellh.ghostty",
-		kitty = "net.kovidgoyal.kitty",
-		iterm2 = "com.googlecode.iterm2",
-		terminal = "com.apple.Terminal",
-	}
-
-	-- uses matched bundle id, if found
-	local app = hs.application.get(bundle_ids[term_name] or error("unsupported terminal"))
+	local term_name = (opts.terminal or DEFAULT_TERM_NAME):lower():match("[^.]+$")
+	local app = hs.application.get(DEFAULT_TERM_ID or error("unsupported terminal"))
 
 	if term_name == "ghostty" or term_name == "kitty" then
 		if not (app and app:isRunning()) then
@@ -631,12 +626,9 @@ local function open_term_and_run(opts)
 				    tell application "%s"
 					activate
 				    end tell
-				    delay 0.1
 				    tell application "System Events"
 					keystroke "n" using {command down}
-				    end tell
-				    delay 0.1
-				    tell application "System Events"
+			
 					tell process "%s"
 					    keystroke "%s"
 					    keystroke return
@@ -715,9 +707,12 @@ local function open_term_and_run(opts)
 	end
 end
 
+-- local LSB = require("loopSafeBind")
+local LSB = require("LSBB")
+
 LSB.bind({ "option" }, "r", function()
 	open_term_and_run({ cmd = "recent_pick" })
-
+	-- launchGhosttyWithCmd({ cmd = "recent_pick" })
 	-- launchGhosttyWithCmd({ cmd = "send_key option r" })
 	-- note: simulated control r, whether with osascript or hs.eventtap.keyStroke is somehow intercepted by macos,
 	-- havent figured it out
@@ -726,12 +721,14 @@ end)
 -- local hotkey_option_y = hs.hotkey.bind({ "option" }, "y", function()
 LSB.bind({ "option" }, "y", function()
 	-- launchGhosttyWithCmd({ cmd = "send_key option y" })
+	-- launchGhosttyWithCmd({ cmd = "yazi" })
 	open_term_and_run({ cmd = "yazi" })
 end)
 
 -- local hotkey_option_f = hs.hotkey.bind({ "option" }, "f", function()
 LSB.bind({ "option" }, "f", function()
 	-- launchGhosttyWithCmd({ cmd = "send_key option f" })
+	-- launchGhosttyWithCmd({ cmd = "fzd file" })
 	open_term_and_run({ cmd = "fzd file" })
 end)
 
@@ -739,23 +736,27 @@ end)
 LSB.bind({ "option" }, "d", function()
 	-- runCommandInItermAndHitEnter("find_dir_from_cache 'emacs'")
 	-- launchGhosttyWithCmd({ cmd = "send_key option d" })
+	-- launchGhosttyWithCmd({ cmd = "fzd dir" })
 	open_term_and_run({ cmd = "fzd dir" })
 end)
 
 LSB.bind({ "ctrl", "option" }, "d", function()
 	-- local hotkey_ctrl_option_d = hs.hotkey.bind({ "ctrl", "option" }, "d", function()
 	-- launchGhosttyWithCmd({ cmd = "send_key control option d" })
+	-- launchGhosttyWithCmd({ cmd = "fzd" })
 	open_term_and_run({ cmd = "fzd" })
 end)
 
 LSB.bind({ "option" }, "h", function()
 	-- launchGhosttyWithCmd({ cmd = " send_key option h" })
 	-- hs.alert("yooor")
-	open_term_and_run({
-		-- terminal = "iterm2",
-		-- terminal = "terminal",
-		cmd = "send_key option h",
-	})
+	open_term_and_run({ cmd = "send_key option h" })
+
+	-- open_term_and_run({
+	-- 	-- terminal = "iterm2",
+	-- 	-- terminal = "terminal",
+	-- 	cmd = "send_key option h",
+	-- })
 end)
 
 --

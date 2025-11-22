@@ -25,6 +25,13 @@ in
 
   home.packages = [ pkgs.nil ];
 
+  # home.activation.build-zshrc-flat = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  #   cat \
+  #     ${./zsh/aliases} \
+  #     ${./zsh/exports} \
+  #      > $HOME/.zshrc_flat_test
+  # '';
+
   home.file = {
     ".local/bin/sg" = {
       text = ''

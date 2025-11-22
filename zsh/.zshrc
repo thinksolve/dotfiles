@@ -1,5 +1,5 @@
 
-source ~/.config/path.sh 
+# source ~/.config/path.sh 
 source "$HOME"/.shell_functions.sh
 
 export FZD_MAXDEPTH=5
@@ -57,7 +57,7 @@ export DIRVIEWER="yazi"
 # antidote essentially replaces my uses for OMZ
 source "$NIX_CURRENT_SYSTEM/share/antidote/antidote.zsh"
 antidote load
-bindkey -v #basic vi-mode but antidote's ~/.zsh_plugins.txt uses 'vi-more' to augment it
+# bindkey -v #basic vi-mode but antidote's ~/.zsh_plugins.txt uses 'vi-more' to augment it
 
 
 # export PURE_PROMPT_PATH=$HOME/.zsh/pure
@@ -81,6 +81,8 @@ alias rm='trash-put'
 #deletes to ~/.local/share/Trash/; other commands trash-restore, trash-empty; accepts -r -f flags 
 
 # alias rm='rm -I --preserve-root' #safeguard, but permanent deletion
+alias nix-list-generations='sudo darwin-rebuild --list-generations'
+alias nix-delete-generations-older-than='sudo nix-collect-garbage --delete-older-than'
 alias lz="eza"
 alias drs='sudo darwin-rebuild switch --flake ~/.dotfiles/nix/darwin'
 alias config='cd ~/.dotfiles/ && yazi .'
@@ -285,4 +287,5 @@ do_exit_cleanup() {
 }
 
 trap do_exit_cleanup EXIT
+
 

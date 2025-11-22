@@ -1757,3 +1757,13 @@ vim.keymap.set({ "n", "x" }, "gx", function()
 		vim.notify("No URL found under cursor", vim.log.levels.WARN)
 	end
 end, { desc = "open URL under cursor" })
+
+-- lua/config/keymaps.lua  (LazyVim) or anywhere kickstart loads
+-- open the VISUALLY-SELECTED path as a normal buffer
+vim.keymap.set("v", "<leader>gf", function()
+	-- trim surrounding quotes/spaces if you like
+	local path = vim.fn.getline("."):sub(vim.fn.col("'<"), vim.fn.col("'>")):match("^%s*(.-)%s*$")
+	-- expand ~ and environment vars
+	path = vim.fn.expand(path)
+	vim.cmd("edit " .. vim.fn.fnameescape(path))
+end, { desc = "Go to file (visual selection)" })
