@@ -1,4 +1,5 @@
 
+
 # source ~/.config/path.sh 
 source "$HOME"/.shell_functions.sh
 
@@ -41,10 +42,12 @@ export NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export NIX_CURRENT_SYSTEM=/run/current-system/sw/
+export NIX_CURRENT_USER=$HOME/.nix-profile/
 
 ## NOTE: the custom nvim binary (at ~./local/bin) uses 'recent_add' logic before executing real nvim 
 readonly RECENT_NVIM="$HOME/.local/bin/nvim"
-readonly REAL_NVIM="$NIX_CURRENT_SYSTEM/bin/nvim"
+# readonly REAL_NVIM="$NIX_CURRENT_SYSTEM/bin/nvim"
+readonly REAL_NVIM="$NIX_CURRENT_USER/bin/nvim"
 
 
 alias wvim="$RECENT_NVIM"    # <-- 'w' for 'wrapper'
@@ -55,13 +58,15 @@ export DIRVIEWER="yazi"
 
 
 # antidote essentially replaces my uses for OMZ
-source "$NIX_CURRENT_SYSTEM/share/antidote/antidote.zsh"
+# source "$NIX_CURRENT_SYSTEM/share/antidote/antidote.zsh"
+source "$NIX_CURRENT_USER/share/antidote/antidote.zsh"
 antidote load
 # bindkey -v #basic vi-mode but antidote's ~/.zsh_plugins.txt uses 'vi-more' to augment it
 
 
 # export PURE_PROMPT_PATH=$HOME/.zsh/pure
-export PURE_PROMPT_PATH="$NIX_CURRENT_SYSTEM/share/zsh/site-functions/"
+# export PURE_PROMPT_PATH="$NIX_CURRENT_SYSTEM/share/zsh/site-functions/"
+export PURE_PROMPT_PATH="$NIX_CURRENT_USER/share/zsh/site-functions/"
 fpath+=($PURE_PROMPT_PATH)
 autoload -U promptinit; promptinit
 prompt pure
@@ -289,3 +294,12 @@ do_exit_cleanup() {
 trap do_exit_cleanup EXIT
 
 
+FZF_PREVIEW='
+p=$1;
+if [[ -d $p ]]; then
+  tree -a -C -L 1 "$p";
+elif [[ $p =~ \.(jpe?g|png|gif|webp)$ ]]; then
+  chafa -f ansi -s 100x40 "$p";
+else
+  bat --color=always "$p" 2>/dev/null || cat "$p" 2>/dev/null || file -b "$p";
+fi'

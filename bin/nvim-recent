@@ -1,5 +1,6 @@
 #!/bin/sh
-REAL_NVIM=/run/current-system/sw/bin/nvim
+# REAL_NVIM=/run/current-system/sw/bin/nvim
+REAL_NVIM=$HOME/.nix-profile/bin/nvim
 RECENT_DB=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
 MAX=75
 

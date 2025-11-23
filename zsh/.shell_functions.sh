@@ -1,5 +1,85 @@
 #!/usr/bin/env bash
 
+function editable_path() {
+        local p=$1
+        [[ -d $p ]] && return 0 #in shell return 0 is truthy!
+
+        case $(file --mime-type -b -- "$p") in
+        text/* | application/json | application/x-yaml | application/xml | application/x-shellscript) return 0 ;;
+        esac
+
+        return 1
+}
+
+# fixed and doesnt hardcore paths!
+function recent_pick() {
+        local recent_pick_db="${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}"
+        local editor="${EDITOR:-nvim}"
+        local dir_viewer="${DIRVIEWER:-$editor}"
+        local filter="${1:-}"
+        local -a open_now edit_later
+        local pick
+
+        local FZF_PREVIEW='
+            p=$1
+            if [[ -d "$p" ]]; then
+              echo -e "\033[1;34mDirectory:\033[0m $p\n"
+              tree -a -C -L 2 "$p" 2>/dev/null || exa --tree --level=2 --color=always "$p" 2>/dev/null || ls -la "$p"
+            elif [[ $p =~ \.(jpe?g|png|gif|webp|tiff|bmp|avif|svg)$ ]]; then
+              chafa -f ansi -s "${FZF_PREVIEW_WINDOW:-80x40}" "$p" 2>/dev/null || echo "Image preview not available"
+            elif command -v bat >/dev/null; then
+              bat --color=always --style=numbers "$p" 2>/dev/null
+            else
+              cat "$p" 2>/dev/null || highlight -O ansi "$p" 2>/dev/null || cat "$p"
+            fi
+          '
+
+        #this block to color-distinguish files vs dirs
+        tac "$recent_pick_db" 2>/dev/null | while IFS= read -r path; do
+                [[ -e "$path" ]] || continue
+                if [[ -d "$path" ]]; then
+                        printf '\e[34mDIR\e[0m\t%s\n' "$path"
+                else
+                        printf '\e[33mFILE\e[0m\t%s\n' "$path"
+                fi
+        done |
+                # previewer logic here
+                fzf --ansi -m \
+                        --delimiter=$'\t' \
+                        --query="$filter" \
+                        --prompt='recent> ' \
+                        --header='CTRL-E → edit DB' \
+                        --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty)+abort" \
+                        --preview "bash -c '$FZF_PREVIEW' bash {2}" | # --preview-window=right:65%:border-sharp |
+                awk -F'\t' '{print $2}' |
+                while IFS= read -r pick; do
+                        [[ -e "$pick" ]] || continue
+                        if editable_path "$pick" 2>/dev/null; then
+                                edit_later+=("$pick")
+                        else
+                                open_now+=("$pick")
+                        fi
+                done
+
+        # nothing chosen → stop recursion
+        ((${#open_now[@]} + ${#edit_later[@]})) || return 0
+
+        # 1. launch everything that detaches
+        for p in "${open_now[@]}"; do open "$p"; done
+
+        # 2. now occupy the terminal (if you want)
+        for p in "${edit_later[@]}"; do
+                if [[ -d $p ]]; then
+                        cd "$p" && $dir_viewer .
+                else
+                        $editor "$p"
+                fi
+        done
+
+        # round finished → offer the list again
+        recent_pick "$filter"
+}
+
 function nix-generations() {
         local cmd="${1---help}"
         case "$cmd" in
@@ -174,16 +254,6 @@ function search_commits() {
 # }
 
 # used for recent_pick and find_file
-function editable_path() {
-        local p=$1
-        [[ -d $p ]] && return 0 #in shell return 0 is truthy!
-
-        case $(file --mime-type -b -- "$p") in
-        text/* | application/json | application/x-yaml | application/xml | application/x-shellscript) return 0 ;;
-        esac
-
-        return 1
-}
 
 function send_key() {
         local mods=()
@@ -561,160 +631,6 @@ function get_history() {
         fc -rl 1 | fzf --layout=reverse --height=~30 | sed 's/^[ *]*[0-9*]* *//'
 }
 
-# function editable_path_old() {
-#     local p=$1
-#
-#     # Short circuit pattern; returns at the first true statement
-#     # i.e. is directory OR matches extension OR is text file
-#     [[ -d $p ]] ||
-#         [[ $p =~ \.(json|toml|yaml|yml|md|txt|sh|zsh|vim|conf|ini|py|js|ts|css|html)$ ]] ||
-#         [[ $(file --mime-type -b -- "$p") == text/* ]]
-# }
-
-function recent_pick() {
-        local recent_pick_db=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
-        local editor=${EDITOR:-nvim}
-        local dir_viewer=${DIRVIEWER:-$editor}
-        local filter=${1-}
-        local pick
-        local -a open_now edit_later
-
-        local fzf_preview='
-    path=$(echo {} | cut -f2-)
-    if [[ -d $path ]]; then
-      /run/current-system/sw/bin/tree -a -C -L 1 "$path"
-    elif [[ $path =~ \.(jpe?g|jpg|png|gif|webp)$ ]]; then
-      /run/current-system/sw/bin/chafa -f ansi -s 100x40 "$path"
-    else
-      /run/current-system/sw/bin/bat --color=always "$path" 2>/dev/null ||
-      /bin/cat "$path" 2>/dev/null ||
-      /usr/bin/file -b "$path"
-    fi'
-
-        # first call
-        # <"$db" tac |
-        # while IFS= read -r path; do
-        #     [[ -d $path ]] &&
-        #         printf '\e[34mDIR\e[0m\t%s\n' "$path" ||
-        #         printf '\e[33mFILE\e[0m\t%s\n' "$path"
-        # done |
-
-        # export to make it visible to reload sub-shell (i.e. when deleting entry with ctrl-d)
-        export recent_pick_db
-
-        # # fzf reload() cannot serialize functions so i have to make it a command string (to eval on)
-        # # in order to recreate coloured list
-        # RECENT_COLOURED_LIST='
-        #      <"$recent_pick_db" tac | while IFS= read -r path; do
-        #        if [[ -d $path ]]; then
-        #          printf "\\e[34mDIR\\e[0m\t%s\n" "$path"
-        #        else
-        #          printf "\\e[33mFILE\\e[0m\t%s\n" "$path"
-        #        fi
-        #      done'
-
-        coloured_list() {
-                tac "$recent_pick_db" | while IFS= read -r path; do
-                        if [[ -d $path ]]; then
-                                printf '\e[34mDIR\e[0m\t%s\n' "$path"
-                        else
-                                printf '\e[33mFILE\e[0m\t%s\n' "$path"
-                        fi
-                done
-        }
-        # eval "$RECENT_COLOURED_LIST" |
-        # NOTE: dangerous code using /r/m/ with potential improper escaping ... previously deleted this file:
-        #--bind 'ctrl-d:transform:  printf "%s\n%s\n" "Delete this entry?" "{2}" |
-        # fzf --print-query --exit-0 --multi --prompt="Confirm> " |
-        # { read -r reply && [[ $reply == "{2}" ]] && rm -f "{2}" && sed -i '\'''\'' '\''\|{2}|d'\'' "$recent_pick_db" && echo "reload(coloured_list | cat)"; }' \
-
-        coloured_list | fzf --ansi -m \
-                --delimiter=$'\t' \
-                --query="$filter" \
-                --prompt='recent> ' \
-                --header='Ctrl-E → edit DB' \
-                --bind 'ctrl-e:execute('$editor' "$recent_pick_db" >/dev/tty)' \
-                --preview '
-		    path={2}
-		    if [[ -d $path ]]; then
-		      /run/current-system/sw/bin/tree -a -C -L 1 "$path"
-		    elif [[ $path =~ \.(jpe?g|png|gif|webp)$ ]]; then
-		      /run/current-system/sw/bin/chafa -f ansi -s 100x40 "$path"
-		    else
-		      /run/current-system/sw/bin/bat --color=always "$path" 2>/dev/null ||
-		      /bin/cat "$path" 2>/dev/null ||
-		      /usr/bin/file -b "$path"
-		    fi' | awk -F'\t' '{print $2}' |
-                while IFS= read -r pick; do
-                        [[ -e $pick ]] || continue
-                        if editable_path "$pick"; then
-                                edit_later+=("$pick")
-                        else
-                                open_now+=("$pick")
-                        fi
-                done
-
-        # nothing chosen → stop recursion
-        ((${#open_now[@]} + ${#edit_later[@]})) || return 0
-
-        # 1. launch everything that detaches
-        for p in "${open_now[@]}"; do open "$p"; done
-
-        # 2. now occupy the terminal (if you want)
-        for p in "${edit_later[@]}"; do
-                if [[ -d $p ]]; then
-                        cd "$p" && $dir_viewer .
-                else
-                        $editor "$p"
-                fi
-        done
-
-        # round finished → offer the list again
-        recent_pick "$filter"
-}
-
-# function recent_pick_old() {
-#     local db=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
-#     local editor=${EDITOR:-nvim}
-#     local filter=${1:-.*} pick
-#
-#     <"$db" grep -E "$filter" | tac |
-#         while IFS= read -r path; do
-#             [[ -d $path ]] &&
-#                 printf '\e[34mDIR\e[0m\t%s\n' "$path" ||
-#                 printf '\e[33mFILE\e[0m\t%s\n' "$path"
-#         done |
-#         fzf --ansi -m \
-#             --prompt="filter: ${1:-}" \
-#             --header="Ctrl-E → edit DB" \
-#             --bind "ctrl-e:execute($editor \"$db\" >/dev/tty)" \
-#             --with-nth=1,2 \
-#             --preview '
-#         path=$(echo {} | cut -f2-)
-#         if [[ -d $path ]]; then
-#           /run/current-system/sw/bin/tree -a -C -L 1 "$path"
-#         else
-#           /run/current-system/sw/bin/bat --color=always "$path" 2>/dev/null || cat "$path" 2>/dev/null
-#         fi' |
-#         awk -F'\t' '{print $2}' |
-#         while IFS= read -r pick; do
-#
-#             [[ -e $pick ]] || continue # exists at all (file or dir)
-#             # --- now safe to use "$pick" ---
-#
-#             if [[ -f $pick ]]; then
-#                 if [[ "$(file --mime-type -b "$pick")" =~ ^text/ ]]; then
-#                     $editor "$pick"
-#                 else
-#                     open "$pick"
-#                 fi
-#             elif [[ -d $pick ]]; then
-#                 cd "$pick" && $editor .
-#             fi
-#         done
-#
-# }
-
 function recent_add() {
         local db=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
         [[ -e $1 ]] || return
@@ -995,40 +911,6 @@ function getBundleId() {
         # mdls -name kMDItemCFBundleIdentifier -raw "$1" | cut -d '"' -f 2 #not as robust
 }
 
-# useful for creating custom new Emacs.icns (havented tested yet)
-function generate_icns() {
-        local png="$1"
-        local output_icns="$2"
-
-        if [ ! -f "$png" ]; then
-                echo "Error: PNG file $png not found"
-                exit 1
-        fi
-
-        echo "Generating .icns from $png"
-        mkdir -p "$ICONSET_DIR"
-
-        # Generate required icon sizes
-        sips -z 16 16 "$png" --out "$ICONSET_DIR/icon_16x16.png" >/dev/null
-        sips -z 32 32 "$png" --out "$ICONSET_DIR/icon_16x16@2x.png" >/dev/null
-        sips -z 32 32 "$png" --out "$ICONSET_DIR/icon_32x32.png" >/dev/null
-        sips -z 64 64 "$png" --out "$ICONSET_DIR/icon_32x32@2x.png" >/dev/null
-        sips -z 64 64 "$png" --out "$ICONSET_DIR/icon_64x64.png" >/dev/null
-        sips -z 128 128 "$png" --out "$ICONSET_DIR/icon_64x64@2x.png" >/dev/null
-        sips -z 128 128 "$png" --out "$ICONSET_DIR/icon_128x128.png" >/dev/null
-        sips -z 256 256 "$png" --out "$ICONSET_DIR/icon_128x128@2x.png" >/dev/null
-        sips -z 256 256 "$png" --out "$ICONSET_DIR/icon_256x256.png" >/dev/null
-        sips -z 512 512 "$png" --out "$ICONSET_DIR/icon_256x256@2x.png" >/dev/null
-        sips -z 512 512 "$png" --out "$ICONSET_DIR/icon_512x512.png" >/dev/null
-        sips -z 1024 1024 "$png" --out "$ICONSET_DIR/icon_512x512@2x.png" >/dev/null
-        sips -z 1024 1024 "$png" --out "$ICONSET_DIR/icon_1024x1024.png" >/dev/null
-
-        # Convert to .icns
-        iconutil -c icns "$ICONSET_DIR" -o "$output_icns"
-        rm -rf "$ICONSET_DIR"
-        echo "Created $output_icns"
-}
-
 # old way; new way with 'rat'
 function rat() {
         local comment_char="$1"
@@ -1248,43 +1130,6 @@ function zh_pi() {
 # }
 #
 
-#NOTE: problematic zsh specific syntax disallows this bash file from formatting on save
-
-# function not_grep() {
-#     if [ $# -lt 1 ]; then
-#         echo "Usage: $0 <patterns> [file]"
-#         exit 1
-#     fi
-#
-#     patterns="$1"
-#     file="${2:-/dev/stdin}"
-#
-#     # Split patterns into array (Zsh syntax)
-#     pattern_array=("${(s: :)patterns}") #NOTE: line problematic when format saving
-#
-#     # Use rg if available, otherwise grep
-#     if command -v rg >/dev/null 2>&1; then
-#         search_cmd=(rg -i -q)
-#     else
-#         search_cmd=(grep -i -q)
-#     fi
-#
-#     # Read input into a temporary file if piped
-#     if [ "$file" = "/dev/stdin" ] && [ -p /dev/stdin ]; then
-#         temp_file=$(mktemp)
-#         cat >"$temp_file"
-#         file="$temp_file"
-#     fi
-#
-#     for pattern in "${pattern_array[@]}"; do
-#         if ! "${search_cmd[@]}" "$pattern" "$file"; then
-#             echo "$pattern not found"
-#         fi
-#     done
-#
-#     # Clean up temporary file if created
-#     [ -n "$temp_file" ] && rm -f "$temp_file"
-# }
 #
 # no pngpaste required!
 function get_latex() {
@@ -1389,6 +1234,8 @@ function find_dir_from_cache() {
                 find_dir_then_cache
         else
                 dir=$(gunzip -c $home_dirs_cache | fzf --prompt="Find Dir (from cache): " --preview "tree -a -C -L 1 {}")
+                [[ -n "$dir" ]] && cd "$dir" && $dir_viewer .
+
                 # dir=$(fzf --prompt="Find Dir: " --preview "tree -C -L 1 {}" < $muh_cache)
                 # if [[ -n "$dir" ]]; then
                 #
@@ -1403,29 +1250,8 @@ function find_dir_from_cache() {
                 # recent_add "$dir"
 
                 # [[ -n "$dir" ]] && open_with_editor "$open_with" "$dir"
-                [[ -n "$dir" ]] && cd "$dir" && $dir_viewer .
         fi
 }
-
-# function find_file_og() {
-#
-#     local dir_or_file=$(fd . $HOME -H ${dir_exclusions[@]/#/-E} | fzf --prompt="Find Files: " --preview "$preview")
-#
-#     if [[ -z "$dir_or_file" ]]; then
-#         echo "No directory selected."
-#         return 1
-#     fi
-#     if [[ -d "$dir_or_file" ]]; then
-#         # cd "$dir_or_file" && nvim .
-#         emacsclient -c -n "$dir"
-#     else
-#         if [[ "$(file --mime-type -b "$dir_or_file")" =~ ^text/ ]]; then
-#             cd $(dirname $dir_or_file) && nvim "$dir_or_file"
-#         else
-#             open "$dir_or_file"
-#         fi
-#     fi
-# }
 
 function find_file() {
         local mode="$1"
@@ -1507,22 +1333,9 @@ function clip_from_url() {
                 fi
 
                 clip_video "$temp_video" "$start_time" "$end_time" "$output_file"
-                rm "$temp_video"
+                rm "$temp_video" #NOTE: probably 'clip_from_url' should work under /tmp/video/ or something
         fi
 }
-
-# function clip_from_url_old() {
-#     local url="$1"
-#     local start_time="$2"
-#     local end_time="$3"
-#     local temp_video="temp_video.mp4"
-#     local output_file="${4:-output_clip.mp4}"
-#
-#     download_video "$url" "$temp_video"
-#     clip_video "$temp_video" "$start_time" "$end_time" "$output_file"
-#     # Optionally, clean up the temporary file
-#     rm "$temp_video"
-# }
 
 function download_video() {
         local url="$1"
@@ -2027,13 +1840,6 @@ function ship_oct5_2025() {
         git add . && git commit -a -m "$escaped_input" -n && git push
 }
 
-# NOTE: remove neovim config
-function rm_nvim_config() {
-        rm -rf ~/.config/nvim
-        rm -rf ~/.local/state/nvim
-        rm -rf ~/.local/share/nvim
-}
-
 function connect_to_open_wifi() {
 
         get_current_network() {
@@ -2084,16 +1890,7 @@ function ls_show_files() {
 #     mkdir -p "$1" && cd -P "$1" || exit
 #
 # }
-#
-# function rmD() {
-#     for file in *; do
-#         if [[ $(ls | grep -c "^$file$") -gt 1 ]]; then
-#             rm "$file"
-#         fi
-#     done
-#
-#     echo "Duplicates removed successfully"
-# }
+
 #
 # function kPorts2() {
 #     sudo lsof -iTCP:"$1"-"$2" | awk '{print $2}' | grep -v "PID" | xargs kill -9
@@ -2125,27 +1922,7 @@ function ls_show_files() {
 #         fi
 #     done
 # }
-# ## remove files using a newline-delimited list the elements of which are string-escaped
-# function delC() {
-#     local line="$1"
-#     IFS=$'\n' && arr=($(echo "${line}"))
-#     for i in ${arr[@]}; do
-#         escd_path=$(printf '%q\n' /Users/brightowl/Library/Application\ Support/Google/Chrome/Default/"${i}")
-#         eval rm -R "${escd_path}"
-#         ## echo rm -R ${escd_path}
-#     done
-# }
-#
-# # recursively delete files in git repository (i.e. accidentally committed folders)
-# function rrmGit() {
-#     find . -name "$1" -print0 | xargs -0 git rm -f -r --ignore-unmatch
-# }
-#
-# # delete files in git repository (i.e. accidentally committed files)
-# function rmGit() {
-#     find . -name "$1" -print0 | xargs -0 git rm -f --ignore-unmatch
-# }
-#
+
 #
 #
 # # use: some_zsh_fn() { _bash_to_zsh some_bash_fn }

@@ -8,6 +8,78 @@
 let
   dotfiles_dir = "${config.home.homeDirectory}/.dotfiles";
   link_dotfiles = path: config.lib.file.mkOutOfStoreSymlink "${dotfiles_dir}/${path}";
+
+  # Helper function: 'pkg.meta.broken' is overridden to allow broken package
+  unbreak =
+    pkg:
+    pkg.overrideAttrs (oldAttrs: {
+      meta.broken = false;
+    });
+
+  cli = [
+    pkgs.bat
+    pkgs.coreutils
+    pkgs.eza
+    pkgs.fd
+    pkgs.fzf
+    pkgs.rename
+    pkgs.ripgrep
+    pkgs.trash-cli
+    pkgs.tree
+    (unbreak pkgs.jp2a)
+    # pkgs.jq
+    # pkgs.yq
+  ];
+
+  dev_tools = [
+    pkgs.gh
+    pkgs.git
+    pkgs.lua5_4
+    pkgs.lua54Packages.luasocket
+    pkgs.math-preview # instead of 'npm install -g git+https://gitlab.com/matsievskiysv/math-preview' and change npm prefix .. due to nix immutability
+    pkgs.neovim
+    pkgs.nodejs
+    pkgs.htmlq
+    pkgs.nixfmt-rfc-style
+    pkgs.pandoc
+    pkgs.shellcheck
+    pkgs.shfmt
+    # pkgs.helix
+    (pkgs.python3.withPackages (
+      ps: with ps; [
+        fastapi
+        sacremoses
+        sentencepiece
+        torch
+        transformers
+        uvicorn
+        langdetect
+        fasttext
+      ]
+    ))
+  ];
+
+  file_system = [ pkgs.fswatch ];
+  pdf_and_document = [
+    pkgs.chafa
+    # pkgs.poppler #not needed when moved from flake.nix to home.nix?
+    pkgs.poppler-utils
+    pkgs.viu
+  ];
+
+  terminal_and_shell_enhancements = [
+    pkgs.antidote
+    pkgs.ast-grep # TEST: might remove this (also remove the wrapper in home.nix)
+    pkgs.difftastic
+    pkgs.fastfetch
+    # pkgs.ghostty ## isnt supported??
+    pkgs.iterm2
+    pkgs.kitty
+    pkgs.nushell
+    pkgs.pure-prompt
+    pkgs.tmux
+    pkgs.yazi
+  ];
 in
 {
   home.username = "brightowl";
@@ -23,7 +95,11 @@ in
   # home.stateVersion = "24.11";
   home.stateVersion = "23.11";
 
-  home.packages = [ pkgs.nil ];
+  home.packages =
+
+    cli ++ dev_tools ++ file_system ++ pdf_and_document ++ terminal_and_shell_enhancements
+
+  ;
 
   # home.activation.build-zshrc-flat = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
   #   cat \

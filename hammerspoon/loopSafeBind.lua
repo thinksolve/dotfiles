@@ -1,8 +1,6 @@
--- hs/loopSafeBind.lua
 local M = {}
 local log = hs.logger.new("loopSafe", "info")
 
--- bundle IDs that count as “terminal”
 local termIDs = {
 	["com.mitchellh.ghostty"] = true,
 	["com.googlecode.iterm2"] = true,
@@ -10,37 +8,55 @@ local termIDs = {
 	["net.kovidgoyal.kitty"] = true,
 }
 
--- create a hot-key that is automatically disabled
---   a) while a terminal is front-most  (termGuard behaviour)
---   b) for 1 s after we ourselves launch that terminal (anti-race)
+-- returns true  -> we are inside a terminal
+-- returns false -> safe to let the hot-key fire
+local function insideTerm()
+	local app = hs.application.frontmostApplication()
+	return app and termIDs[app:bundleID()]
+end
+
 function M.bind(mods, key, launchCmd, bundleID)
 	bundleID = bundleID or "com.mitchellh.ghostty"
-	local hk
 
-	local function antiLoop()
-		-- 1.  termGuard part
-		local app = hs.application.frontmostApplication()
-		if app and termIDs[app:bundleID()] then
-			hk:disable()
+	local hk
+	local function reEnable()
+		-- re-check every 250 ms until we are *outside* a terminal
+		if insideTerm() then
+			hs.timer.doAfter(0.25, reEnable)
 		else
 			hk:enable()
 		end
 	end
 
 	local function callback()
-		-- 2.  anti-race part
-		hk:disable() -- disarm
-		launchCmd() -- open terminal
-		hs.timer.doAfter(1, function()
-			antiLoop()
-		end) -- re-arm after grace
+		-- 1.  do not fire again while we are launching
+		hk:disable()
+
+		-- 2.  run the user command
+		launchCmd()
+
+		-- 3.  wait a little for the new window to register, then start polling
+		hs.timer.doAfter(0.2, reEnable)
 	end
 
-	hk = hs.hotkey.bind(mods, key, callback)
+	hk = hs.hotkey.new(mods, key, callback)
 
-	-- watch for future app switches
-	hs.application.watcher.new(antiLoop):start()
-	antiLoop() -- initial state
+	-- initial state
+	if insideTerm() then
+		hk:disable()
+	end
+
+	-- keep state in sync when user switches apps manually
+	hs.application.watcher
+		.new(function()
+			if insideTerm() then
+				hk:disable()
+			else
+				hk:enable()
+			end
+		end)
+		:start()
+
 	return hk
 end
 

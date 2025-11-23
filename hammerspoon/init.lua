@@ -8,9 +8,7 @@ local TERM = {
 	terminal = "com.apple.Terminal",
 }
 local DEFAULT_TERM_ID = TERM.ghostty
-local DEFAULT_TERM_NAME = DEFAULT_TERM_ID:match("[^.]+$")
---NOTE: the match portion ensures if bundle id is passed then it extracts name
---e.g.: print(("com.mitchellh.ghostty"):match("[^.]+$"))
+local DEFAULT_TERM_NAME = DEFAULT_TERM_ID:match("[^.]+$") -- e.g. print(("com.mitchellh.ghostty"):match("[^.]+$")) --> ghostty
 
 --Commmented these 2 out on 4-25-25 since not really using
 -- hs.ipc.cliInstall()
@@ -18,8 +16,6 @@ local DEFAULT_TERM_NAME = DEFAULT_TERM_ID:match("[^.]+$")
 
 require("submodules")
 require("registerSpoons")
-
-local TG = require("termGuard")
 
 local watchers = require("watchers") -- set as variable in case want to stop a watcher
 local window_management = require("window-management")
@@ -120,38 +116,20 @@ hs.hotkey.bind(goto_app_mod, "a", function()
 	window_management.toggle_open_close_by_bundle_id("com.apple.ActivityMonitor")
 end)
 
--- -- Directory search hotkey
-
-local function runCommandInBackground(command)
-	-- Set PATH to include Homebrew binaries and source Zsh environment
-	local shellCommand = string.format(
-		'/bin/zsh -c "export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH; source /etc/zprofile 2>/dev/null; source ~/.zshenv 2>/dev/null; source ~/.zshrc 2>/dev/null && %s"',
-		command
-	)
-	-- Execute and capture output/errors
-	local output, status, type, rc = hs.execute(shellCommand)
-	if not status then
-		hs.notify
-			.new({
-				title = "Hammerspoon",
-				informativeText = "Error running " .. command .. ": " .. (output or "Unknown error"),
-			})
-			:send()
-	else
-		hs.notify
-			.new({
-				title = "Hammerspoon",
-				informativeText = "Successfully ran " .. command .. ". Text copied to clipboard.",
-			})
-			:send()
+-- helper gives feedback when cmd string does not exist
+local function runSilent(cmd)
+	local ok, _, err = hs.execute(cmd, true)
+	if not ok or (err and err ~= "") then
+		hs.alert("That command doesnt work boss. Error: " .. err, 3)
 	end
-	return output, status
 end
 
 hs.hotkey.bind({ "ctrl", "option" }, "x", function()
-	local cmd = "get_ocr"
-	hs.execute(string.format("/bin/zsh -i -c 'LC_ALL=en_US.UTF-8 %s'", cmd))
+	-- local cmd = "get_ocr"
+	-- hs.execute(string.format("/bin/zsh -i -c 'LC_ALL=en_US.UTF-8 %s'", cmd))
+	runSilent("get_ocr")
 end)
+--
 
 local function runCommandInTerminal(command)
 	local wrappedCommand = command .. "; exit"
@@ -453,117 +431,7 @@ hs.hotkey.bind({ "option", "cmd", "shift" }, "v", function()
 	end
 end)
 
--- 1. Original “plain terminal” toggle -------------------------------------------------
-local termBundle = "com.mitchellh.ghostty"
-
--- one helper that works for *any* terminal -------------------------------
-local function launchTerminalTheRunCmd(opts)
-	opts = opts or {} -- guard against nil
-	local bundleID = opts.bundleID or "com.mitchellh.ghostty"
-	local cmd = opts.cmd or error("opts.cmd required")
-	local pollPeriod = opts.poll or 0.02 -- seconds
-	local finalPause = opts.pause or 0.03 -- seconds
-	local timeout = opts.timeout or 3 -- seconds
-
-	-- 1. start the app if necessary
-	local app = hs.application.get(bundleID)
-	if not app then
-		hs.application.launchOrFocusByBundleID(bundleID)
-	end
-
-	-- 2. poll until a window exists
-	local poll
-	poll = hs.timer.doEvery(pollPeriod, function()
-		app = hs.application.get(bundleID)
-		if app and #app:allWindows() > 0 then
-			poll:stop()
-			app:activate()
-			hs.timer.doAfter(finalPause, function()
-				hs.eventtap.keyStrokes(cmd)
-				hs.eventtap.keyStroke({}, "return")
-			end)
-		end
-	end)
-
-	-- 3. safety kill-switch
-	hs.timer.doAfter(timeout, function()
-		if poll then
-			poll:stop()
-		end
-	end)
-end
-
-local function launchTerminalWithCmd_old(opts)
-	opts = opts or {}
-	local cmd = opts.cmd or error("opts.cmd required")
-	local bundleID = opts.bundleID or "com.mitchellh.ghostty"
-
-	local app = hs.application.get(bundleID)
-	local newWindow = (app and app:isRunning()) and "" or "n"
-	-- doesnt actually open a newWindow when app is running
-
-	hs.execute(
-		string.format("open -%sb %s --args -e zsh -c 'source ~/.zshrc && %s; exec zsh'", newWindow, bundleID, cmd),
-		true
-	)
-end
-
--- NOTE: works with terminal/ghostty but not with iterm2
-local function open_terminal_and_run_callback(opts)
-	local terminal = opts.terminal or "Ghostty"
-	hs.execute(string.format("open -a %s", terminal), true)
-
-	local app = hs.application.get(terminal)
-	local isRunning = app and app:isRunning()
-
-	if isRunning then
-		hs.timer.doAfter(0.15, function()
-			hs.eventtap.keyStroke({ "cmd" }, "n")
-		end)
-	end
-
-	hs.timer.doAfter(isRunning and 0.3 or 0.4, function()
-		opts.callback()
-	end)
-end
-
-local function open_terminal_and_run_cmd(opts)
-	local cmd = opts.cmd or error("cmd required")
-	local default_term = "ghostty"
-	local term = (opts.terminal or default_term):lower()
-
-	if term == "ghostty" or term == "kitty" then
-		hs.execute(string.format("open -a %s --args -e zsh -il -c '%s; exec zsh'", term, cmd), true)
-	elseif term == "iterm2" then
-		-- AppleScript branch: NO pre-escaping
-		local script = string.format(
-			[[
-			tell application "iTerm2"
-			    if not running then launch
-			    activate
-			    set newWin to (create window with default profile)
-			    tell current session of newWin
-				write text "%s"
-			    end tell
-			end tell]],
-			cmd
-		)
-		hs.osascript.applescript(script)
-	else -- Terminal
-		local script = string.format(
-			[[
-			tell application "Terminal"
-			    if not running then launch
-			    activate
-			    do script "%s"
-			end tell]],
-			cmd
-		)
-		hs.osascript.applescript(script)
-	end
-end
-
--- TEST: almost generalized this for many terminals (open_terminal_and_run_cmd); realized too late each terminal has its own syntax
+--NOTE: replaced with open_term_and_run
 local function launchGhosttyWithCmd(opts)
 	opts = opts or {}
 	local cmd = opts.cmd or error("opts.cmd required")
@@ -707,12 +575,10 @@ local function open_term_and_run(opts)
 	end
 end
 
--- local LSB = require("loopSafeBind")
-local LSB = require("LSBB")
+local LSB = require("loopSafeBind")
 
 LSB.bind({ "option" }, "r", function()
 	open_term_and_run({ cmd = "recent_pick" })
-	-- launchGhosttyWithCmd({ cmd = "recent_pick" })
 	-- launchGhosttyWithCmd({ cmd = "send_key option r" })
 	-- note: simulated control r, whether with osascript or hs.eventtap.keyStroke is somehow intercepted by macos,
 	-- havent figured it out
@@ -721,14 +587,12 @@ end)
 -- local hotkey_option_y = hs.hotkey.bind({ "option" }, "y", function()
 LSB.bind({ "option" }, "y", function()
 	-- launchGhosttyWithCmd({ cmd = "send_key option y" })
-	-- launchGhosttyWithCmd({ cmd = "yazi" })
 	open_term_and_run({ cmd = "yazi" })
 end)
 
 -- local hotkey_option_f = hs.hotkey.bind({ "option" }, "f", function()
 LSB.bind({ "option" }, "f", function()
 	-- launchGhosttyWithCmd({ cmd = "send_key option f" })
-	-- launchGhosttyWithCmd({ cmd = "fzd file" })
 	open_term_and_run({ cmd = "fzd file" })
 end)
 
@@ -736,20 +600,16 @@ end)
 LSB.bind({ "option" }, "d", function()
 	-- runCommandInItermAndHitEnter("find_dir_from_cache 'emacs'")
 	-- launchGhosttyWithCmd({ cmd = "send_key option d" })
-	-- launchGhosttyWithCmd({ cmd = "fzd dir" })
 	open_term_and_run({ cmd = "fzd dir" })
 end)
 
 LSB.bind({ "ctrl", "option" }, "d", function()
 	-- local hotkey_ctrl_option_d = hs.hotkey.bind({ "ctrl", "option" }, "d", function()
 	-- launchGhosttyWithCmd({ cmd = "send_key control option d" })
-	-- launchGhosttyWithCmd({ cmd = "fzd" })
 	open_term_and_run({ cmd = "fzd" })
 end)
 
 LSB.bind({ "option" }, "h", function()
-	-- launchGhosttyWithCmd({ cmd = " send_key option h" })
-	-- hs.alert("yooor")
 	open_term_and_run({ cmd = "send_key option h" })
 
 	-- open_term_and_run({
@@ -761,6 +621,7 @@ end)
 
 --
 
+-- local TG = require("termGuard")
 -- TG.watch({
 -- 	hotkey_ctrl_option_d,
 -- 	hotkey_option_d,

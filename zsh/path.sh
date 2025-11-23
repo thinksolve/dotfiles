@@ -19,9 +19,10 @@
 
 export PNPM_HOME=/Users/brightowl/Library/pnpm
 export NIX_CURRENT_SYSTEM_BIN=/run/current-system/sw/bin
+export NIX_CURRENT_USER_BIN=$HOME/.nix-profile/bin
 export HM_PROFILE="$HOME/.local/state/nix/profiles/home-manager"
 export HOMEBREW_BIN="/opt/homebrew/bin"
 
-export PATH="$HM_PROFILE/bin:$NIX_CURRENT_SYSTEM_BIN:$HOME/.nix-profile/bin:$HOME/.local/bin:$HOME/.config/emacs/bin:$HOME/bin:/usr/local/bin:$PNPM_HOME:$HOMEBREW_BIN:$PATH"
+export PATH="$HM_PROFILE/bin:$NIX_CURRENT_SYSTEM_BIN:$NIX_CURRENT_USER_BIN:$HOME/.local/bin:$HOME/.config/emacs/bin:$HOME/bin:/usr/local/bin:$PNPM_HOME:$HOMEBREW_BIN:$PATH"
 
 
