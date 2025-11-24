@@ -96,10 +96,7 @@ in
   home.stateVersion = "23.11";
 
   home.packages =
-
-    cli ++ dev_tools ++ file_system ++ pdf_and_document ++ terminal_and_shell_enhancements
-
-  ;
+    cli ++ dev_tools ++ file_system ++ pdf_and_document ++ terminal_and_shell_enhancements;
 
   # home.activation.build-zshrc-flat = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
   #   cat \

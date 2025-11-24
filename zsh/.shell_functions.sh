@@ -1,5 +1,45 @@
 #!/usr/bin/env bash
 
+#use: a=$(pbpaste) b=$(pbpaste); diff_text a b
+function diff_text() {
+        # --- arity guard ---
+        if (($# != 2)); then
+                print -u2 "usage: diff_text <var1> <var2>"
+                return 1
+        fi
+
+        local _left _right
+
+        eval '_left=${'$1'} _right=${'$2'}' #old: _left=${(P)1} _right=${(P)2}  # not posix friendly
+
+        [[ -n $_left ]] || {
+                print -u2 "diff_text: '$1' is empty or unset"
+                return 1
+        }
+        [[ -n $_right ]] || {
+                print -u2 "diff_text: '$2' is empty or unset"
+                return 1
+        }
+
+        difft <(printf %s "$_left") <(printf %s "$_right")
+}
+
+function diff_funcs() {
+        [[ $# -eq 2 ]] || {
+                echo "usage: diff_funcs <func1> <func2>" >&2
+                return 1
+        }
+
+        for f; do
+                whence -w "$f" >/dev/null || {
+                        echo "no such shell function: $f" >&2
+                        return 1
+                }
+        done
+
+        difft <(declare -f "$1") <(declare -f "$2")
+}
+
 function editable_path() {
         local p=$1
         [[ -d $p ]] && return 0 #in shell return 0 is truthy!
@@ -11,7 +51,88 @@ function editable_path() {
         return 1
 }
 
-# fixed and doesnt hardcore paths!
+fzd.cleanup() {
+        [[ $SHLVL -eq 1 ]] || return # Run only in top-level shell
+        rm -f "/tmp/deep-fzf-full"-* || true
+        rm -f "/tmp/deep-fzf-file"-* || true
+}
+
+function fzd() {
+        local mode=${1:-full} root=${2:-$HOME} root_hash cache session_id
+        root_hash=$(printf '%s' "$root" | md5sum | cut -d' ' -f1)
+        session_id="session_$$"
+
+        # ---------------------------------------------------- cache path
+        case $mode in
+        file) cache="/tmp/deep-fzf-file-${root_hash}-${session_id}" ;;
+        full) cache="/tmp/deep-fzf-full-${root_hash}-${session_id}" ;;
+        dir) cache="/tmp/deep-fzf-dir-${root_hash}" ;;
+        *)
+                echo "Usage: fzd {file|full|dir} [root]" >&2
+                return 1
+                ;;
+        esac
+
+        # ---------------------------------------------------- fd type flags
+        local type_flags=()
+        case $mode in
+        file) type_flags=(-t f) ;;
+        dir) type_flags=(-t d) ;;
+        esac
+
+        local editor=${EDITOR:-nvim}
+        local dir_viewer=${DIRVIEWER:-$editor}
+        local maxdepth=${FZD_MAXDEPTH:-3}
+
+        local preview='p=$1;
+            if [ -d "$p" ]; then
+              tree -a -C -L 1 "$p" 2>/dev/null
+            else
+              bat --color=always "$p" 2>/dev/null || cat "$p" 2>/dev/null
+            fi'
+
+        #note: when $preview string is multiline then need to use 'zsh -c' here
+        local fzf_args=(
+                --preview "bash -c '$preview' bash {}"
+                --prompt "fzd-$mode> "
+                --border rounded
+                --bind "ctrl-d:become(zsh -ic 'fzd full {}')"
+        )
+
+        menu_cycle() {
+                setopt localoptions no_notify no_monitor 2>/dev/null || true
+                #this line finally ensures no garbage messages forwarded to terminal, nor fzf input
+
+                local chosen
+                if [ -s "$cache" ]; then
+                        chosen=$(cat "$cache" | fzf "${fzf_args[@]}") || return 1
+                else
+                        # background fill
+                        (fd "${type_flags[@]}" -H -L . "$root" \
+                                --exclude node_modules --exclude .git \
+                                --max-depth "$maxdepth" >"$cache" 2>/dev/null) &
+                        disown $! 2>/dev/null
+
+                        chosen=$(fd "${type_flags[@]}" -H -L . "$root" \
+                                --exclude node_modules --exclude .git \
+                                --max-depth "$maxdepth" | fzf "${fzf_args[@]}") || return 1
+                fi
+
+                [ -z "$chosen" ] && return 1
+
+                if [ -d "$chosen" ]; then
+                        "$dir_viewer" "$chosen"
+                elif editable_path "$chosen" 2>/dev/null; then
+                        "$editor" "$chosen"
+                else
+                        command -v xdg-open >/dev/null && xdg-open "$chosen" || open "$chosen"
+                fi
+        }
+
+        # ---------------------------------------------------- endless loop
+        while menu_cycle; do :; done
+}
+
 function recent_pick() {
         local recent_pick_db="${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}"
         local editor="${EDITOR:-nvim}"
@@ -76,8 +197,22 @@ function recent_pick() {
                 fi
         done
 
-        # round finished → offer the list again
-        recent_pick "$filter"
+        # round finished → offer the list again .. with exit status guard
+        (($? == 0)) && recent_pick "$filter"
+}
+
+# Note: these are snapshots nix takes when ive done dirty git commits;
+# its a useful side-effect since im using mkOutOfStoreSymLink for my dotfiles
+function nix_dot_snapshots() {
+        tmp=$(mktemp -d /tmp/yazi-dotfiles-XXXXXX)
+
+        for el in $(ls -dt /nix/store/*-source); do
+                [[ -d $el/zsh && -d $el/nvim && -d $el/bin ]] || continue
+                name=$(basename "$el")
+                ln -s "$el" "$tmp/$name"
+        done
+
+        yazi "$tmp"
 }
 
 function nix-generations() {
@@ -110,6 +245,15 @@ function nix_search() {
       to_entries[]
       | select(.key | test($p))
       | "* \(.key)  (\(.value.version))\n  \(.value.description)"'
+}
+
+#nix helper to find explicit pathname of a pkg
+function nixpath() {
+        if [ -z "$1" ]; then
+                echo "Usage: nixpath <package-name>"
+                return 1
+        fi
+        nix eval --raw "nixpkgs#${1}"
 }
 
 function toggle_desktop() {
@@ -600,15 +744,6 @@ local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else command -v bat >/de
 local home_dirs_cache="$HOME/.cache/fcd_cache.gz"
 local dir_exclusions=(node_modules .git .cache .DS_Store venv __pycache__ Trash "*.bak" "*.log")
 
-#nix helper to find explicit pathname of a pkg
-function nixpath() {
-        if [ -z "$1" ]; then
-                echo "Usage: nixpath <package-name>"
-                return 1
-        fi
-        nix eval --raw "nixpkgs#${1}"
-}
-
 function get_history_old() {
 
         local cmd=("$(fc -rl 1 | fzf --select-1 --exit-0 | cut -c 8-)")
@@ -668,40 +803,6 @@ function remove_last_newline_yas_snippet() {
 #     local dir=${RECENT_DB%/*}
 #     [[ -d $dir ]] || mkdir -p "$dir"
 #     printf '%s\n' "$(realpath "$1")" >>"$RECENT_DB" # no -m
-# }
-
-# function recent_pick_old_with_dedupe() {
-#     local filter=${1:-.*} pick
-#
-#     <"$RECENT_DB" grep -E "$filter" | tac | awk '!seen[$0]++' |
-#         while IFS= read -r path; do
-#             if [[ -d $path ]]; then
-#                 printf '\e[34mDIR\e[0m\t%s\n' "$path"
-#             else
-#                 printf '\e[33mFILE\e[0m\t%s\n' "$path"
-#             fi
-#         done |
-#         fzf --ansi \
-#             --prompt="filter: ${1:-}" \
-#             --header="Ctrl-E -> edit" \
-#             --bind "ctrl-e:execute(${EDITOR:-nvim} \"$RECENT_DB\" > /dev/tty)" \
-#             --with-nth=1,2 \
-#             --preview '
-#             path=$(echo {} | cut -f2-)
-#
-#             if [[ -d "$path" ]]; then
-#                 /run/current-system/sw/bin/tree -a -C -L 1 "$path"
-#             else
-#                 if /run/current-system/sw/bin/bat --version >/dev/null 2>&1; then
-#                     /run/current-system/sw/bin/bat --color=always "$path"
-#                 else
-#                     cat "$path" 2>/dev/null
-#                 fi
-#             fi
-#         ' |
-#         awk -F'\t' '{print $2}' | while IFS= read -r pick; do
-#         [[ $pick ]] && ${EDITOR:-nvim} "$pick"
-#     done
 # }
 
 readonly translate_host="127.0.0.1"

@@ -79,13 +79,7 @@
             "/bin"
             "/share"
           ];
-          environment.systemPackages =
-            # cli
-            # ++ dev_tools
-            # ++ file_system
-            # ++ pdf_and_document
-            # ++ terminal_and_shell_enhancements
-            media_tools ++ networking ++ system_utilities;
+          environment.systemPackages = media_tools ++ networking ++ system_utilities;
 
           homebrew = {
             enable = true;

@@ -1,5 +1,17 @@
 
 
+insert-paste-assignment() {
+  BUFFER='a=$(pbpaste)'
+  CURSOR=1
+  zle reset-prompt
+}
+zle -N insert-paste-assignment
+
+for mode in viins vicmd; do
+ bindkey -M $mode '^[p' insert-paste-assignment
+done
+
+
 # source ~/.config/path.sh 
 source "$HOME"/.shell_functions.sh
 
@@ -49,7 +61,7 @@ readonly RECENT_NVIM="$HOME/.local/bin/nvim"
 # readonly REAL_NVIM="$NIX_CURRENT_SYSTEM/bin/nvim"
 readonly REAL_NVIM="$NIX_CURRENT_USER/bin/nvim"
 
-
+alias pbp='$(pbpaste)'
 alias wvim="$RECENT_NVIM"    # <-- 'w' for 'wrapper'
 export EDITOR="$RECENT_NVIM"
 export VISUAL="$RECENT_NVIM"
@@ -211,15 +223,11 @@ function compile_zsh() {
 # )
 # export PATH
 
-fzd.cleanup() {
-        [[ $SHLVL -eq 1 ]] || return # Run only in top-level shell
-        rm -f "/tmp/deep-fzf-full"-* || true
-        rm -f "/tmp/deep-fzf-file"-* || true
-}
+
 
 #NOTE: this moved here since breaks format-on-save in ~/.shell_functions.sh, 
 # and all other bash-friendly versions still print junk to fzf/terminal
-fzd() {
+fzd_old() {
     local mode=${1:-full}
     local root=${2:-$HOME}
     local root_hash
@@ -276,8 +284,7 @@ fzd() {
         elif editable_path "$chosen"; then
             "$editor" "$chosen"
         else
-            echo "OPEN WOULD RUN: $chosen" >&2
-            # open "$chosen"
+            open "$chosen"
         fi
         [[ $? -ne 0 ]] && return 1
         return 0
@@ -294,12 +301,4 @@ do_exit_cleanup() {
 trap do_exit_cleanup EXIT
 
 
-FZF_PREVIEW='
-p=$1;
-if [[ -d $p ]]; then
-  tree -a -C -L 1 "$p";
-elif [[ $p =~ \.(jpe?g|png|gif|webp)$ ]]; then
-  chafa -f ansi -s 100x40 "$p";
-else
-  bat --color=always "$p" 2>/dev/null || cat "$p" 2>/dev/null || file -b "$p";
-fi'
+
