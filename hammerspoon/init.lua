@@ -94,9 +94,9 @@ hs.hotkey.bind(goto_app_mod, "m", function()
 	window_management.toggle_open_close_by_bundle_id("com.apple.MobileSMS")
 end)
 
-hs.hotkey.bind(goto_app_mod, "n", function()
-	window_management.toggle_app("Notes")
-end)
+-- hs.hotkey.bind(goto_app_mod, "n", function()
+-- 	window_management.toggle_app("Notes")
+-- end)
 
 hs.hotkey.bind(goto_app_mod, "l", function()
 	-- window_management.toggle_app("Mail")
@@ -496,7 +496,7 @@ local function open_term_and_run(opts)
 				    end tell
 				    tell application "System Events"
 					keystroke "n" using {command down}
-			
+		                        delay 0.05 --needed else windows open without running command below	
 					tell process "%s"
 					    keystroke "%s"
 					    keystroke return

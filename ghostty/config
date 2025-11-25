@@ -1,7 +1,7 @@
 font-family = "JetBrains Mono NL"
 #background = 0f0f11 
 #background = 1d1d3d
-background-opacity = 0.8
+background-opacity = 0.9
 background-blur = 15
 font-size = 15.5
 macos-option-as-alt = true

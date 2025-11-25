@@ -204,12 +204,16 @@ function recent_pick() {
 # Note: these are snapshots nix takes when ive done dirty git commits;
 # its a useful side-effect since im using mkOutOfStoreSymLink for my dotfiles
 function nix_dot_snapshots() {
-        tmp=$(mktemp -d /tmp/yazi-dotfiles-XXXXXX)
 
+        tmp=$(mktemp -d "/tmp/yazi-dotfiles-$(date +%Y%m%d-%H%M%S)-XXX")
+
+        local i=0
         for el in $(ls -dt /nix/store/*-source); do
                 [[ -d $el/zsh && -d $el/nvim && -d $el/bin ]] || continue
                 name=$(basename "$el")
-                ln -s "$el" "$tmp/$name"
+                ln -s "$el" "$tmp/dotfiles_$i"
+                # ln -s "$el" "$tmp/$name_dotfiles_i"
+                ((i += 1))
         done
 
         yazi "$tmp"
@@ -598,24 +602,28 @@ function signal_keychain_checks() {
 }
 
 function diffy() {
-        local mode="full"
+        # local mode="full" #NOTE: WIP delete the 'full' logic below eventually?
+
+        local mode="sym"
         local file1 file2
-        local side_by_side=false
 
         # --- Parse options ---
         while [[ $# -gt 0 ]]; do
                 case "$1" in
                 -s | --symmetric) mode="sym" ;;
                 -i | --intersection) mode="int" ;;
-                -t | --tastic | -c | --code) side_by_side=true ;;
+                -t | --tastic | -c | --code) mode="tastic" ;;
                 -h | --help)
-                        echo "Usage: diffy [-s|--symmetric | -i|--intersection | -t|--tastic|-c|--code] <file1> <file2>"
-                        echo
-                        echo "Modes:"
-                        echo "  (default)      Full: common (white) + uniques (green/red)"
-                        echo "  -s, --symmetric  Only symmetric uniques (green/red)"
-                        echo "  -i, --intersection  Only intersection (common lines only)"
-                        echo "  -t, --tastic      Side-by-side diff (like difft)"
+                        local lines=(
+                                "Usage: yea ho diffy [options] <file1> <file2>"
+                                ""
+                                "  (no flag) → symmetric difference (only unique lines) ← default"
+                                "      -s    → same as default"
+                                "      -i    → show only common lines (intersection)"
+                                "      -t    → full difftastic (proper pretty diff)"
+                                ""
+                        )
+                        printf '%s\n' "${lines[@]}"
                         return 0
                         ;;
                 -*)
@@ -642,7 +650,7 @@ function diffy() {
                 return 1
         fi
 
-        if [[ "$side_by_side" == true ]]; then
+        if [[ "$mode" == "tastic" ]]; then
                 # Use standard side-by-side diff for code-friendly view
                 difft --color=always "$file1" "$file2" | less -R
                 return
