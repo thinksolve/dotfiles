@@ -76,7 +76,6 @@ let
     pkgs.iterm2
     pkgs.kitty
     pkgs.nushell
-    pkgs.pure-prompt
     pkgs.tmux
     pkgs.yazi
   ];

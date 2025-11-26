@@ -496,7 +496,7 @@ local function open_term_and_run(opts)
 				    end tell
 				    tell application "System Events"
 					keystroke "n" using {command down}
-		                        delay 0.05 --needed else windows open without running command below	
+		                        delay 0.1 --needed else windows open without running command below	
 					tell process "%s"
 					    keystroke "%s"
 					    keystroke return

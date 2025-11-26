@@ -1,5 +1,4 @@
 
-
 insert-paste-assignment() {
   BUFFER='a=$(pbpaste)'
   CURSOR=1
@@ -70,19 +69,14 @@ export DIRVIEWER="yazi"
 
 
 # antidote essentially replaces my uses for OMZ
-# source "$NIX_CURRENT_SYSTEM/share/antidote/antidote.zsh"
-source "$NIX_CURRENT_USER/share/antidote/antidote.zsh"
-antidote load
+# source "$NIX_CURRENT_USER/share/antidote/antidote.zsh"
+# antidote load 
+source ~/.zsh_plugins.zsh
 # bindkey -v #basic vi-mode but antidote's ~/.zsh_plugins.txt uses 'vi-more' to augment it
 
 
-# export PURE_PROMPT_PATH=$HOME/.zsh/pure
-# export PURE_PROMPT_PATH="$NIX_CURRENT_SYSTEM/share/zsh/site-functions/"
-export PURE_PROMPT_PATH="$NIX_CURRENT_USER/share/zsh/site-functions/"
-fpath+=($PURE_PROMPT_PATH)
-autoload -U promptinit; promptinit
-prompt pure
 
+#
 
 
 autoload -U compinit
@@ -300,5 +294,24 @@ do_exit_cleanup() {
 
 trap do_exit_cleanup EXIT
 
+
+# ------ styling essentially replaces pure prompt --------------
+autoload -Uz add-zsh-hook vcs_info
+zstyle ':vcs_info:git:*' formats ' %F{#8a8a8a}(%b%u)%f'
+zstyle ':vcs_info:git:*' check-for-changes true
+zstyle ':vcs_info:git:*' unstagedstr '*'
+
+setopt PROMPT_SUBST
+PROMPT='%F{blue}%~%f${vcs_info_msg_0_}
+%F{magenta}❯%f '
+RPROMPT='%F{241}%D{%H:%M:%S}%f${CMD_TIME:+ %F{yellow}$CMD_TIME%f'
+
+add-zsh-hook precmd vcs_info
+# ------ styling essentially replaces pure prompt --------------
+# NOTE: no longer needed
+# export PURE_PROMPT_PATH="$NIX_CURRENT_USER/share/zsh/site-functions/"
+# fpath+=($PURE_PROMPT_PATH)
+# autoload -U promptinit; promptinit
+# prompt pure
 
 

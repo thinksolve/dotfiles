@@ -204,16 +204,14 @@ function recent_pick() {
 # Note: these are snapshots nix takes when ive done dirty git commits;
 # its a useful side-effect since im using mkOutOfStoreSymLink for my dotfiles
 function nix_dot_snapshots() {
-
+        local tmp i=0
         tmp=$(mktemp -d "/tmp/yazi-dotfiles-$(date +%Y%m%d-%H%M%S)-XXX")
 
-        local i=0
         for el in $(ls -dt /nix/store/*-source); do
                 [[ -d $el/zsh && -d $el/nvim && -d $el/bin ]] || continue
-                name=$(basename "$el")
-                ln -s "$el" "$tmp/dotfiles_$i"
-                # ln -s "$el" "$tmp/$name_dotfiles_i"
-                ((i += 1))
+                ln -s "$el" "$tmp/dotfiles_$((i++))"
+                # name=$(basename "$el")
+                # ln -s "$el" "$tmp/$name"
         done
 
         yazi "$tmp"
