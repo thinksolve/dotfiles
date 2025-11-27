@@ -1,6 +1,5 @@
 
 # source ~/.config/path.sh 
-
 source ~/.config/zsh/constants.zsh     
 source ~/.config/zsh/.shell_functions.sh
 source ~/.config/zsh/bindkeys.zsh
