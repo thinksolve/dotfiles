@@ -1,5 +1,22 @@
 #!/usr/bin/env bash
 
+# use nvim for manpage, else fallback to regular behaviour
+function man() {
+        if command -v nvim >/dev/null 2>&1; then
+                MANPAGER='nvim +Man!' command man "$@"
+        else
+                MANPAGER=less command man "$@"
+        fi
+}
+
+#WIP: opens all 'source' path_names in zshrc (generalize to any shell file, or more?)
+function open_sources_zshrc() {
+        grep -h '^\s*source' ~/.dotfiles/zsh/.zshrc |
+                sed -E "s|^\s*source\s+||; s|[\"']||g" |
+                while IFS= read -r line; do eval "printf '%s\n' $line"; done |
+                xargs nvim
+}
+
 #use: a=$(pbpaste) b=$(pbpaste); diff_text a b
 function diff_text() {
         # --- arity guard ---

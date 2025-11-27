@@ -125,6 +125,11 @@ in
     };
     ".hammerspoon".source = link_dotfiles "/hammerspoon";
     ".config/path.sh".source = link_dotfiles "/zsh/path.sh";
+    ".config/zsh/aliases.zsh".source = link_dotfiles "/zsh/aliases.zsh";
+    ".config/zsh/bindkeys.zsh".source = link_dotfiles "/zsh/bindkeys.zsh";
+    ".config/zsh/constants.zsh".source = link_dotfiles "/zsh/constants.zsh";
+    ".config/zsh/preferences.zsh".source = link_dotfiles "/zsh/preferences.zsh";
+    ".config/zsh/terminal_styling.zsh".source = link_dotfiles "/zsh/terminal_styling.zsh";
     ".zshrc".source = link_dotfiles "/zsh/.zshrc";
     ".zsh_plugins.txt".source = link_dotfiles "/zsh/.zsh_plugins.txt";
     ".tmux.conf".source = link_dotfiles "/tmux/.tmux.conf";
