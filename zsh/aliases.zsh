@@ -1,23 +1,20 @@
 
-alias wvim="$HOME/.local/bin/nvim"
+alias wvim="$RECENT_NVIM"
 
 alias rm='trash-put' 
 #deletes to ~/.local/share/Trash/; other commands trash-restore, trash-empty; accepts -r -f flags 
 
 # alias rm='rm -I --preserve-root' #safeguard, but permanent deletion
-alias nix-list-generations='sudo darwin-rebuild --list-generations'
-alias nix-delete-generations-older-than='sudo nix-collect-garbage --delete-older-than'
 alias lz="eza"
 alias drs='sudo darwin-rebuild switch --flake ~/.dotfiles/nix/darwin'
 alias config='cd ~/.dotfiles/ && yazi .'
 alias config-nix='cd ~/.dotfiles/nix/darwin && yazi .'
-alias evim='emacs -nw' # not really useful now that im using emacsclient
+# alias evim='emacs -nw' # not really useful now that im using emacsclient
 alias zshrc='nvim ~/.zshrc'
 alias hist='nvim ~/.zsh_history'
 alias shell_functions='nvim ~/.shell_functions.sh'
 alias SCREENSAVERS='cd "/Library/Application Support/com.apple.idleassetsd/Customer/4KSDR240FPS"'
-alias BRAVE='cd ${HOME}/Library/Application\ Support/BraveSoftware/Brave-Browser/afalakplffnnnlkncjhbmahjfjhmlkal/1.0.904/1/'
-
+# alias BRAVE='cd ${HOME}/Library/Application\ Support/BraveSoftware/Brave-Browser/afalakplffnnnlkncjhbmahjfjhmlkal/1.0.904/1/'
 
 # alias snake="tr '[ ]-' '_'"
 # alias kebab="tr '[ ]_' '-'"

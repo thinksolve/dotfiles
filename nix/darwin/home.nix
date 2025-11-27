@@ -34,15 +34,15 @@ let
   dev_tools = [
     pkgs.gh
     pkgs.git
-    pkgs.lua5_4
-    pkgs.lua54Packages.luasocket
-    pkgs.math-preview # instead of 'npm install -g git+https://gitlab.com/matsievskiysv/math-preview' and change npm prefix .. due to nix immutability
-    pkgs.neovim
-    pkgs.nodejs
+    # pkgs.lua5_4
+    # pkgs.lua54Packages.luasocket
     pkgs.htmlq
-    pkgs.nixfmt-rfc-style
-    pkgs.pandoc
-    pkgs.shellcheck
+    # pkgs.math-preview # instead of 'npm install -g git+https://gitlab.com/matsievskiysv/math-preview' and change npm prefix .. due to nix immutability
+    pkgs.neovim
+    # pkgs.nixfmt-rfc-style
+    # pkgs.nodejs
+    # pkgs.pandoc
+    # pkgs.shellcheck
     pkgs.shfmt
     # pkgs.helix
     (pkgs.python3.withPackages (
@@ -61,22 +61,20 @@ let
 
   file_system = [ pkgs.fswatch ];
   pdf_and_document = [
-    pkgs.chafa
+    # pkgs.chafa
     # pkgs.poppler #not needed when moved from flake.nix to home.nix?
     pkgs.poppler-utils
-    pkgs.viu
+    # pkgs.viu
   ];
 
   terminal_and_shell_enhancements = [
     pkgs.antidote
-    pkgs.ast-grep # TEST: might remove this (also remove the wrapper in home.nix)
     pkgs.difftastic
     pkgs.fastfetch
     # pkgs.ghostty ## isnt supported??
-    pkgs.iterm2
+    # pkgs.iterm2
     pkgs.kitty
-    pkgs.nushell
-    pkgs.tmux
+    # pkgs.tmux
     pkgs.yazi
   ];
 in

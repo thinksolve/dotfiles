@@ -8,31 +8,43 @@ source ~/.config/zsh/preferences.zsh
 source ~/.config/zsh/terminal_styling.zsh  # has to go after compinit (when using timestamp?)
 source ~/.config/zsh/aliases.zsh   
 
-export FZD_MAXDEPTH=5
+# zsh_config_files=(
+#   constants.zsh
+#   .shell_functions.sh
+#   bindkeys.zsh
+#   preferences.zsh
+#   terminal_styling.zsh
+#   aliases.zsh
+# )
+#
+# for file in "${zsh_config_files[@]}"; do
+#   source ~/.config/zsh/"$file"
+# done
 
 # source "$NIX_CURRENT_USER/share/antidote/antidote.zsh"
 # antidote load 
 source ~/.zsh_plugins.zsh
 
-autoload -U compinit
-compinit -C -d "${ZDOTDIR:-$HOME}/.zcompdump"
-zcompile "${ZDOTDIR:-$HOME}/.zcompdump" 2>/dev/null
+# autoload -U compinit
+# compinit -C -d "${ZDOTDIR:-$HOME}/.zcompdump"
+# zcompile "${ZDOTDIR:-$HOME}/.zcompdump" 2>/dev/null
 
 
 # alias zsh-recompile-funcs='zcompile ~/.shell_functions.zwc ~/.shell_functions.sh && echo "Compiled! Restart shell."'
-function compile_zsh() {
-  setopt extendedglob
-  local repo=${ZDOTDIR:-$HOME}/.dotfiles/zsh
+# function compile_zsh() {
+#   setopt extendedglob
+#   local repo=${ZDOTDIR:-$HOME}/.dotfiles/zsh
+#
+#   for src in $repo/.zshrc(N) $repo/*.sh(N) $repo/*.zsh(N); do
+#     zcompile -U -z $src
+#   done
+#
+#   # compile the dump only where compinit expects it
+#   zcompile -U -z ~/.zcompdump 2>/dev/null
+# }
 
-  for src in $repo/.zshrc(N) $repo/*.sh(N) $repo/*.zsh(N); do
-    zcompile -U -z $src
-  done
 
-  # compile the dump only where compinit expects it
-  zcompile -U -z ~/.zcompdump 2>/dev/null
-}
-
-
+export FZD_MAXDEPTH=5
 do_exit_cleanup() {
     fzd.cleanup
     echo "Shell exit: Cleanups complete" >&2

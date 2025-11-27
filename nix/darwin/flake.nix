@@ -41,18 +41,18 @@
             pkgs.tesseract
             pkgs.vips
             pkgs.yt-dlp
-            (pkgs.texlive.combine {
-              inherit (pkgs.texlive)
-                scheme-basic # Core LaTeX
-                dvipng # PNG for Emacs preview
-                dvisvgm # SVG option, useful for scalability
-                amsmath # Math essentials
-                amsfonts # Math fonts
-                latex-bin # LaTeX commands
-                ulem # without this doom emacs breaks when previewing latex?? might be better to use textlive scheme medium
-                ; # Add more if needed (e.g., hyperref, geometry)
-            })
-            # pkgs.texlive.combined.scheme-medium
+            # (pkgs.texlive.combine {
+            #   inherit (pkgs.texlive)
+            #     scheme-basic # Core LaTeX
+            #     dvipng # PNG for Emacs preview
+            #     dvisvgm # SVG option, useful for scalability
+            #     amsmath # Math essentials
+            #     amsfonts # Math fonts
+            #     latex-bin # LaTeX commands
+            #     ulem # without this doom emacs breaks when previewing latex?? might be better to use textlive scheme medium
+            #     ; # Add more if needed (e.g., hyperref, geometry)
+            # })
+            ## pkgs.texlive.combined.scheme-medium
           ];
 
           networking = [
