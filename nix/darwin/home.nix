@@ -69,12 +69,14 @@ let
 
   terminal_and_shell_enhancements = [
     pkgs.antidote
+    pkgs.carapace
     pkgs.difftastic
     pkgs.fastfetch
     # pkgs.ghostty ## isnt supported??
     # pkgs.iterm2
     pkgs.kitty
     # pkgs.tmux
+    pkgs.tldr
     pkgs.yazi
   ];
 in

@@ -9,8 +9,9 @@ window-width = 1000
 window-height = 1000
 
 # foreground = ffffff
-theme = catppuccin-frappe
+#theme = catppuccin-frappe
 theme = catppuccin-mocha
+#theme = Alabaster
 # window-position-x = 0
 # window-position-y = 0
 

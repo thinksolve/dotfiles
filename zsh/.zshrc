@@ -1,32 +1,21 @@
+export Z_CONFIG=~/.dotfiles/zsh/
 
 # source ~/.config/path.sh 
-source ~/.config/zsh/constants.zsh     
-source ~/.config/zsh/.shell_functions.sh
-source ~/.config/zsh/bindkeys.zsh
-source ~/.config/zsh/preferences.zsh   
-source ~/.config/zsh/terminal_styling.zsh  # has to go after compinit (when using timestamp?)
-source ~/.config/zsh/aliases.zsh   
+source $Z_CONFIG/constants.zsh
+source $Z_CONFIG/.shell_functions.sh
+source $Z_CONFIG/bindkeys.zsh
+source $Z_CONFIG/preferences.zsh
+source $Z_CONFIG/terminal_styling.zsh  # has to go after compinit (when using timestamp?)
+source $Z_CONFIG/aliases.zsh
+source $Z_CONFIG/fast_compinit.zsh
+source $Z_CONFIG/lazy_wrappers.zsh
 
-# zsh_config_files=(
-#   constants.zsh
-#   .shell_functions.sh
-#   bindkeys.zsh
-#   preferences.zsh
-#   terminal_styling.zsh
-#   aliases.zsh
-# )
-#
-# for file in "${zsh_config_files[@]}"; do
-#   source ~/.config/zsh/"$file"
-# done
 
 # source "$NIX_CURRENT_USER/share/antidote/antidote.zsh"
 # antidote load 
 source ~/.zsh_plugins.zsh
 
-# autoload -U compinit
-# compinit -C -d "${ZDOTDIR:-$HOME}/.zcompdump"
-# zcompile "${ZDOTDIR:-$HOME}/.zcompdump" 2>/dev/null
+
 
 
 # alias zsh-recompile-funcs='zcompile ~/.shell_functions.zwc ~/.shell_functions.sh && echo "Compiled! Restart shell."'
@@ -129,5 +118,7 @@ trap do_exit_cleanup EXIT
 # }
 #
 #
+
+
 
 
