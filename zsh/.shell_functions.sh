@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
 
+function recompile_config_files() {
+        autoload -Uz zrecompile 2>/dev/null || {
+                # Fallback if not available
+                for src in $ZSH_CONFIG/??-*.zsh; do
+                        local zwc="${src:r}.zwc"
+                        [[ ! -f "$zwc" || "$src" -nt "$zwc" ]] && zcompile -U "$src"
+                done
+        }
+        zrecompile -q $ZSH_CONFIG/??-*.zsh
+}
+
 # use nvim for manpage, else fallback to regular behaviour
 function man() {
         if command -v nvim >/dev/null 2>&1; then

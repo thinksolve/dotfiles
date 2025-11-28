@@ -7,3 +7,4 @@ _carapace_lazy_wrapper() {
 }
 
 add-zsh-hook precmd _carapace_lazy_wrapper
+

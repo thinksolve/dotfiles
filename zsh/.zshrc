@@ -1,21 +1,18 @@
-export Z_CONFIG=~/.dotfiles/zsh/
+export ZSH_CONFIG=~/.dotfiles/zsh/
 
 # source ~/.config/path.sh 
-source $Z_CONFIG/constants.zsh
-source $Z_CONFIG/.shell_functions.sh
-source $Z_CONFIG/bindkeys.zsh
-source $Z_CONFIG/preferences.zsh
-source $Z_CONFIG/terminal_styling.zsh  # has to go after compinit (when using timestamp?)
-source $Z_CONFIG/aliases.zsh
-source $Z_CONFIG/fast_compinit.zsh
-source $Z_CONFIG/lazy_wrappers.zsh
-
+source $ZSH_CONFIG/constants.zsh
+source $ZSH_CONFIG/.shell_functions.sh
+source $ZSH_CONFIG/bindkeys.zsh
+source $ZSH_CONFIG/preferences.zsh
+source $ZSH_CONFIG/terminal_styling.zsh  # has to go after compinit (when using timestamp?)
+source $ZSH_CONFIG/aliases.zsh
+source $ZSH_CONFIG/lazy_wrappers.zsh
+source $ZSH_CONFIG/fast_compinit.zsh
 
 # source "$NIX_CURRENT_USER/share/antidote/antidote.zsh"
 # antidote load 
 source ~/.zsh_plugins.zsh
-
-
 
 
 # alias zsh-recompile-funcs='zcompile ~/.shell_functions.zwc ~/.shell_functions.sh && echo "Compiled! Restart shell."'
@@ -31,6 +28,16 @@ source ~/.zsh_plugins.zsh
 #   zcompile -U -z ~/.zcompdump 2>/dev/null
 # }
 
+function recompile_config_files(){
+    autoload -Uz zrecompile 2>/dev/null || {
+        # Fallback if not available
+        for src in $ZSH_CONFIG/??-*.zsh; do
+            local zwc="${src:r}.zwc"
+            [[ ! -f "$zwc" || "$src" -nt "$zwc" ]] && zcompile -U "$src"
+        done
+    }
+    zrecompile -q $ZSH_CONFIG/??-*.zsh
+}
 
 export FZD_MAXDEPTH=5
 do_exit_cleanup() {
