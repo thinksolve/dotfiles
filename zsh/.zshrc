@@ -20,7 +20,7 @@ export FZD_MAXDEPTH=5
 
 do_exit_cleanup() {
     fzd.cleanup
-    echo "Shell exit: Cleanups complete" >&2
+    # echo "Shell exit: Cleanups complete" >&2
 }
 
 trap do_exit_cleanup EXIT

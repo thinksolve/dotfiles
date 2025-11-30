@@ -164,10 +164,14 @@ function fzd() {
 
 function recent_pick() {
         local recent_pick_db="${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}"
-        local editor=log-and-run
-        local -a dir_viewer=($editor --yazi) #passing flags requires array
+        local editor="${LOGANDRUN:-nvim}"
+        local dir_viewer="${LOGANDRUN:-yazi}"
+        #NOTE: LOGANDRUN uses binary 'log-and-run' which opens files in nvim and directories in yazi
+        # while updating the recent_pick_db in between (*smacks lips* ... nice).
+
         # local editor="${EDITOR:-nvim}"
         # local dir_viewer="${DIRVIEWER:-$editor}"
+        # local -a dir_viewer=(log-and-run --yazi) #passing flags requires array
         local filter="${1:-}"
         local -a open_now edit_later
         local pick
@@ -200,8 +204,12 @@ function recent_pick() {
                         --delimiter=$'\t' \
                         --query="$filter" \
                         --prompt='recent> ' \
-                        --header='CTRL-E → edit DB' \
-                        --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty)+abort" \
+                        --header='CTRL-E → edit DB; CTRL-P → open parent directory' \
+                        --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty; zsh -ic \"recent_pick '$filter'\")+abort" \
+                        --bind 'ctrl-p:execute(
+                          parent=$(cut -f2 <<< {} | xargs dirname)
+                          log-and-run "$parent"
+                        ; zsh -ic "recent_pick \"'$filter'\"")+abort' \
                         --preview "bash -c '$FZF_PREVIEW' bash {2}" | # --preview-window=right:65%:border-sharp |
                 awk -F'\t' '{print $2}' |
                 while IFS= read -r pick; do
@@ -222,12 +230,9 @@ function recent_pick() {
         # 2. now occupy the terminal (if you want)
         for p in "${edit_later[@]}"; do
                 if [[ -d $p ]]; then
-                        # cd "$p" && $dir_viewer .
-                        # cd "$p" && "${dir_viewer[@]}" .
-                        cd "$p" && log-and-run --yazi .
+                        cd "$p" && $dir_viewer .
                 else
-                        # $editor "$p"
-                        log-and-run "$p"
+                        $editor "$p"
                 fi
         done
 

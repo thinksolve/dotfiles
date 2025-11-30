@@ -9,22 +9,15 @@ RECENT_DB=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
 MAX=75
 
 # ---- pick launcher -------------------------------------------------
-RUNNER="" # start empty
 if [[ ${1:-} == --yazi ]]; then
+    shift
     RUNNER=$REAL_YAZI
-    shift
-elif [[ ${1:-} == --nvim ]]; then
+elif [[ ${1:-} == --help || ${1:-} == -h ]]; then
+    echo "Usage: ${0##*/} [--yazi] <path> [extra-args...]"
+    echo "  (default launcher: nvim)"
+    exit 0
+else
     RUNNER=$REAL_NVIM
-    shift
-fi
-
-# ---- auto-detect if no override -----------------------------------
-if [[ -z $RUNNER ]]; then
-    if [[ -d ${1:-} ]]; then
-        RUNNER=$REAL_YAZI
-    else
-        RUNNER=$REAL_NVIM
-    fi
 fi
 
 # ---- log the first existing argument -------------------------------
