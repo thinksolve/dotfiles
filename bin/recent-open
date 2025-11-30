@@ -18,12 +18,23 @@ elif [[ ${1:-} == --nvim ]]; then
     shift
 fi
 
+editable_path() {
+    local p=$1
+    [[ -d $p ]] && return 0
+    case $(file --mime-type -b -- "$p") in
+    text/* | application/json | application/x-yaml | application/xml | application/x-shellscript) return 0 ;;
+    esac
+    return 1
+}
+
 # ---- auto-detect if no override -----------------------------------
 if [[ -z $RUNNER ]]; then
     if [[ -d ${1:-} ]]; then
         RUNNER=$REAL_YAZI
-    else
+    elif editable_path "$1"; then
         RUNNER=$REAL_NVIM
+    else
+        RUNNER=open
     fi
 fi
 

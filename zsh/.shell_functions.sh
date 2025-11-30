@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+pdf_preview() {
+        local tmp="/tmp/preview-$$"
+        pdftoppm -f 1 -l 1 -png "$1" "$tmp"
+        kitten icat --silent --transfer-mode=file "${tmp}-1.png"
+
+        #NOTE: $$ is unique hash per shell session; get's overwritten
+        # so no explosion of preview files and /tmp clears on its own
+}
+
 #WIP: might delete since even `zcompile -U ~/.zshrc` (manually compile zshrc) shaves only 2-3ms
 # function recompile_config_files() {
 #         autoload -Uz zrecompile 2>/dev/null || {
@@ -109,8 +118,10 @@ function fzd() {
         dir) type_flags=(-t d) ;;
         esac
 
-        local editor=${EDITOR:-nvim}
-        local dir_viewer=${DIRVIEWER:-$editor}
+        # local editor=${EDITOR:-nvim}
+        # local dir_viewer=${DIRVIEWER:-$editor}
+        local editor=recent-open
+        local dir_viewer=$editor
         local maxdepth=${FZD_MAXDEPTH:-3}
 
         local preview='p=$1;
@@ -177,12 +188,19 @@ function recent_pick() {
         local pick
 
         local FZF_PREVIEW='
+            # wipe any previous kitty graphic
+            printf "\e_Ga=d,d=a\e\\"        
+
             p=$1
             if [[ -d "$p" ]]; then
               echo -e "\033[1;34mDirectory:\033[0m $p\n"
               tree -a -C -L 2 "$p" 2>/dev/null || exa --tree --level=2 --color=always "$p" 2>/dev/null || ls -la "$p"
             elif [[ $p =~ \.(jpe?g|png|gif|webp|tiff|bmp|avif|svg)$ ]]; then
-              chafa -f ansi -s "${FZF_PREVIEW_WINDOW:-80x40}" "$p" 2>/dev/null || echo "Image preview not available"
+              kitten icat --silent --transfer-mode=file "$p" 2>/dev/null || echo "Image preview not available"
+            elif [[ $p =~ \.pdf$ ]]; then
+                  tmp="/tmp/preview-$$" 
+                  pdftoppm -f 1 -l 1 -png "$1" "$tmp"
+                  kitten icat --silent --transfer-mode=file "${tmp}-1.png"  2>/dev/null || echo "PDF preview unavailable"
             elif command -v bat >/dev/null; then
               bat --color=always --style=numbers "$p" 2>/dev/null
             else

@@ -61,7 +61,7 @@ let
 
   file_system = [ pkgs.fswatch ];
   pdf_and_document = [
-    # pkgs.chafa
+    pkgs.chafa
     # pkgs.poppler #not needed when moved from flake.nix to home.nix?
     pkgs.poppler-utils
     # pkgs.viu
