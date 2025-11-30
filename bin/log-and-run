@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# run-and-log  [--yazi]  path  [extra-args...]
+set -e
+
+REAL_NVIM=$HOME/.nix-profile/bin/nvim
+REAL_YAZI=$HOME/.nix-profile/bin/yazi
+RECENT_DB=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
+MAX=75
+
+# ---- pick launcher -------------------------------------------------
+if [[ ${1:-} == --yazi ]]; then
+    shift
+    RUNNER=$REAL_YAZI
+elif [[ ${1:-} == --help || ${1:-} == -h ]]; then
+    echo "Usage: ${0##*/} [--yazi] <path> [extra-args...]"
+    echo "  (default launcher: nvim)"
+    exit 0
+else
+    RUNNER=$REAL_NVIM
+fi
+
+# ---- log the first existing argument -------------------------------
+for arg; do
+    [[ -e $arg ]] && TARGET=$(realpath "$arg") && break
+done
+
+if [[ -n ${TARGET:-} ]]; then
+    tmp=$(mktemp)
+    [[ -f $RECENT_DB ]] && grep -Fxv "$TARGET" "$RECENT_DB" >"$tmp" || true
+    printf '%s\n' "$TARGET" >>"$tmp"
+    tail -n "$MAX" "$tmp" >"$tmp.2" && mv "$tmp.2" "$RECENT_DB"
+    rm -f "$tmp"
+fi
+
+exec "$RUNNER" "$@"

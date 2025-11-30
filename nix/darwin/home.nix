@@ -39,7 +39,7 @@ let
     pkgs.htmlq
     # pkgs.math-preview # instead of 'npm install -g git+https://gitlab.com/matsievskiysv/math-preview' and change npm prefix .. due to nix immutability
     pkgs.neovim
-    # pkgs.nixfmt-rfc-style
+    pkgs.nixfmt-rfc-style
     # pkgs.nodejs
     # pkgs.pandoc
     # pkgs.shellcheck
@@ -115,14 +115,24 @@ in
     "/Library/Application Support/com.mitchellh.ghostty/config".source =
       link_dotfiles "/ghostty/config";
 
-    ".local/bin/nvim" = {
-      source = link_dotfiles "/bin/nvim-recent"; # source in dotfiles repo
-      executable = true; # chmod +x done by HM
-    };
-    ".local/bin/yt-txt" = {
-      source = link_dotfiles "/bin/yt-txt";
-      executable = true;
-    };
+    ".local/bin/log-and-run".source = link_dotfiles "/bin/log-and-run";
+    # ".local/bin/log-and-run" = {
+    #   source = link_dotfiles "/bin/log-and-run";
+    #   # source = ./../../bin/log-and-run;
+    #   executable = true;
+    # };
+
+    ".local/bin/nvim".source = link_dotfiles "/bin/nvim-recent";
+    # ".local/bin/nvim" = {
+    #   source = link_dotfiles "/bin/nvim-recent";
+    #   executable = true;
+    # };
+
+    ".local/bin/yt-txt".source = link_dotfiles "/bin/yt-txt";
+    # ".local/bin/yt-txt" = {
+    #   source = link_dotfiles "/bin/yt-txt";
+    #   executable = true;
+    # };
     ".hammerspoon".source = link_dotfiles "/hammerspoon";
     ".config/path.sh".source = link_dotfiles "/zsh/path.sh";
     ".config/zsh/aliases.zsh".source = link_dotfiles "/zsh/aliases.zsh";

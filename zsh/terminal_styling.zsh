@@ -9,4 +9,17 @@ PROMPT='%F{blue}%~%f${vcs_info_msg_0_}
 %F{magenta}❯%f '
 # RPROMPT='%F{241}%D{%H:%M:%S}%f${CMD_TIME:+ %F{yellow}$CMD_TIME%f'
 add-zsh-hook precmd vcs_info
-# ------ styling essentially replaces pure prompt --------------
+
+
+
+# ensure the `:completion` system is loaded (sanity guard check)
+if ! typeset -f compinit > /dev/null; then
+    autoload -Uz compinit && compinit -C
+fi
+# ------ styling for tab completion?  --------------
+zstyle ':completion:*' verbose yes
+zstyle ':completion:*' list-prompt ''
+zstyle ':completion:*' select-prompt '%SScrolling active: current selection at %p%s'
+zstyle ':completion:*' menu yes select
+zstyle ':completion:*' use-cache yes             # speed
+zstyle ':completion:*' cache-path "$HOME/.zcompcache"

@@ -8,38 +8,16 @@ source $ZSH_CONFIG/preferences.zsh
 source $ZSH_CONFIG/terminal_styling.zsh  # has to go after compinit (when using timestamp?)
 source $ZSH_CONFIG/aliases.zsh
 source $ZSH_CONFIG/lazy_wrappers.zsh
-source $ZSH_CONFIG/fast_compinit.zsh
+# source $ZSH_CONFIG/fast_compinit.zsh
 
 # source "$NIX_CURRENT_USER/share/antidote/antidote.zsh"
 # antidote load 
 source ~/.zsh_plugins.zsh
 
 
-# alias zsh-recompile-funcs='zcompile ~/.shell_functions.zwc ~/.shell_functions.sh && echo "Compiled! Restart shell."'
-# function compile_zsh() {
-#   setopt extendedglob
-#   local repo=${ZDOTDIR:-$HOME}/.dotfiles/zsh
-#
-#   for src in $repo/.zshrc(N) $repo/*.sh(N) $repo/*.zsh(N); do
-#     zcompile -U -z $src
-#   done
-#
-#   # compile the dump only where compinit expects it
-#   zcompile -U -z ~/.zcompdump 2>/dev/null
-# }
-
-function recompile_config_files(){
-    autoload -Uz zrecompile 2>/dev/null || {
-        # Fallback if not available
-        for src in $ZSH_CONFIG/??-*.zsh; do
-            local zwc="${src:r}.zwc"
-            [[ ! -f "$zwc" || "$src" -nt "$zwc" ]] && zcompile -U "$src"
-        done
-    }
-    zrecompile -q $ZSH_CONFIG/??-*.zsh
-}
-
 export FZD_MAXDEPTH=5
+
+
 do_exit_cleanup() {
     fzd.cleanup
     echo "Shell exit: Cleanups complete" >&2
@@ -53,9 +31,9 @@ trap do_exit_cleanup EXIT
 # fpath+=($PURE_PROMPT_PATH)
 # autoload -U promptinit; promptinit
 # prompt pure
-#
-#
-#
+
+
+
 #NOTE: this moved here since breaks format-on-save in ~/.shell_functions.sh, 
 # and all other bash-friendly versions still print junk to fzf/terminal
 # fzd_old() {
@@ -123,9 +101,3 @@ trap do_exit_cleanup EXIT
 #
 #     while menu_cycle; do :; done
 # }
-#
-#
-
-
-
-

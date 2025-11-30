@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 
-function recompile_config_files() {
-        autoload -Uz zrecompile 2>/dev/null || {
-                # Fallback if not available
-                for src in $ZSH_CONFIG/??-*.zsh; do
-                        local zwc="${src:r}.zwc"
-                        [[ ! -f "$zwc" || "$src" -nt "$zwc" ]] && zcompile -U "$src"
-                done
-        }
-        zrecompile -q $ZSH_CONFIG/??-*.zsh
-}
+#WIP: might delete since even `zcompile -U ~/.zshrc` (manually compile zshrc) shaves only 2-3ms
+# function recompile_config_files() {
+#         autoload -Uz zrecompile 2>/dev/null || {
+#                 # Fallback if not available
+#                 for src in $ZSH_CONFIG/??-*.zsh; do
+#                         local zwc="${src:r}.zwc"
+#                         [[ ! -f "$zwc" || "$src" -nt "$zwc" ]] && zcompile -U "$src"
+#                 done
+#         }
+#         zrecompile -q $ZSH_CONFIG/??-*.zsh
+# }
 
 # use nvim for manpage, else fallback to regular behaviour
 function man() {
@@ -163,8 +164,10 @@ function fzd() {
 
 function recent_pick() {
         local recent_pick_db="${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}"
-        local editor="${EDITOR:-nvim}"
-        local dir_viewer="${DIRVIEWER:-$editor}"
+        local editor=log-and-run
+        local -a dir_viewer=($editor --yazi) #passing flags requires array
+        # local editor="${EDITOR:-nvim}"
+        # local dir_viewer="${DIRVIEWER:-$editor}"
         local filter="${1:-}"
         local -a open_now edit_later
         local pick
@@ -219,9 +222,12 @@ function recent_pick() {
         # 2. now occupy the terminal (if you want)
         for p in "${edit_later[@]}"; do
                 if [[ -d $p ]]; then
-                        cd "$p" && $dir_viewer .
+                        # cd "$p" && $dir_viewer .
+                        # cd "$p" && "${dir_viewer[@]}" .
+                        cd "$p" && log-and-run --yazi .
                 else
-                        $editor "$p"
+                        # $editor "$p"
+                        log-and-run "$p"
                 fi
         done
 
