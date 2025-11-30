@@ -164,8 +164,8 @@ function fzd() {
 
 function recent_pick() {
         local recent_pick_db="${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}"
-        local editor="${LOGANDRUN:-nvim}"
-        local dir_viewer="${LOGANDRUN:-yazi}"
+        local editor="${RECENT_OPEN:-nvim}"
+        local dir_viewer="${RECENT_OPEN:-yazi}"
         #NOTE: LOGANDRUN uses binary 'log-and-run' which opens files in nvim and directories in yazi
         # while updating the recent_pick_db in between (*smacks lips* ... nice).
 
@@ -206,11 +206,10 @@ function recent_pick() {
                         --prompt='recent> ' \
                         --header='CTRL-E → edit DB; CTRL-P → open parent directory' \
                         --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty; zsh -ic \"recent_pick '$filter'\")+abort" \
-                        --bind 'ctrl-p:execute(
-                          parent=$(cut -f2 <<< {} | xargs dirname)
-                          log-and-run "$parent"
-                        ; zsh -ic "recent_pick \"'$filter'\"")+abort' \
-                        --preview "bash -c '$FZF_PREVIEW' bash {2}" | # --preview-window=right:65%:border-sharp |
+                        --bind "ctrl-p:execute( parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; zsh -ic \"recent_pick '$filter'\")+abort" \
+                        \
+                        --preview "bash -c '$FZF_PREVIEW' bash {2}" | # --bind 'ctrl-p:execute( parent=$(cut -f2 <<< {} | xargs dirname) && recent-open "$parent" ; zsh -ic "recent_pick \"'$filter'\"")+abort' \
+                # --preview-window=right:65%:border-sharp |
                 awk -F'\t' '{print $2}' |
                 while IFS= read -r pick; do
                         [[ -e "$pick" ]] || continue
@@ -1309,9 +1308,13 @@ function get_ocr() {
         fi
 
         # Pipe clipboard image through ImageMagick and Tesseract, strip ICC profile
-        pngpaste - |
-                # magick - -strip -grayscale Rec709Luma -normalize - |
-                tesseract stdin stdout --psm 3 | tr -d '\n' | pbcopy
+        pngpaste - 2>/dev/null |
+                tesseract stdin stdout --psm 3 2>/dev/null |
+                tr -d '\n' |
+                pbcopy
+        # pngpaste - |
+        #         # magick - -strip -grayscale Rec709Luma -normalize - |
+        #         tesseract stdin stdout --psm 3 | tr -d '\n' | pbcopy
 }
 
 ##NOTE: WIP

@@ -3,8 +3,8 @@ hs.alert.show("hs init.lua loaded")
 -- default terminal across hotkey binds below
 local TERM = {
 	ghostty = "com.mitchellh.ghostty",
-	kitty = "net.kovidgoyal.kitty",
-	iterm2 = "com.googlecode.iterm2",
+	kitty = "net.kovidgoyal.kitty", -- kinda broken when using hotkey and app already running
+	-- iterm2 = "com.googlecode.iterm2",
 	terminal = "com.apple.Terminal",
 }
 local DEFAULT_TERM_ID = TERM.ghostty
@@ -119,12 +119,11 @@ end)
 
 -- helper gives feedback when cmd string does not exist
 local function runSilent(cmd)
-	local ok, _, err = hs.execute(cmd, true)
-	if not ok or (err and err ~= "") then
-		hs.alert("That command doesnt work boss. Error: " .. err, 3)
+	local _, status = hs.execute(cmd, true) -- bro why is the relevant data the SECOND one??
+	if not status then
+		hs.alert("That command doesnt work boss.", 3)
 	end
 end
-
 hs.hotkey.bind({ "ctrl", "option" }, "x", function()
 	-- local cmd = "get_ocr"
 	-- hs.execute(string.format("/bin/zsh -i -c 'LC_ALL=en_US.UTF-8 %s'", cmd))
@@ -433,7 +432,7 @@ hs.hotkey.bind({ "option", "cmd", "shift" }, "v", function()
 end)
 
 --NOTE: replaced with open_term_and_run
-local function launchGhosttyWithCmd(opts)
+function launchGhosttyWithCmd(opts)
 	opts = opts or {}
 	local cmd = opts.cmd or error("opts.cmd required")
 	local bundleID = opts.bundleID or "com.mitchellh.ghostty"
@@ -495,14 +494,24 @@ local function open_term_and_run(opts)
 				    tell application "%s"
 					activate
 				    end tell
+				   
 				    tell application "System Events"
 					keystroke "n" using {command down}
-		                        delay 0.1 --needed else windows open without running command below	
+				    end tell
+				    tell application "System Events"
 					tell process "%s"
 					    keystroke "%s"
 					    keystroke return
 					end tell
 				    end tell
+					--    tell application "System Events"
+					-- keystroke "n" using {command down}
+					--                      delay 0.1 --needed else windows open without running command below	
+					-- tell process "%s"
+					--     keystroke "%s"
+					--     keystroke return
+					-- end tell
+					--    end tell
 				]],
 				term_name,
 				term_name,

@@ -1,4 +1,5 @@
 alias dotfiles="cd ~/.dotfiles/"
+alias rop="recent-open"
 alias wvim="$RECENT_NVIM"
 
 alias rm='trash-put' 

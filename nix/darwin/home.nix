@@ -115,7 +115,7 @@ in
     "/Library/Application Support/com.mitchellh.ghostty/config".source =
       link_dotfiles "/ghostty/config";
 
-    ".local/bin/log-and-run".source = link_dotfiles "/bin/log-and-run";
+    ".local/bin/recent-open".source = link_dotfiles "/bin/recent-open";
     # ".local/bin/log-and-run" = {
     #   source = link_dotfiles "/bin/log-and-run";
     #   # source = ./../../bin/log-and-run;
