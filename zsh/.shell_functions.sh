@@ -1,9 +1,49 @@
 #!/usr/bin/env bash
 
+media_preview() {
+        local base_name=$(basename "$1")
+        local safe_name=${base_name//[^[:alnum:]._-]/_}
+        local hash=$(printf '%s' "$1" | md5sum | cut -d' ' -f1)
+        local tmp="/tmp/$safe_name-$hash"
+        case "$1" in
+        *.pdf)
+                pdftoppm -f 1 -l 1 -png -singlefile "$1" "$tmp"
+                tmp="${tmp}.png"
+                ;;
+        *.mp4 | *.mov | *.mkv | *.webm | *.avi | *.m4v)
+                ffmpeg -loglevel error -y -ss 00:00:03 -i "$1" -vframes 1 -vf "scale=320:-1" "${tmp}.png"
+                tmp="${tmp}.png"
+                ;;
+        *)
+                echo "No preview handler for $1" >&2
+                return 1
+                ;;
+        esac
+        [[ -f $tmp ]] && kitten icat --silent --transfer-mode=file "$tmp" 2>/dev/null || echo "Preview unavailable"
+}
+
+video_preview() {
+        # local tmp="/tmp/video-preview-$$.png"
+        local base_name=$(basename "$1")
+        local safe_name=${base_name//[^[:alnum:]._-]/_} # replace junk with _
+        local hash=$(printf '%s' "$1" | md5sum | cut -d' ' -f1)
+        local tmp="/tmp/$safe_name-$hash.png"
+
+        ffmpeg -loglevel error -y -ss 00:00:03 -i "$1" -vframes 1 -vf "scale=320:-1" "$tmp"
+        kitten icat --silent --transfer-mode=file "$tmp" 2>/dev/null || echo "Video preview unavailable"
+
+}
+
 pdf_preview() {
-        local tmp="/tmp/preview-$$"
+        # local tmp="/tmp/pdf-preview-$$"
+
+        local base_name=$(basename "$1")
+        local safe_name=${base_name//[^[:alnum:]._-]/_} # replace junk with _
+        local hash=$(printf '%s' "$1" | md5sum | cut -d' ' -f1)
+        local tmp="/tmp/$safe_name-$hash"
+
         pdftoppm -f 1 -l 1 -png "$1" "$tmp"
-        kitten icat --silent --transfer-mode=file "${tmp}-1.png"
+        kitten icat --silent --transfer-mode=file "${tmp}-1.png" 2>/dev/null || echo "PDF preview unavailable"
 
         #NOTE: $$ is unique hash per shell session; get's overwritten
         # so no explosion of preview files and /tmp clears on its own
@@ -165,7 +205,8 @@ function fzd() {
                 elif editable_path "$chosen" 2>/dev/null; then
                         "$editor" "$chosen"
                 else
-                        command -v xdg-open >/dev/null && xdg-open "$chosen" || open "$chosen"
+                        recent-open "$chosen" || open "$chosen"
+                        # command -v xdg-open >/dev/null && xdg-open "$chosen" || open "$chosen"
                 fi
         }
 
@@ -188,25 +229,34 @@ function recent_pick() {
         local pick
 
         local FZF_PREVIEW='
-            # wipe any previous kitty graphic
-            printf "\e_Ga=d,d=a\e\\"        
+                # wipe any previous kitty graphic
+                printf "\e_Ga=d,d=a\e\\"
 
-            p=$1
-            if [[ -d "$p" ]]; then
-              echo -e "\033[1;34mDirectory:\033[0m $p\n"
-              tree -a -C -L 2 "$p" 2>/dev/null || exa --tree --level=2 --color=always "$p" 2>/dev/null || ls -la "$p"
-            elif [[ $p =~ \.(jpe?g|png|gif|webp|tiff|bmp|avif|svg)$ ]]; then
-              kitten icat --silent --transfer-mode=file "$p" 2>/dev/null || echo "Image preview not available"
-            elif [[ $p =~ \.pdf$ ]]; then
-                  tmp="/tmp/preview-$$" 
-                  pdftoppm -f 1 -l 1 -png "$1" "$tmp"
-                  kitten icat --silent --transfer-mode=file "${tmp}-1.png"  2>/dev/null || echo "PDF preview unavailable"
-            elif command -v bat >/dev/null; then
-              bat --color=always --style=numbers "$p" 2>/dev/null
-            else
-              cat "$p" 2>/dev/null || highlight -O ansi "$p" 2>/dev/null || cat "$p"
-            fi
-          '
+                p=$1
+
+                #useful for two blocks below
+                base_name=$(basename "$p")
+                safe_name=${base_name//[^[:alnum:]._-]/_}
+                hash=$(printf "%s" "$p" | md5sum | cut -d" " -f1)
+                tmp="/tmp/preview-$safe_name-$hash"
+
+                if [[ -d "$p" ]]; then
+                  echo -e "\033[1;34mDirectory:\033[0m $p\n"
+                  tree -a -C -L 2 "$p" 2>/dev/null || exa --tree --level=2 --color=always "$p" 2>/dev/null || ls -la "$p"
+                elif [[ $p =~ \.(jpe?g|png|gif|webp|tiff|bmp|avif|svg)$ ]]; then
+                  kitten icat --silent --transfer-mode=file "$p" 2>/dev/null || echo "Image preview unavailable"
+                elif [[ $p =~ \.pdf$ ]]; then
+                  pdftoppm -f 1 -l 1 -png "$p" "$tmp"
+                  kitten icat --silent --transfer-mode=file "${tmp}-1.png" 2>/dev/null || echo "PDF preview unavailable"
+                elif [[ $p =~ \.(mp4|mov|mkv|webm|avi|m4v)$ ]]; then
+                  ffmpeg -loglevel error -y -ss 00:00:03 -i "$p" -vframes 1 -vf "scale=320:-1" "${tmp}.png"
+                  kitten icat --silent --transfer-mode=file "${tmp}.png" 2>/dev/null || echo "Video preview unavailable"
+                elif command -v bat >/dev/null; then
+                  bat --color=always --style=numbers "$p" 2>/dev/null
+                else
+                  cat "$p" 2>/dev/null || highlight -O ansi "$p" 2>/dev/null || cat "$p"
+                fi
+        '
 
         #this block to color-distinguish files vs dirs
         tac "$recent_pick_db" 2>/dev/null | while IFS= read -r path; do
