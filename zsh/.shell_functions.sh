@@ -246,8 +246,10 @@ function recent_pick() {
                 elif [[ $p =~ \.(jpe?g|png|gif|webp|tiff|bmp|avif|svg)$ ]]; then
                   kitten icat --silent --transfer-mode=file "$p" 2>/dev/null || echo "Image preview unavailable"
                 elif [[ $p =~ \.pdf$ ]]; then
-                  pdftoppm -f 1 -l 1 -png "$p" "$tmp"
-                  kitten icat --silent --transfer-mode=file "${tmp}-1.png" 2>/dev/null || echo "PDF preview unavailable"
+                  # pdftoppm -f 1 -l 1 -png "$p" "$tmp"
+                  # kitten icat --silent --transfer-mode=file "${tmp}-1.png" 2>/dev/null || echo "PDF preview unavailable"
+                    pdftoppm -f 1 -l 1 -png -singlefile "$p" "$tmp"
+                    kitten icat --silent --transfer-mode=file "${tmp}.png" 2>/dev/null || echo "PDF preview unavailable"
                 elif [[ $p =~ \.(mp4|mov|mkv|webm|avi|m4v)$ ]]; then
                   ffmpeg -loglevel error -y -ss 00:00:03 -i "$p" -vframes 1 -vf "scale=320:-1" "${tmp}.png"
                   kitten icat --silent --transfer-mode=file "${tmp}.png" 2>/dev/null || echo "Video preview unavailable"

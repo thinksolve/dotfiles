@@ -432,7 +432,7 @@ hs.hotkey.bind({ "option", "cmd", "shift" }, "v", function()
 end)
 
 --NOTE: replaced with open_term_and_run
-function launchGhosttyWithCmd(opts)
+local function launchGhosttyWithCmd(opts)
 	opts = opts or {}
 	local cmd = opts.cmd or error("opts.cmd required")
 	local bundleID = opts.bundleID or "com.mitchellh.ghostty"
@@ -487,36 +487,36 @@ local function open_term_and_run(opts)
 	if term_name == "ghostty" or term_name == "kitty" then
 		if not (app and app:isRunning()) then
 			-- start + run command in first window
+			cmd = cmd:gsub("'", "'\\''")
+
 			hs.execute(string.format("open -a %s --args -e zsh -il -c '%s; exec zsh'", term_name, cmd), true)
 		else
-			local applescript = string.format(
-				[[
-				    tell application "%s"
-					activate
-				    end tell
-				   
-				    tell application "System Events"
-					keystroke "n" using {command down}
-				    end tell
-				    tell application "System Events"
-					tell process "%s"
-					    keystroke "%s"
-					    keystroke return
-					end tell
-				    end tell
-					--    tell application "System Events"
-					-- keystroke "n" using {command down}
-					--                      delay 0.1 --needed else windows open without running command below	
-					-- tell process "%s"
-					--     keystroke "%s"
-					--     keystroke return
-					-- end tell
-					--    end tell
-				]],
-				term_name,
-				term_name,
-				cmd
-			)
+			-- NOTE: the delays below prevent weird race conditions (opens other apps, etc)
+			-- there has to be a less janky way to do this
+
+			local applescript = ([[
+			    tell application "{term}"
+				activate
+			    end tell
+
+			    delay 0.1  -- this prevents an alternate app (notes, alfred) opening bug
+
+			    tell application "System Events"
+				keystroke "n" using {command down}
+			    end tell
+
+			    delay 0.1 -- this allows other LSBs to fire their cmd properly
+
+			    tell application "System Events"
+				tell process "{term}"
+				    keystroke "{cmd}"
+				    keystroke return
+				end tell
+			    end tell
+			]]):gsub("{(%w+)}", {
+				term = term_name,
+				cmd = cmd,
+			})
 
 			local ok, result = hs.osascript.applescript(applescript)
 			if not ok then
@@ -586,6 +586,7 @@ local function open_term_and_run(opts)
 end
 
 local LSB = require("loopSafeBind")
+-- local LSB = hs.hotkey
 
 LSB.bind({ "option" }, "r", function()
 	open_term_and_run({ cmd = "recent_pick" })
