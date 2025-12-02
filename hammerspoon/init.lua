@@ -586,37 +586,26 @@ local function open_term_and_run(opts)
 end
 
 local LSB = require("loopSafeBind")
--- local LSB = hs.hotkey
 
 LSB.bind({ "option" }, "r", function()
 	open_term_and_run({ cmd = "recent_pick" })
-	-- launchGhosttyWithCmd({ cmd = "send_key option r" })
-	-- note: simulated control r, whether with osascript or hs.eventtap.keyStroke is somehow intercepted by macos,
-	-- havent figured it out
+	-- note: simulated control r, whether with osascript or hs.eventtap.keyStroke
+	-- is somehow intercepted by macos, havent figured it out
 end)
 
--- local hotkey_option_y = hs.hotkey.bind({ "option" }, "y", function()
 LSB.bind({ "option" }, "y", function()
-	-- launchGhosttyWithCmd({ cmd = "send_key option y" })
 	open_term_and_run({ cmd = "yazi" })
 end)
 
--- local hotkey_option_f = hs.hotkey.bind({ "option" }, "f", function()
 LSB.bind({ "option" }, "f", function()
-	-- launchGhosttyWithCmd({ cmd = "send_key option f" })
 	open_term_and_run({ cmd = "fzd file" })
 end)
 
--- local hotkey_option_d = hs.hotkey.bind({ "option" }, "d", function()
 LSB.bind({ "option" }, "d", function()
-	-- runCommandInItermAndHitEnter("find_dir_from_cache 'emacs'")
-	-- launchGhosttyWithCmd({ cmd = "send_key option d" })
 	open_term_and_run({ cmd = "fzd dir" })
 end)
 
 LSB.bind({ "ctrl", "option" }, "d", function()
-	-- local hotkey_ctrl_option_d = hs.hotkey.bind({ "ctrl", "option" }, "d", function()
-	-- launchGhosttyWithCmd({ cmd = "send_key control option d" })
 	open_term_and_run({ cmd = "fzd" })
 end)
 
@@ -624,7 +613,6 @@ LSB.bind({ "option" }, "h", function()
 	open_term_and_run({ cmd = "send_key option h" })
 
 	-- open_term_and_run({
-	-- 	-- terminal = "iterm2",
 	-- 	-- terminal = "terminal",
 	-- 	cmd = "send_key option h",
 	-- })

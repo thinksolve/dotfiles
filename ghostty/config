@@ -10,7 +10,11 @@ window-height = 1000
 
 # foreground = ffffff
 
-#theme = catppuccin-mocha
+# theme = xcodedarkhc 
+#tokyonight
+#Cyberdyne
+#catppuccin-mocha
+
 # window-position-x = 0
 # window-position-y = 0
 

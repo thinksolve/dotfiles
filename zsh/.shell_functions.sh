@@ -228,7 +228,14 @@ function recent_pick() {
         local -a open_now edit_later
         local pick
 
-        local FZF_PREVIEW='
+        local pixel_width=$((16 * $(tput cols)))
+        # local _pixel_width=2560
+        local -x _preview_width=$(($pixel_width * 50 / 100))
+        #NOTE: bruh .. 'local -x VAR' is similar to 'EXPORT var; <consuming logic>; unset VAR'
+        # This is required for zsh subshells to inherit  variables ... but cleaner
+
+        local FZF_PREVIEW=$(
+                cat <<'PREVIEW'
                 # wipe any previous kitty graphic
                 printf "\e_Ga=d,d=a\e\\"
 
@@ -241,24 +248,23 @@ function recent_pick() {
                 tmp="/tmp/preview-$safe_name-$hash"
 
                 if [[ -d "$p" ]]; then
-                  echo -e "\033[1;34mDirectory:\033[0m $p\n"
-                  tree -a -C -L 2 "$p" 2>/dev/null || exa --tree --level=2 --color=always "$p" 2>/dev/null || ls -la "$p"
+                        echo -e "\033[1;34mDirectory:\033[0m $p\n"
+                        tree -a -C -L 2 "$p" 2>/dev/null || exa --tree --level=2 --color=always "$p" 2>/dev/null || ls -la "$p"
                 elif [[ $p =~ \.(jpe?g|png|gif|webp|tiff|bmp|avif|svg)$ ]]; then
-                  kitten icat --silent --transfer-mode=file "$p" 2>/dev/null || echo "Image preview unavailable"
+                        kitten icat --silent --transfer-mode=file "$p" 2>/dev/null || echo "Image preview unavailable"
                 elif [[ $p =~ \.pdf$ ]]; then
-                  # pdftoppm -f 1 -l 1 -png "$p" "$tmp"
-                  # kitten icat --silent --transfer-mode=file "${tmp}-1.png" 2>/dev/null || echo "PDF preview unavailable"
-                    pdftoppm -f 1 -l 1 -png -singlefile "$p" "$tmp"
-                    kitten icat --silent --transfer-mode=file "${tmp}.png" 2>/dev/null || echo "PDF preview unavailable"
+                        pdftoppm -f 1 -l 1 -png -singlefile "$p" "$tmp"
+                        kitten icat --silent --transfer-mode=file "${tmp}.png" 2>/dev/null || echo "PDF preview unavailable"
                 elif [[ $p =~ \.(mp4|mov|mkv|webm|avi|m4v)$ ]]; then
-                  ffmpeg -loglevel error -y -ss 00:00:03 -i "$p" -vframes 1 -vf "scale=320:-1" "${tmp}.png"
-                  kitten icat --silent --transfer-mode=file "${tmp}.png" 2>/dev/null || echo "Video preview unavailable"
+                        ffmpeg -loglevel error -y -ss 00:00:03 -i "$p" -vframes 1 -vf "scale=$_preview_width:-1" "${tmp}.png"
+                        kitten icat --silent --transfer-mode=file "${tmp}.png" 2>/dev/null || echo "Video preview unavailable"
                 elif command -v bat >/dev/null; then
-                  bat --color=always --style=numbers "$p" 2>/dev/null
+                        bat --color=always --style=numbers "$p" 2>/dev/null
                 else
-                  cat "$p" 2>/dev/null || highlight -O ansi "$p" 2>/dev/null || cat "$p"
+                        cat "$p" 2>/dev/null || highlight -O ansi "$p" 2>/dev/null || cat "$p"
                 fi
-        '
+PREVIEW
+        )
 
         #this block to color-distinguish files vs dirs
         tac "$recent_pick_db" 2>/dev/null | while IFS= read -r path; do
@@ -274,12 +280,14 @@ function recent_pick() {
                         --delimiter=$'\t' \
                         --query="$filter" \
                         --prompt='recent> ' \
-                        --header='CTRL-E → edit DB; CTRL-P → open parent directory' \
+                        --header='CTRL-E (edit list)  CTRL-D (parent directory)' \
                         --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty; zsh -ic \"recent_pick '$filter'\")+abort" \
-                        --bind "ctrl-p:execute( parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; zsh -ic \"recent_pick '$filter'\")+abort" \
+                        --bind "ctrl-d:execute( parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; zsh -ic \"recent_pick '$filter'\")+abort" \
                         \
-                        --preview "bash -c '$FZF_PREVIEW' bash {2}" | # --bind 'ctrl-p:execute( parent=$(cut -f2 <<< {} | xargs dirname) && recent-open "$parent" ; zsh -ic "recent_pick \"'$filter'\"")+abort' \
-                # --preview-window=right:65%:border-sharp |
+                        --preview-window=right:50%:wrap \
+                        --preview "bash -c '$FZF_PREVIEW' bash {2}" |
+
+                # --bind 'ctrl-p:execute( parent=$(cut -f2 <<< {} | xargs dirname) && recent-open "$parent" ; zsh -ic "recent_pick \"'$filter'\"")+abort' \
                 awk -F'\t' '{print $2}' |
                 while IFS= read -r pick; do
                         [[ -e "$pick" ]] || continue
