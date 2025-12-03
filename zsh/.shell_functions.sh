@@ -231,11 +231,12 @@ function recent_pick() {
         local pixel_width=$((16 * $(tput cols)))
         # local _pixel_width=2560
         local -x _preview_width=$(($pixel_width * 50 / 100))
+
         #NOTE: bruh .. 'local -x VAR' is similar to 'EXPORT var; <consuming logic>; unset VAR'
         # This is required for zsh subshells to inherit  variables ... but cleaner
 
         local FZF_PREVIEW=$(
-                cat <<'PREVIEW'
+                cat <<"PREVIEW"
                 # wipe any previous kitty graphic
                 printf "\e_Ga=d,d=a\e\\"
 
@@ -246,6 +247,7 @@ function recent_pick() {
                 safe_name=${base_name//[^[:alnum:]._-]/_}
                 hash=$(printf "%s" "$p" | md5sum | cut -d" " -f1)
                 tmp="/tmp/preview-$safe_name-$hash"
+
 
                 if [[ -d "$p" ]]; then
                         echo -e "\033[1;34mDirectory:\033[0m $p\n"
@@ -276,7 +278,8 @@ PREVIEW
                 fi
         done |
                 # previewer logic here
-                fzf --ansi -m \
+                fzf --preview "bash -c '$FZF_PREVIEW' bash {2}" \
+                        --ansi -m \
                         --delimiter=$'\t' \
                         --query="$filter" \
                         --prompt='recent> ' \
@@ -284,8 +287,7 @@ PREVIEW
                         --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty; zsh -ic \"recent_pick '$filter'\")+abort" \
                         --bind "ctrl-d:execute( parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; zsh -ic \"recent_pick '$filter'\")+abort" \
                         \
-                        --preview-window=right:50%:wrap \
-                        --preview "bash -c '$FZF_PREVIEW' bash {2}" |
+                        --preview-window=right:50%:wrap |
 
                 # --bind 'ctrl-p:execute( parent=$(cut -f2 <<< {} | xargs dirname) && recent-open "$parent" ; zsh -ic "recent_pick \"'$filter'\"")+abort' \
                 awk -F'\t' '{print $2}' |

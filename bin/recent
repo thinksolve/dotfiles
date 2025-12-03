@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+
+set -e
+
+REAL_NVIM=$HOME/.nix-profile/bin/nvim
+REAL_YAZI=$HOME/.nix-profile/bin/yazi
+RECENT_DB=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}
+
+editable_path() {
+    local p=$1
+    [[ -d $p ]] && return 0
+    case $(file --mime-type -b -- "$p") in
+    text/* | application/json | application/x-yaml | application/xml | application/x-shellscript) return 0 ;;
+    esac
+    return 1
+}
+
+cmd_recent_pick() {
+    local recent_pick_db="${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}"
+    local editor="${RECENT_OPEN:-nvim}"
+    local dir_viewer="${RECENT_OPEN:-yazi}"
+    local filter="${1:-}"
+    local -a open_now edit_later
+    local pick
+    local pixel_width=$((16 * $(tput cols)))
+    local -x _preview_width=$(($pixel_width * 50 / 100))
+    local FZF_PREVIEW=$(
+        cat <<'PREVIEW'
+                # wipe any previous kitty graphic
+                printf "\e_Ga=d,d=a\e\\"
+
+                p=$1
+
+                #useful for two blocks below
+                base_name=$(basename "$p")
+                safe_name=${base_name//[^[:alnum:]._-]/_}
+                hash=$(printf "%s" "$p" | md5sum | cut -d" " -f1)
+                tmp="/tmp/preview-$safe_name-$hash"
+
+                if [[ -d "$p" ]]; then
+                        echo -e "\033[1;34mDirectory:\033[0m $p\n"
+                        tree -a -C -L 2 "$p" 2>/dev/null || exa --tree --level=2 --color=always "$p" 2>/dev/null || ls -la "$p"
+                elif [[ $p =~ \.(jpe?g|png|gif|webp|tiff|bmp|avif|svg)$ ]]; then
+                        kitten icat --silent --transfer-mode=file "$p" 2>/dev/null || echo "Image preview unavailable"
+                elif [[ $p =~ \.pdf$ ]]; then
+                        pdftoppm -f 1 -l 1 -png -singlefile "$p" "$tmp"
+                        kitten icat --silent --transfer-mode=file "${tmp}.png" 2>/dev/null || echo "PDF preview unavailable"
+                elif [[ $p =~ \.(mp4|mov|mkv|webm|avi|m4v)$ ]]; then
+                        ffmpeg -loglevel error -y -ss 00:00:03 -i "$p" -vframes 1 -vf "scale=$_preview_width:-1" "${tmp}.png"
+                        kitten icat --silent --transfer-mode=file "${tmp}.png" 2>/dev/null || echo "Video preview unavailable"
+                elif command -v bat >/dev/null; then
+                        bat --color=always --style=numbers "$p" 2>/dev/null
+                else
+                        cat "$p" 2>/dev/null || highlight -O ansi "$p" 2>/dev/null || cat "$p"
+                fi
+PREVIEW
+    )
+    tac "$recent_pick_db" 2>/dev/null | while IFS= read -r path; do
+        [[ -e "$path" ]] || continue
+        if [[ -d "$path" ]]; then
+            printf '\e[34mDIR\e[0m\t%s\n' "$path"
+        else
+            printf '\e[33mFILE\e[0m\t%s\n' "$path"
+        fi
+    done | fzf --ansi -m --delimiter=$'\t' --query="$filter" --prompt='recent> ' --header='CTRL-E (edit list)  CTRL-D (parent directory)' --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty; zsh -ic \"recent_pick '$filter'\")+abort" --bind "ctrl-d:execute( parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; zsh -ic \"recent_pick '$filter'\")+abort" --preview-window=right:50%:wrap --preview "bash -c '$FZF_PREVIEW' bash {2}" | awk -F'\t' '{print $2}' | while IFS= read -r pick; do
+        [[ -e "$pick" ]] || continue
+        if editable_path "$pick" 2>/dev/null; then
+            edit_later+=("$pick")
+        else
+            open_now+=("$pick")
+        fi
+    done
+    ((${#open_now[@]} + ${#edit_later[@]})) || return 0
+    for p in "${open_now[@]}"; do
+        open "$p"
+    done
+    for p in "${edit_later[@]}"; do
+        if [[ -d $p ]]; then
+            cd "$p" && $dir_viewer .
+        else
+            $editor "$p"
+        fi
+    done
+    (($? == 0)) && recent_pick "$filter"
+}
+
+cmd_recent_open() {
+
+    # cmd_recent_open  [--yazi]  path  [extra-args...]
+    MAX=75
+
+    # ---- pick launcher -------------------------------------------------
+    RUNNER="" # start empty
+    if [[ ${1:-} == --yazi ]]; then
+        RUNNER=$REAL_YAZI
+        shift
+    elif [[ ${1:-} == --nvim ]]; then
+        RUNNER=$REAL_NVIM
+        shift
+    fi
+
+    # ---- auto-detect if no override -----------------------------------
+    if [[ -z $RUNNER ]]; then
+        if [[ -d ${1:-} ]]; then
+            RUNNER=$REAL_YAZI
+        elif editable_path "$1"; then
+            RUNNER=$REAL_NVIM
+        else
+            RUNNER=open
+        fi
+    fi
+
+    # ---- log the first existing argument -------------------------------
+    for arg; do
+        [[ -e $arg ]] && TARGET=$(realpath "$arg") && break
+    done
+
+    if [[ -n ${TARGET:-} ]]; then
+        tmp=$(mktemp)
+        [[ -f $RECENT_DB ]] && grep -Fxv "$TARGET" "$RECENT_DB" >"$tmp" || true
+        printf '%s\n' "$TARGET" >>"$tmp"
+        tail -n "$MAX" "$tmp" >"$tmp.2" && mv "$tmp.2" "$RECENT_DB"
+        rm -f "$tmp"
+    fi
+
+    exec "$RUNNER" "$@"
+
+}
+
+# Dispatch based on first argument
+# ./recent-pick and ./recent-open wrap the separate cases too!
+# ... since easier to point $EDITOR to recent-open (dont think i can point to `recent open`)
+case "$1" in
+pick)
+    shift
+    cmd_recent_pick "$@"
+    ;;
+open)
+    shift
+    cmd_recent_open "$@"
+    ;;
+*)
+    echo "Usage: recent {pick|open}"
+    exit 1
+    ;;
+esac
