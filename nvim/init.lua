@@ -84,6 +84,14 @@ I hope you enjoy your Neovim journey,
 P.S. You can delete this when you're done too. It's your config now! :)
 --]]
 
+-- 1. wipe anything the terminal may have pushed
+for i = 0, 255 do
+	vim.g["terminal_color_" .. i] = nil
+end
+-- vim.o.termguicolors = true -- ignore palette, use #RRGGBB
+-- vim.o.background = "light" -- or read it from your theme_index_file
+-- vim.cmd.colorscheme("default")
+
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -271,6 +279,7 @@ local function lazy_themes(themes)
 	end, { desc = "Theme Switcher" })
 
 	return themes
+	-- return {}
 end
 
 -- NOTE: load lazy plugin on custom cmd
@@ -579,6 +588,7 @@ require("lazy").setup({
 	},
 	lazy_themes({
 		{
+
 			"neanias/everforest-nvim",
 			config = function()
 				vim.cmd.colorscheme("everforest")
@@ -647,6 +657,7 @@ require("lazy").setup({
 			end,
 		},
 	}),
+
 	-- NOTE: https://codeberg.org/sheykail/my-lazyvim/src/branch/master/lua/plugins/fold.lua
 	-- (nvim 0.11 will replace this?)
 	{

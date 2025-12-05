@@ -1,3 +1,4 @@
+shell-integration = none
 font-family = "JetBrains Mono NL"
 #background = 0f0f11 
 #background = 1d1d3d
@@ -10,7 +11,8 @@ window-height = 1000
 
 # foreground = ffffff
 
-# theme = xcodedarkhc 
+# theme = zenbones_light
+# xcodedarkhc 
 #tokyonight
 #Cyberdyne
 #catppuccin-mocha

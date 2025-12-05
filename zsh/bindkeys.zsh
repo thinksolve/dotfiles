@@ -18,7 +18,7 @@ function bindkey_minimal() {
 
 
 bindkey_minimal '^[k' copylast
-bindkey_minimal '^[r' recent pick
+bindkey_minimal '^[r' recent
 
 fzd_file() { fzd 'file' }
 bindkey_minimal '^[f' fzd_file #old: find_dir_then_cache 

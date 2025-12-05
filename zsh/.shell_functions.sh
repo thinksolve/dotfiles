@@ -1,5 +1,37 @@
 #!/usr/bin/env bash
 
+#WIP
+workspace() {
+        local query="${1:-}"
+        local preview_cmd="bat --color=always --style=numbers {} 2>/dev/null || cat {}"
+
+        # Read from stdin or generate list
+        cat "${@:--}" | fzf \
+                --multi \
+                --preview "$preview_cmd" \
+                --preview-window=right:60% \
+                --bind "enter:accept" \
+                --bind "ctrl-o:execute(open {})" \
+                --bind "ctrl-e:execute(${EDITOR:-nvim} {})" \
+                --bind "ctrl-y:execute(yazi {})" \
+                --bind "ctrl-r:reload(cat ${@:--})" \
+                --query "$query" \
+                --header="ENTER: open default | CTRL+E: edit | CTRL+Y: yazi | CTRL+O: system open"
+}
+
+#WIP: probably delete soon
+getBetween() {
+        local startPattern="$1"
+        local endPattern="$2"
+        local file="$3"
+
+        awk -v start="^${startPattern}" -v end="^${endPattern}" '
+    $0 ~ start { flag=1 }
+    flag { print }
+    flag && $0 ~ end { exit }
+  ' "$file"
+}
+
 media_preview() {
         local base_name=$(basename "$1")
         local safe_name=${base_name//[^[:alnum:]._-]/_}
@@ -214,6 +246,7 @@ function fzd() {
         while menu_cycle; do :; done
 }
 
+#NOTE: no longer maintained; logic exists as cmd_recent_pick in ~/.dotfiles/bin/recent
 function recent_pick() {
         local recent_pick_db="${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}"
         local editor="${RECENT_OPEN:-nvim}"
@@ -285,7 +318,7 @@ PREVIEW
                         --prompt='recent> ' \
                         --header='CTRL-E (edit list)  CTRL-D (parent directory)' \
                         --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty; zsh -ic \"recent_pick '$filter'\")+abort" \
-                        --bind "ctrl-d:execute( parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; zsh -ic \"recent_pick '$filter'\")+abort" \
+                        --bind "left:execute( parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; zsh -ic \"recent_pick '$filter'\")+abort" \
                         \
                         --preview-window=right:50%:wrap |
 

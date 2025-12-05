@@ -116,13 +116,6 @@ in
       link_dotfiles "/ghostty/config";
 
     ".local/bin/recent".source = link_dotfiles "/bin/recent";
-    ".local/bin/recent-open".source = link_dotfiles "/bin/recent-open";
-    ".local/bin/recent-pick".source = link_dotfiles "/bin/recent-pick";
-    # ".local/bin/log-and-run" = {
-    #   source = link_dotfiles "/bin/log-and-run";
-    #   # source = ./../../bin/log-and-run;
-    #   executable = true;
-    # };
 
     ".local/bin/nvim".source = link_dotfiles "/bin/nvim-recent";
     # ".local/bin/nvim" = {

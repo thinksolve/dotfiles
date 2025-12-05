@@ -588,7 +588,7 @@ end
 local LSB = require("loopSafeBind")
 
 LSB.bind({ "option" }, "r", function()
-	open_term_and_run({ cmd = "recent_pick" })
+	open_term_and_run({ cmd = "recent" })
 	-- note: simulated control r, whether with osascript or hs.eventtap.keyStroke
 	-- is somehow intercepted by macos, havent figured it out
 end)
