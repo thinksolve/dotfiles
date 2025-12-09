@@ -1,7 +1,64 @@
 #!/usr/bin/env bash
 
+which_theme() {
+        setopt localoptions nocasematch
+        local theme="$1"
+        local lightmodes='(light|day|dawn|white|latte)'
+        local darkmodes='(dark|night|moon|black|frappe|macchiato|mocha|rose pine)'
+
+        # Check suffix match (unambiguous modes)
+        if [[ "$theme" =~ $lightmodes$ ]]; then
+                echo "light"
+                return
+        elif [[ "$theme" =~ $darkmodes$ ]]; then
+                echo "dark"
+                return
+        fi
+
+        # Check anywhere else in string (less certain)
+        if [[ "$theme" =~ $lightmodes ]]; then
+                echo "light"
+                return
+        elif [[ "$theme" =~ $darkmodes ]]; then
+                echo "dark"
+                return
+        fi
+
+        # Fallback default
+        echo "dark (fallback)"
+}
+
+ghostty_current_theme() {
+        which_theme "$(grep '^[^#]*theme' ~/.dotfiles/ghostty/config | cut -d= -f2)"
+}
+export BAT_THEME="$(ghostty_current_theme)"
+
+compare_dirs() {
+        local dir1=$1 dir2=$2
+        if [[ ! -d $dir1 || ! -d $dir2 ]]; then
+                echo 'both arguments have to be directories'
+        fi
+
+        difft <(ls $dir1 | sort) <(ls $dir2 | sort)
+}
 #WIP
 workspace() {
+        # preview_string='if [ -d {} ]; then
+        #                         tree -L 2 {};
+        #                 elif [ -f {} ]; then
+        #                         bat --color=always {};
+        #                 fi'
+        #
+
+        preview_string=$(
+                cat <<'BASH'
+                        if [ -d {} ]; then
+                                tree -L 2 {};
+                        elif [ -f {} ]; then
+                                bat --color=always {};
+                        fi
+BASH
+        )
         local query="${1:-}"
         local preview_cmd="bat --color=always --style=numbers {} 2>/dev/null || cat {}"
 
@@ -192,7 +249,7 @@ function fzd() {
 
         # local editor=${EDITOR:-nvim}
         # local dir_viewer=${DIRVIEWER:-$editor}
-        local editor=recent-open
+        local editor=recent
         local dir_viewer=$editor
         local maxdepth=${FZD_MAXDEPTH:-3}
 
@@ -237,7 +294,7 @@ function fzd() {
                 elif editable_path "$chosen" 2>/dev/null; then
                         "$editor" "$chosen"
                 else
-                        recent-open "$chosen" || open "$chosen"
+                        recent "$chosen" || open "$chosen"
                         # command -v xdg-open >/dev/null && xdg-open "$chosen" || open "$chosen"
                 fi
         }
@@ -245,6 +302,74 @@ function fzd() {
         # ---------------------------------------------------- endless loop
         while menu_cycle; do :; done
 }
+
+#NOTE: this works but breaks format-on-save in ~/.shell_functions.sh,
+# and all other bash-friendly versions still print junk to fzf/terminal
+# fzd_old() {
+#     local mode=${1:-full}
+#     local root=${2:-$HOME}
+#     local root_hash
+#     root_hash=$(md5sum <<<"$root" | cut -d' ' -f1)
+#     local session_id="session_$$"
+#
+#
+#     # session/persistent caches
+#     local cache
+#     case $mode in
+#         file) cache="/tmp/deep-fzf-file-${root_hash}-${session_id}" ;;
+#         full) cache="/tmp/deep-fzf-full-${root_hash}-${session_id}" ;;
+#         dir)  cache="/tmp/deep-fzf-dir-${root_hash}" ;;
+#         *)    echo "Usage: fzd-new {file|full|dir}" >&2; return 1 ;;
+#     esac
+#
+#
+#
+#     # fd type flags
+#     local type_flags=()
+#     case $mode in
+#         file) type_flags=(-t f) ;;
+#         dir)  type_flags=(-t d) ;;
+#         full) type_flags=() ;;
+#     esac
+#
+#     local editor=${EDITOR:-nvim}
+#     local dir_viewer=${DIRVIEWER:-$editor}
+#     local preview="if [[ -d {} ]]; then tree -a -C -L 1 {}; else command -v bat >/dev/null && bat --color=always {} || cat {} 2>/dev/null; fi"
+#     # local dir_exclusions=(node_modules .git .cache .DS_Store venv __pycache__ Trash "*.bak" "*.log")
+#     local fd_args=(-H -L . "$root" --exclude 'node_modules' --exclude '.git' --max-depth ${FZD_MAXDEPTH:-3})
+#     local fzf_args=(--preview "$preview" --bind "ctrl-d:become(zsh -ic 'fzd full {}')")
+#
+#     # makes using while loop below tolerable, otherwise have to interpolate `||break` everywhere
+#     menu_cycle() {
+#         local chosen
+#
+#         if [[ -f $cache && -s $cache ]]; then
+#             # Re-check before cat (race-proof)
+#             if [[ -f $cache && -s $cache ]]; then
+#                 cat "$cache" | fzf "${fzf_args[@]}" | IFS= read -r chosen
+#             else
+#                 # Fallback live if vanished
+#                 fd "${type_flags[@]}" "${fd_args[@]}" | fzf "${fzf_args[@]}" | IFS= read -r chosen
+#             fi
+#         else
+#             # Bg cache: Silent, no job prints
+#             (fd "${type_flags[@]}" "${fd_args[@]}" > "$cache") &>/dev/null &!
+#             fd "${type_flags[@]}" "${fd_args[@]}"  | fzf "${fzf_args[@]}" | IFS= read -r chosen
+#         fi
+#         [[ $? -ne 0 || -z $chosen ]] && return 1
+#         if [[ -d $chosen ]]; then
+#             "$dir_viewer" "$chosen"
+#         elif editable_path "$chosen"; then
+#             "$editor" "$chosen"
+#         else
+#             open "$chosen"
+#         fi
+#         [[ $? -ne 0 ]] && return 1
+#         return 0
+#     }
+#
+#     while menu_cycle; do :; done
+# }
 
 #NOTE: no longer maintained; logic exists as cmd_recent_pick in ~/.dotfiles/bin/recent
 function recent_pick() {
@@ -322,7 +447,7 @@ PREVIEW
                         \
                         --preview-window=right:50%:wrap |
 
-                # --bind 'ctrl-p:execute( parent=$(cut -f2 <<< {} | xargs dirname) && recent-open "$parent" ; zsh -ic "recent_pick \"'$filter'\"")+abort' \
+                # --bind 'ctrl-p:execute( parent=$(cut -f2 <<< {} | xargs dirname) && recent "$parent" ; zsh -ic "recent_pick \"'$filter'\"")+abort' \
                 awk -F'\t' '{print $2}' |
                 while IFS= read -r pick; do
                         [[ -e "$pick" ]] || continue

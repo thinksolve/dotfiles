@@ -1447,6 +1447,7 @@ require("lazy").setup({
 				--  the list of additional_vim_regex_highlighting and disabled languages for indent.
 				additional_vim_regex_highlighting = { "ruby" },
 			},
+			parsers = { "bash" },
 			indent = { enable = true, disable = { "ruby" } },
 			fold = { enable = false },
 		},

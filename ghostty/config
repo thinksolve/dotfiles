@@ -11,11 +11,22 @@ window-height = 1000
 
 # foreground = ffffff
 
-# theme = zenbones_light
-# xcodedarkhc 
-#tokyonight
-#Cyberdyne
-#catppuccin-mocha
+
+#theme = light:LightOwl, dark:Rose Pine
+#LIGHT THEMES
+
+
+
+#theme = Atom One Light 
+#theme = Ayu Light
+#theme = zenbones_light
+
+#theme = Rose Pine
+#theme = Afterglow-dark
+#theme = xcodedarkhc 
+theme = tokyonight
+#theme = Cyberdyne
+#theme =catppuccin-mocha
 
 # window-position-x = 0
 # window-position-y = 0

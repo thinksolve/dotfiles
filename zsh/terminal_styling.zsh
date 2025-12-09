@@ -11,11 +11,12 @@ PROMPT='%F{blue}%~%f${vcs_info_msg_0_}
 add-zsh-hook precmd vcs_info
 
 
+## NOTE: actually not needed ... 
+# # ensure the `:completion` system is loaded (sanity guard check)
+# if ! typeset -f compinit > /dev/null; then
+#     autoload -Uz compinit && compinit -C
+# fi
 
-# ensure the `:completion` system is loaded (sanity guard check)
-if ! typeset -f compinit > /dev/null; then
-    autoload -Uz compinit && compinit -C
-fi
 # ------ styling for tab completion?  --------------
 zstyle ':completion:*' verbose yes
 zstyle ':completion:*' list-prompt ''

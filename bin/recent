@@ -1,17 +1,20 @@
 #!/usr/bin/env bash
-
-# located: ~/.dotfiles/bin/recent
+# ~/.dotfiles/bin/recent
 
 set -e
 
-SELF=$(realpath "$0") # for recursive calling since spawned shells dont have access to functions in this script otherwise!
+# IDX_FILE=$(mktemp /tmp/recent.idx.XXXXXX)
+# IDX_FILE=/tmp/recent.idx
+# [[ -s $IDX_FILE ]] || printf 1 >"$IDX_FILE" # create empty if missing
+
+SELF=$(realpath "$0")
+RECENT_OPEN="$SELF"
+
+# should create the DB and parent directory if doesnt exist .. behind guard
 RECENT_DB=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/recent/files}
 RECENT_DIR=$(dirname "$RECENT_DB")
 
-# RECENT_OPEN=recent-open
-RECENT_OPEN="$SELF"
-
-editable_path() {
+__editable_path() {
     local p=$1
     [[ -d $p ]] && return 0
     case $(file --mime-type -b -- "$p") in
@@ -19,15 +22,27 @@ editable_path() {
     esac
     return 1
 }
-cmd_recent_pick() {
+
+_recent_pick() {
     local recent_pick_db="${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}"
     local editor="${RECENT_OPEN:-nvim}"
     local dir_viewer="${RECENT_OPEN:-yazi}"
     local filter="${1:-}"
     local pixel_width=$((16 * $(tput cols)))
     local -x _preview_width=$(($pixel_width * 50 / 100))
+
+    #WIP: broken
+    #     SAVE_IDX=$(
+    #         cat <<'IDX'
+    # # printf %s {n} >"$IDX_FILE"
+    # printf %s {1} >"$IDX_FILE"
+    #
+    # IDX
+    #     )
+    # SAVE_IDX='printf %s {n} >"$IDX_FILE"'
+
     local FZF_PREVIEW=$(
-        cat <<'PREVIEW'
+        cat <<-'PREVIEW'
                 printf "\e_Ga=d,d=a\e\\"
 
                 p=$1
@@ -39,7 +54,7 @@ cmd_recent_pick() {
 
                 if [[ -d "$p" ]]; then
                         echo -e "\033[1;34mDirectory:\033[0m $p\n"
-                        tree -a -C -L 2 "$p" 2>/dev/null || exa --tree --level=2 --color=always "$p" 2>/dev/null || ls -la "$p"
+                        tree -a -C -L 2 "$p" 2>/dev/null ||  eza --tree --level=2 --color=always "$p" 2>/dev/null || ls -la "$p"
                 elif [[ $p =~ \.(jpe?g|png|gif|webp|tiff|bmp|avif|svg)$ ]]; then
                         kitten icat --silent --transfer-mode=file "$p" 2>/dev/null || echo "Image preview unavailable"
                 elif [[ $p =~ \.pdf$ ]]; then
@@ -56,7 +71,11 @@ cmd_recent_pick() {
 PREVIEW
     )
 
-    # Process files directly without arrays
+    #NOTE: WIP: this works but i only want it to work for specific binds not all
+    # --bind "load:pos:$(cat "$IDX_FILE" 2>/dev/null || echo 1)" \
+    #
+    #  --bind "left:execute(printf %s {n} >\"$IDX_FILE\"; parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; \"$0\"'$filter')+abort" \
+    #
     tac "$recent_pick_db" 2>/dev/null | while IFS= read -r path; do
         [[ -e "$path" ]] || continue
         if [[ -d "$path" ]]; then
@@ -65,25 +84,21 @@ PREVIEW
             printf '\e[33mFILE\e[0m\t%s\n' "$path"
         fi
     done |
-        #NOTE: these commented out lines only valid in shell function version since 'zsh -ic ..' surfaces the function in the spawned shell
-        # In script files '$0' is a reference to the file itself so handling logic this way with cases is better.
-        #             # --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty; zsh -ic \"cmd_recent_pick '$filter'\")+abort" \
-        # --bind "left:execute( parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; zsh -ic \"cmd_recent_pick '$filter'\")+abort" \
         fzf --preview "bash -c '$FZF_PREVIEW' bash {2}" \
-            --ansi -m \
+            --preview-window=right:50%:wrap \
             --delimiter=$'\t' \
             --query="$filter" --prompt='recent> ' \
-            --header='CTRL-E (edit list)  LEFTARROW (parent directory)' \
+            --header='CTRL-E (edit list); LEFT (parent directory); RIGHT (accept)' \
             --bind "right:accept" \
+            --bind "left:execute(parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; \"$0\"'$filter')+abort" \
             --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty; \"$0\"'$filter')+abort" \
-            --bind "left:execute( parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; \"$0\"'$filter')+abort" \
-            --preview-window=right:50%:wrap |
+            --ansi -m |
         awk -F'\t' '{print $2}' | (
         open_now=()
         edit_later=()
         while IFS= read -r pick; do
             [[ -e "$pick" ]] || continue
-            if editable_path "$pick" 2>/dev/null; then
+            if __editable_path "$pick" 2>/dev/null; then
                 edit_later+=("$pick")
             else
                 open_now+=("$pick")
@@ -103,84 +118,22 @@ PREVIEW
             fi
         done
 
-        (($? == 0)) && cmd_recent_pick "$filter"
+        (($? == 0)) && _recent_pick "$filter"
     )
 }
 
-#NOTE: to be deleted in next git commit; this logic was too similar to the shell function version 'recent_pick' which has
-# different behaviour vs this bash script ... namely arrays 'open_now edit_later' cannot be defined in advance of the while loops
-# but as in the corrected function 'cmd_recent_pick' above it is more robust (works in bash and zsh) to create it alongside the
-# loop withih a subshell `(...)`
-cmd_recent_pick_og() {
-    local recent_pick_db="${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}"
-    local editor="${RECENT_OPEN:-nvim}"
-    local dir_viewer="${RECENT_OPEN:-yazi}"
-    local filter="${1:-}"
-    local -a open_now edit_later
-    local pick
-    local pixel_width=$((16 * $(tput cols)))
-    local -x _preview_width=$(($pixel_width * 50 / 100))
-    local FZF_PREVIEW=$(
-        cat <<'PREVIEW'
-                # wipe any previous kitty graphic
-                printf "\e_Ga=d,d=a\e\\"
+_recent_open() {
 
-                p=$1
-
-                #useful for two blocks below
-                base_name=$(basename "$p")
-                safe_name=${base_name//[^[:alnum:]._-]/_}
-                hash=$(printf "%s" "$p" | md5sum | cut -d" " -f1)
-                tmp="/tmp/preview-$safe_name-$hash"
-
-                if [[ -d "$p" ]]; then
-                        echo -e "\033[1;34mDirectory:\033[0m $p\n"
-                        tree -a -C -L 2 "$p" 2>/dev/null || exa --tree --level=2 --color=always "$p" 2>/dev/null || ls -la "$p"
-                elif [[ $p =~ \.(jpe?g|png|gif|webp|tiff|bmp|avif|svg)$ ]]; then
-                        kitten icat --silent --transfer-mode=file "$p" 2>/dev/null || echo "Image preview unavailable"
-                elif [[ $p =~ \.pdf$ ]]; then
-                        pdftoppm -f 1 -l 1 -png -singlefile "$p" "$tmp"
-                        kitten icat --silent --transfer-mode=file "${tmp}.png" 2>/dev/null || echo "PDF preview unavailable"
-                elif [[ $p =~ \.(mp4|mov|mkv|webm|avi|m4v)$ ]]; then
-                        ffmpeg -loglevel error -y -ss 00:00:03 -i "$p" -vframes 1 -vf "scale=$_preview_width:-1" "${tmp}.png"
-                        kitten icat --silent --transfer-mode=file "${tmp}.png" 2>/dev/null || echo "Video preview unavailable"
-                elif command -v bat >/dev/null; then
-                        bat --color=always --style=numbers "$p" 2>/dev/null
-                else
-                        cat "$p" 2>/dev/null || highlight -O ansi "$p" 2>/dev/null || cat "$p"
-                fi
-PREVIEW
-    )
-    tac "$recent_pick_db" 2>/dev/null | while IFS= read -r path; do
-        [[ -e "$path" ]] || continue
-        if [[ -d "$path" ]]; then
-            printf '\e[34mDIR\e[0m\t%s\n' "$path"
-        else
-            printf '\e[33mFILE\e[0m\t%s\n' "$path"
-        fi
-    done | fzf --ansi -m --delimiter=$'\t' --query="$filter" --prompt='recent> ' --header='CTRL-E (edit list)  CTRL-D (parent directory)' --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty; zsh -ic \"recent-pick '$filter'\")+abort" --bind "left:execute( parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; zsh -ic \"recent-pick '$filter'\")+abort" --preview-window=right:50%:wrap --preview "bash -c '$FZF_PREVIEW' bash {2}" | awk -F'\t' '{print $2}' | while IFS= read -r pick; do
-        [[ -e "$pick" ]] || continue
-        if editable_path "$pick" 2>/dev/null; then
-            edit_later+=("$pick")
-        else
-            open_now+=("$pick")
-        fi
+    # ---- log the first existing argument -------------------------------
+    for arg; do
+        [[ -e $arg ]] && TARGET=$(realpath "$arg") && break
     done
-    ((${#open_now[@]} + ${#edit_later[@]})) || return 0
-    for p in "${open_now[@]}"; do
-        open "$p"
-    done
-    for p in "${edit_later[@]}"; do
-        if [[ -d $p ]]; then
-            cd "$p" && $dir_viewer .
-        else
-            $editor "$p"
-        fi
-    done
-    (($? == 0)) && recent-pick "$filter"
-}
 
-cmd_recent_open() {
+    [[ ! -e "$TARGET" ]] && {
+        echo "recent: no existing files/directories found" >&2
+        return 1
+    }
+
     MAX=75
 
     # ---- pick launcher -------------------------------------------------
@@ -196,21 +149,16 @@ cmd_recent_open() {
         shift
     fi
 
-    # ---- auto-detect if no override -----------------------------------
+    # ---- aut_o-detect if no override -----------------------------------
     if [[ -z $OPENER ]]; then
         if [[ -d ${1:-} ]]; then
             OPENER=yazi
-        elif editable_path "$1"; then
+        elif __editable_path "$1"; then
             OPENER=nvim
         else
             OPENER=open
         fi
     fi
-
-    # ---- log the first existing argument -------------------------------
-    for arg; do
-        [[ -e $arg ]] && TARGET=$(realpath "$arg") && break
-    done
 
     if [[ -n ${TARGET:-} ]]; then
         tmp=$(mktemp)
@@ -225,22 +173,7 @@ cmd_recent_open() {
 }
 
 case "$1" in
-"") cmd_recent_pick "${@:2}" ;;
-*) cmd_recent_open "$@" ;;
+"" | pick) _recent_pick "${@:2}" ;; #NOTE: with 'pick' then the second argument is a filter on the pick list! nice
+open) _recent_open "${@:2}" ;;
+*) _recent_open "$@" ;;
 esac
-
-#NOTE: old way; also no longer need wrapper scripts recent-open and recent-pick
-# case "$1" in
-# pick)
-#     shift
-#     cmd_recent_pick "$@"
-#     ;;
-# open)
-#     # shift
-#     cmd_recent_open "$@"
-#     ;;
-# *)
-#     echo "Usage: recent {pick|open}"
-#     exit 1
-#     ;;
-# esac

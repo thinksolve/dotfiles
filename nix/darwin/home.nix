@@ -115,6 +115,8 @@ in
     "/Library/Application Support/com.mitchellh.ghostty/config".source =
       link_dotfiles "/ghostty/config";
 
+    ".config/ghostty".source = link_dotfiles "/ghostty/";
+
     ".local/bin/recent".source = link_dotfiles "/bin/recent";
 
     ".local/bin/nvim".source = link_dotfiles "/bin/nvim-recent";
@@ -131,9 +133,11 @@ in
     ".hammerspoon".source = link_dotfiles "/hammerspoon";
     ".config/path.sh".source = link_dotfiles "/zsh/path.sh";
     ".config/zsh/aliases.zsh".source = link_dotfiles "/zsh/aliases.zsh";
+    ".config/zsh/after_compinit.zsh".source = link_dotfiles "/zsh/after_compinit.zsh";
     ".config/zsh/bindkeys.zsh".source = link_dotfiles "/zsh/bindkeys.zsh";
     ".config/zsh/constants.zsh".source = link_dotfiles "/zsh/constants.zsh";
     ".config/zsh/preferences.zsh".source = link_dotfiles "/zsh/preferences.zsh";
+    ".config/zsh/fast_compinit.zsh".source = link_dotfiles "/zsh/fast_compinit.zsh";
     ".config/zsh/terminal_styling.zsh".source = link_dotfiles "/zsh/terminal_styling.zsh";
     ".zshrc".source = link_dotfiles "/zsh/.zshrc";
     ".zsh_plugins.txt".source = link_dotfiles "/zsh/.zsh_plugins.txt";
