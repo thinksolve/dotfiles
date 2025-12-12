@@ -1,3 +1,5 @@
+#~/.dotfiles/nix/darwin/flake.nix
+
 {
   description = "Nix Darwin system flake";
 
@@ -29,47 +31,6 @@
 
       configuration =
         { pkgs, ... }:
-
-        let
-          media_tools = [
-            pkgs.ffmpeg
-            pkgs.ffmpegthumbnailer
-            pkgs.imagemagick
-            pkgs.mpv
-            pkgs.pngpaste
-            pkgs.sigtop
-            pkgs.tesseract
-            pkgs.vips
-            pkgs.yt-dlp
-            # (pkgs.texlive.combine {
-            #   inherit (pkgs.texlive)
-            #     scheme-basic # Core LaTeX
-            #     dvipng # PNG for Emacs preview
-            #     dvisvgm # SVG option, useful for scalability
-            #     amsmath # Math essentials
-            #     amsfonts # Math fonts
-            #     latex-bin # LaTeX commands
-            #     ulem # without this doom emacs breaks when previewing latex?? might be better to use textlive scheme medium
-            #     ; # Add more if needed (e.g., hyperref, geometry)
-            # })
-            ## pkgs.texlive.combined.scheme-medium
-          ];
-
-          networking = [
-            pkgs.curl
-            pkgs.htop
-            pkgs.nghttp2
-            pkgs.nmap
-            pkgs.wget
-          ];
-
-          system_utilities = [
-            pkgs.blueutil
-            pkgs.hello
-            pkgs.rsync
-          ];
-
-        in
         {
           system.primaryUser = username;
           programs.zsh.enable = false;
@@ -79,7 +40,48 @@
             "/bin"
             "/share"
           ];
-          environment.systemPackages = media_tools ++ networking ++ system_utilities;
+          environment.systemPackages =
+            let
+              media_tools = [
+                pkgs.ffmpeg
+                pkgs.ffmpegthumbnailer
+                pkgs.imagemagick
+                pkgs.mpv
+                pkgs.pngpaste
+                pkgs.sigtop
+                pkgs.tesseract
+                pkgs.vips
+                pkgs.yt-dlp
+                # (pkgs.texlive.combine {
+                #   inherit (pkgs.texlive)
+                #     scheme-basic # Core LaTeX
+                #     dvipng # PNG for Emacs preview
+                #     dvisvgm # SVG option, useful for scalability
+                #     amsmath # Math essentials
+                #     amsfonts # Math fonts
+                #     latex-bin # LaTeX commands
+                #     ulem # without this doom emacs breaks when previewing latex?? might be better to use textlive scheme medium
+                #     ; # Add more if needed (e.g., hyperref, geometry)
+                # })
+                ## pkgs.texlive.combined.scheme-medium
+              ];
+
+              networking = [
+                pkgs.curl
+                pkgs.htop
+                pkgs.nghttp2
+                pkgs.nmap
+                pkgs.wget
+              ];
+
+              system_utilities = [
+                pkgs.blueutil
+                pkgs.hello
+                pkgs.rsync
+              ];
+
+            in
+            media_tools ++ networking ++ system_utilities;
 
           homebrew = {
             enable = true;

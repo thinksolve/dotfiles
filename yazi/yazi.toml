@@ -11,6 +11,7 @@ video = [
 ]
 
 
+
 [open]
 prepend_rules = [
   { mime = "video/*", use = "video" },
@@ -23,7 +24,9 @@ ratio = [1, 3, 4]
 show_symlink=true
 show_hidden=true
 
-
 [preview]
 wrap = "yes"
+
+
+
 

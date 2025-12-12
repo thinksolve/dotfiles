@@ -4,7 +4,7 @@ which_theme() {
         setopt localoptions nocasematch
         local theme="$1"
         local lightmodes='(light|day|dawn|white|latte)'
-        local darkmodes='(dark|night|moon|black|frappe|macchiato|mocha|rose pine)'
+        local darkmodes='(dark|night|moon|black|frappe|macchiato|mocha)'
 
         # Check suffix match (unambiguous modes)
         if [[ "$theme" =~ $lightmodes$ ]]; then
