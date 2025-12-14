@@ -1,15 +1,5 @@
 #!/usr/bin/env bash
 
-lsl() {
-        for dir in "${@:-.}"; do
-                [ -d "$dir" ] || continue
-                for f in "$dir"/*; do
-                        [ -e "$f" ] || [ -L "$f" ] || continue
-                        printf '%s -> %s\n' "${f##*/}" "$(realpath "$f")"
-                done
-        done
-}
-
 which_theme() {
         setopt localoptions nocasematch
         local theme="$1"
@@ -1306,23 +1296,8 @@ function getBundleId() {
 
 # old way; new way with 'rat'
 function rat() {
-        local comment_char file use_bat=''
-        # --- simple option parsing ----
-        while [[ $1 == -* ]]; do
-                case $1 in
-                --color | -c)
-                        use_bat=1
-                        shift
-                        ;;
-                *)
-                        echo "unknown option $1" >&2
-                        return 1
-                        ;;
-                esac
-        done
-        comment_char=$1
-        file=$2
-        # ------------------------------
+        local comment_char="$1"
+        local file="$2"
 
         local sed_remove_comments="/^[[:blank:]]*${comment_char}/d; s/${comment_char}.*//"
         local sed_collapse_blanks="/^$/{ N; /^\n$/D; }"
@@ -1332,13 +1307,7 @@ function rat() {
                 sed "$sed_remove_comments" | sed "$sed_collapse_blanks"
         elif [[ -n "$file" ]]; then
                 # Process data from file
-                if [[ -n $use_bat ]]; then
-                        sed "$sed_remove_comments" "$file" |
-                                sed "$sed_collapse_blanks" |
-                                bat --file-name="$file"
-                else
-                        sed "$sed_remove_comments" "$file" | sed "$sed_collapse_blanks"
-                fi
+                sed "$sed_remove_comments" "$file" | sed "$sed_collapse_blanks"
         else
                 echo "Error: No input provided. Usage: rem COMMENT_CHAR [FILE]" >&2
                 return 1
