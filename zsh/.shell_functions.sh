@@ -1,20 +1,32 @@
 #!/usr/bin/env bash
 
+# does what `ls -l` should have done (list final symlink targets)
 lsl() {
+        local dir f
+        setopt glob_dots # <-- let * see dot-file (zsh specific)
+
         for dir in "${@:-.}"; do
-                [ -d "$dir" ] || continue
                 for f in "$dir"/*; do
-                        [ -e "$f" ] || [ -L "$f" ] || continue
-                        printf '%s -> %s\n' "${f##*/}" "$(realpath "$f")"
+                        if [[ -L $f ]]; then
+                                printf '%s -> %s\n' "$f" "$(realpath "$f")"
+                        else
+                                printf '%s\n' "$f"
+                        fi
                 done
         done
+        unsetopt glob_dots #restore default
+}
+
+# editable list from lsl
+lse() {
+        lsl "${@:-.}" | fzf -m | awk '{print $1}' | xargs -r nvim
 }
 
 which_theme() {
         setopt localoptions nocasematch
         local theme="$1"
         local lightmodes='(light|day|dawn|white|latte)'
-        local darkmodes='(dark|night|moon|black|frappe|macchiato|mocha|rose pine)'
+        local darkmodes='(dark|night|moon|black|frappe|macchiato|mocha|obsdian|nocturnal)'
 
         # Check suffix match (unambiguous modes)
         if [[ "$theme" =~ $lightmodes$ ]]; then

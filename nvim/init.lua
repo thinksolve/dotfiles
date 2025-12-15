@@ -1426,6 +1426,7 @@ require("lazy").setup({
 				"typescript", -- NOTE: custom: added
 				"tsx",
 				"bash",
+				-- "zsh",
 				"c",
 				"diff",
 				"html",

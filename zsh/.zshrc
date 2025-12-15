@@ -1,4 +1,4 @@
-export ZSH_CONFIG=~/.dotfiles/zsh/
+    export ZSH_CONFIG=~/.dotfiles/zsh/
 
 # source ~/.config/path.sh 
 
