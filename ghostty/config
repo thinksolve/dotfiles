@@ -21,6 +21,7 @@ window-height = 1000
 #theme = AtomOneLight 
 #theme = AyuLight
 
+#theme = srcery.dark
 theme = rose-pine.dark
 #theme = Afterglow
 #theme = xcodedarkhc 

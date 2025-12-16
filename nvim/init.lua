@@ -1426,7 +1426,6 @@ require("lazy").setup({
 				"typescript", -- NOTE: custom: added
 				"tsx",
 				"bash",
-				-- "zsh",
 				"c",
 				"diff",
 				"html",
@@ -1759,17 +1758,81 @@ vim.api.nvim_create_autocmd("FileType", {
 -- vim.keymap.set("n", "<leader>bd", [["_d]])
 vim.keymap.set("n", "<leader>p", [["_viwP]])
 --o
--- opening urls
+-- NOTE: old code: opening urls
+-- vim.keymap.set({ "n", "x" }, "gx", function()
+-- 	-- grab the whole WORD, then cut out the http(s) part
+-- 	local word = vim.fn.expand("<cWORD>")
+-- 	local url = word:match("(https?://%S+)") or word:match("(ftp://%S+)")
+-- 	if url then
+-- 		vim.ui.open(url)
+-- 	else
+-- 		vim.notify("No URL found under cursor", vim.log.levels.WARN)
+-- 	end
+-- end, { desc = "open URL under cursor" })
+--
+
+local function scrub_to_file(s)
+	-- 0. strip surrounding wrappers (brackets/quotes)
+	s = s:match("^[([\"']*(.-)[\")']*$") or s
+
+	-- 0. tilde paths are *already* absolute – handle first
+	if s:sub(1, 1) == "~" then
+		s = vim.env.HOME .. s:sub(2)
+		s = vim.fn.fnamemodify(s, ":p")
+		if vim.fn.filereadable(s) == 1 or vim.fn.isdirectory(s) == 1 then
+			return s
+		end
+		-- even tilde paths can have trailing junk:  ~/.dotfiles/ghostty/themes-light)
+		local t = s:gsub("[^%w%s/\\%.]+$", "")
+		if #t < #s then
+			return scrub_to_file(t)
+		end
+		return nil
+	end
+
+	-- 1. relative paths: resolve against the file that contains them
+	local base = vim.fn.expand("%:p:h")
+	s = vim.fn.fnamemodify(base .. "/" .. s, ":p")
+
+	if vim.fn.filereadable(s) == 1 or vim.fn.isdirectory(s) == 1 then
+		return s
+	end
+	local t = s:gsub("[^%w%s/\\%.]+$", "")
+	if #t < #s then
+		return scrub_to_file(t)
+	end
+	return nil
+end
+
+-- opens urls or tilde paths
 vim.keymap.set({ "n", "x" }, "gx", function()
-	-- grab the whole WORD, then cut out the http(s) part
 	local word = vim.fn.expand("<cWORD>")
+
+	-- 1. URL branch
 	local url = word:match("(https?://%S+)") or word:match("(ftp://%S+)")
 	if url then
 		vim.ui.open(url)
-	else
-		vim.notify("No URL found under cursor", vim.log.levels.WARN)
+		return
 	end
-end, { desc = "open URL under cursor" })
+
+	-- 2. file / dir branch
+	local path = scrub_to_file(word)
+	if not path then
+		vim.notify("No readable file under cursor", vim.log.levels.WARN)
+		return
+	end
+
+	if vim.bo.modified then
+		vim.notify("Save changes to current buffer before proceeding", vim.log.levels.WARN)
+		return
+	end
+
+	if vim.fn.isdirectory(path) == 1 then
+		vim.cmd("Explore " .. path)
+	else
+		vim.cmd("edit " .. path)
+	end
+end, { desc = "open URL or file under cursor" })
 
 -- lua/config/keymaps.lua  (LazyVim) or anywhere kickstart loads
 -- open the VISUALLY-SELECTED path as a normal buffer

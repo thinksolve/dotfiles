@@ -50,10 +50,10 @@ which_theme() {
         echo "dark (fallback)"
 }
 
-ghostty_current_theme() {
+current_theme_ghostty() {
         which_theme "$(grep '^[^#]*theme' ~/.dotfiles/ghostty/config | cut -d= -f2)"
 }
-export BAT_THEME="$(ghostty_current_theme)"
+export BAT_THEME="$(current_theme_ghostty)"
 
 compare_dirs() {
         local dir1=$1 dir2=$2

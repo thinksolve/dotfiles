@@ -1,10 +1,10 @@
-#~/.dotfiles/nix/darwin/home.nix
+# ~/.dotfiles/nix/darwin/home.nix
 
 {
   config,
   pkgs,
   username,
-  # lib,
+  lib,
   ...
 }:
 {
@@ -52,19 +52,43 @@
         );
 
       # For each base in bases:
-      #   Creates: symlink at "${symlinkPrefix}/${base}${suffix}"
+      #   Creates: symlink at "${symPrefix}/${base}${suffix}"
       #   Points to: "${targetPrefix}/${base}"
       affixLinks =
-        symlinkPrefix: targetPrefix: options: basenames:
+        symPrefix: targetPrefix: options: basenames:
         let
           symSuffix = options.sym_suffix or ""; # symPrefix = options.sym_prefix or ""; WIP ..
         in
         builtins.listToAttrs (
           map (basename: {
-            name = "${symlinkPrefix}/${basename}${symSuffix}";
+            name = "${symPrefix}/${basename}${symSuffix}";
             value.source = config.lib.file.mkOutOfStoreSymlink "${targetPrefix}/${basename}";
           }) basenames
         );
+
+      # #useful for converting a newline separated txt file into a nix list of quoted elements
+      # fileToList_0 = file: lib.filter (s: s != "") (lib.splitString "\n" (builtins.readFile file));
+      #
+      # #same as   fileToList_0  but filters commented lines with comment character '#'
+      # fileToList_1 =
+      #   file:
+      #   map lib.trim (
+      #     lib.filter (s: s != "") (
+      #       map (line: lib.head (lib.splitString "#" line)) (lib.splitString "\n" (builtins.readFile file))
+      #     )
+      #   );
+
+      # using pipe syntax ot make all the nesting easer to read
+      fileToList =
+        file:
+        lib.pipe file [
+          builtins.readFile
+          (lib.splitString "\n")
+          (map (l: lib.head (lib.splitString "#" l)))
+          (lib.filter (s: s != ""))
+          (map lib.trim)
+        ];
+
     in
     {
       ".config/nix-darwin".source = dotfiles "/nix/darwin";
@@ -102,286 +126,12 @@
     // (affixLinks ".dotfiles/ghostty/themes"
       "/Applications/Ghostty.app/Contents/Resources/ghostty/themes/"
       { sym_suffix = ".light"; }
-      [
-        "Adwaita"
-        "Alabaster"
-        "CLRS"
-        "coffee_theme"
-        "Github"
-        "Havn Daggry"
-        "Horizon-Bright"
-        "Man Page"
-        "Material"
-        "Novel"
-        "primary"
-        "Spring"
-        "Tango Adapted"
-        "Tango Half Adapted"
-        "Terminal Basic"
-        "Tomorrow"
-        "Unikitty"
-        "vimbones"
-        "zenbones"
-      ]
+      (fileToList ../../ghostty/ghostty-themes-light)
     )
     // (affixLinks ".dotfiles/ghostty/themes"
       "/Applications/Ghostty.app/Contents/Resources/ghostty/themes/"
       { sym_suffix = ".dark"; }
-      [
-        "Afterglow"
-        "Dracula"
-        "Nord"
-        "rose-pine"
-        "Aardvark Blue"
-        "Abernathy"
-        "Adventure"
-        "AdventureTime"
-        "AlienBlood"
-        "Andromeda"
-        "Apple Classic"
-        "Apple System Colors"
-        "arcoiris"
-        "Ardoise"
-        "Argonaut"
-        "Arthur"
-        "AtelierSulphurpool"
-        "Atom"
-        "Aura"
-        "Aurora"
-        "ayu"
-        "Ayu Mirage"
-        "Banana Blueberry"
-        "Batman"
-        "BirdsOfParadise"
-        "Blazer"
-        "Blue Matrix"
-        "BlueBerryPie"
-        "BlueDolphin"
-        "Borland"
-        "Breeze"
-        "Broadcast"
-        "Brogrammer"
-        "C64"
-        "Calamity"
-        "carbonfox"
-        "CGA"
-        "Chalk"
-        "Chalkboard"
-        "ChallengerDeep"
-        "Chester"
-        "Ciapre"
-        "citruszest"
-        "Cobalt Neon"
-        "Cobalt2"
-        "CobaltNext"
-        "CobaltNext-Minimal"
-        "CrayonPonyFish"
-        "CutiePro"
-        "Cyberdyne"
-        "cyberpunk"
-        "CyberpunkScarletProtocol"
-        "deep"
-        "Desert"
-        "detuned"
-        "Dimidium"
-        "DimmedMonokai"
-        "Django"
-        "DjangoRebornAgain"
-        "DjangoSmooth"
-        "Doom Peacock"
-        "DoomOne"
-        "DotGov"
-        "Dracula"
-        "Dracula+"
-        "duckbones"
-        "duskfox"
-        "Earthsong"
-        "Elegant"
-        "Elemental"
-        "Elementary"
-        "Embark"
-        "ENCOM"
-        "Espresso"
-        "Espresso Libre"
-        "Everblush"
-        "Fahrenheit"
-        "Fairyfloss"
-        "Fideloper"
-        "Firefly Traditional"
-        "FirefoxDev"
-        "Firewatch"
-        "FishTank"
-        "Flat"
-        "Flatland"
-        "Floraverse"
-        "ForestBlue"
-        "Framer"
-        "FunForrest"
-        "Galaxy"
-        "Galizur"
-        "Glacier"
-        "Grape"
-        "Grass"
-        "Grey-green"
-        "gruvbox-material"
-        "Guezwhoz"
-        "Hacktober"
-        "Hardcore"
-        "Harper"
-        "Havn Skumring"
-        "HaX0R_BLUE"
-        "HaX0R_GR33N"
-        "HaX0R_R3D"
-        "heeler"
-        "Highway"
-        "Hipster Green"
-        "Hivacruz"
-        "Homebrew"
-        "Hopscotch"
-        "Hopscotch.256"
-        "Horizon"
-        "Hurtado"
-        "Hybrid"
-        "IC_Green_PPL"
-        "IC_Orange_PPL"
-        "idea"
-        "idleToes"
-        "IRIX Console"
-        "IRIX Terminal"
-        "iTerm2 Default"
-        "iTerm2 Smoooooth"
-        "Jackie Brown"
-        "Japanesque"
-        "Jellybeans"
-        "JetBrains Darcula"
-        "jubi"
-        "Kanagawa Dragon"
-        "Kanagawa Wave"
-        "kanagawabones"
-        "Kibble"
-        "Kolorit"
-        "Konsolas"
-        "kurokula"
-        "Lab Fox"
-        "Laser"
-        "Later This Evening"
-        "Lavandula"
-        "LiquidCarbon"
-        "LiquidCarbonTransparent"
-        "LiquidCarbonTransparentInverse"
-        "lovelace"
-        "Mariana"
-        "MaterialDesignColors"
-        "MaterialOcean"
-        "Mathias"
-        "matrix"
-        "Medallion"
-        "Mellifluous"
-        "mellow"
-        "miasma"
-        "Mirage"
-        "Misterioso"
-        "Molokai"
-        "MonaLisa"
-        "Monokai Classic"
-        "Monokai Pro"
-        "Monokai Pro Machine"
-        "Monokai Pro Octagon"
-        "Monokai Pro Ristretto"
-        "Monokai Pro Spectrum"
-        "Monokai Remastered"
-        "Monokai Soda"
-        "Monokai Vivid"
-        "N0tch2k"
-        "Neon"
-        "Neopolitan"
-        "Neutron"
-        "niji"
-        "nord"
-        "nord-wave"
-        "nordfox"
-        "Ocean"
-        "Oceanic-Next"
-        "OceanicMaterial"
-        "Ollie"
-        "Oxocarbon"
-        "Pandora"
-        "PaulMillr"
-        "Peppermint"
-        "Pnevma"
-        "Popping and Locking"
-        "Pro"
-        "Purple Rain"
-        "purplepeter"
-        "Rapture"
-        "rebecca"
-        "Red Alert"
-        "Red Planet"
-        "Red Sands"
-        "Relaxed"
-        "Retro"
-        "RetroLegends"
-        "Rippedcasts"
-        "rose-pine"
-        "Rouge 2"
-        "Royal"
-        "Ryuuko"
-        "Sakura"
-        "Scarlet Protocol"
-        "Seafoam Pastel"
-        "SeaShells"
-        "Seti"
-        "shades-of-purple"
-        "Shaman"
-        "Slate"
-        "SleepyHollow"
-        "Smyck"
-        "Snazzy"
-        "Snazzy Soft"
-        "SoftServer"
-        "Solarized Darcula"
-        "sonokai"
-        "Spacedust"
-        "SpaceGray"
-        "SpaceGray Bright"
-        "SpaceGray Eighties"
-        "SpaceGray Eighties Dull"
-        "Spiderman"
-        "Square"
-        "srcery"
-        "Sublette"
-        "Subliminal"
-        "Sugarplum"
-        "Sundried"
-        "Symfonic"
-        "synthwave"
-        "synthwave-everything"
-        "SynthwaveAlpha"
-        "Teerb"
-        "terafox"
-        "Thayer Bright"
-        "The Hulk"
-        "ToyChest"
-        "Treehouse"
-        "Ubuntu"
-        "UltraViolent"
-        "UnderTheSea"
-        "Urple"
-        "Vaughn"
-        "Vesper"
-        "VibrantInk"
-        "WarmNeon"
-        "Wez"
-        "Whimsy"
-        "WildCherry"
-        "wilmersdorf"
-        "Wombat"
-        "Wryan"
-        "xcodewwdc"
-        "Zenburn"
-        "zenburned"
-
-      ]
+      (fileToList ../../ghostty/ghostty-themes-dark)
     );
 
   home.packages =
