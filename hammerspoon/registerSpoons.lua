@@ -1,5 +1,6 @@
 hs.loadSpoon("SpoonInstall")
 local spoonList = {
+	{ name = "KeystrokeShell", manual = true },
 	{ name = "EmmyLua", manual = true },
 	{
 		name = "PaperWM",

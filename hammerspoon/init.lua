@@ -15,7 +15,7 @@ local DEFAULT_TERM_NAME = DEFAULT_TERM_ID:match("[^.]+$") -- e.g. print(("com.mi
 -- hs.loadSpoon("EmmyLua")
 
 require("submodules")
-require("registerSpoons")
+-- require("registerSpoons")
 
 local watchers = require("watchers") -- set as variable in case want to stop a watcher
 local window_management = require("window-management")
@@ -690,3 +690,20 @@ local function withHotkeyDisabled(hotkey, fn)
 	end)
 	return ok, result
 end
+
+hs.loadSpoon("KeystrokeShell")
+spoon.KeystrokeShell
+	:bind({ "option", "control", "command" }, "g", {
+		command_string = function(q)
+			-- return "open -a " .. q .. ".app"
+			-- return "open -a " .. q .. ".app"
+			-- return "open 'https://www.google.com/search?q=" .. hs.http.encodeForQuery(q) .. "'"
+			return "open 'https://www.google.com/search?q=" .. q .. "'"
+		end,
+	})
+	:bind({ "option", "control", "command" }, "y", {
+		command_string = function(q)
+			-- return "open 'https://www.youtube.com/results?search_query=" .. hs.http.encodeForQuery(q) .. "'"
+			return "open 'https://www.youtube.com/results?search_query=" .. q .. "'"
+		end,
+	})

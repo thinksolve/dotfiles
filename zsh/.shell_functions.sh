@@ -1,5 +1,155 @@
 #!/usr/bin/env bash
 
+detect_bg_ghostty() {
+        local line=$(ghostty +show-config 2>/dev/null | grep '^background =' || echo "")
+        if [ -z "$line" ]; then
+                echo "dark"
+                return
+        fi
+        local hex=$(echo "$line" | awk '{print $3}' | tr -d '#')
+        local r=$((16#${hex:0:2}))
+        local g=$((16#${hex:2:2}))
+        local b=$((16#${hex:4:2}))
+        local luma=$((r * 299 + g * 587 + b * 114))
+        [ "$luma" -gt 50000 ] && echo "light" || echo "dark"
+}
+
+detect_bg_universal() {
+        # Only run in interactive terminals that support it
+        [[ -t 1 ]] || {
+                echo "dark"
+                return
+        }
+
+        old_tty=$(stty -g) 2>/dev/null || old_tty=""
+        stty raw -echo min 0 time 1 2>/dev/null
+
+        printf '\e]11;?\e\\'
+
+        reply=""
+        IFS= read -r -d '\' -t 0.1 reply 2>/dev/null || reply=""
+
+        [ -n "$old_tty" ] && stty "$old_tty" 2>/dev/null
+
+        [ -z "$reply" ] && {
+                echo "dark"
+                return
+        }
+
+        rgb=${reply#*:} # strip up to :
+        rgb=${rgb%%[*]} # strip trailing junk if any
+
+        r=$((16#${rgb:0:4} / 256))
+        g=$((16#${rgb:5:4} / 256))
+        b=$((16#${rgb:10:4} / 256))
+
+        luma=$((r * 299 + g * 587 + b * 114))
+        ((luma > 32767)) && echo "light" || echo "dark"
+}
+
+detect_bg_grok() {
+        # Save current tty settings
+        old_tty=$(stty -g) 2>/dev/null || old_tty=""
+
+        # Switch to raw mode, no echo
+        stty raw -echo 2>/dev/null
+
+        # Send OSC 11 query for background color
+        printf '\e]11;?\e\\'
+
+        # Read response up to String Terminator (\)
+        reply=""
+        if IFS= read -r -d '\' -t 1 reply 2>/dev/null; then
+                : # success
+        else
+                reply=""
+        fi
+
+        # Restore tty settings
+        if [ -n "$old_tty" ]; then
+                stty "$old_tty" 2>/dev/null
+        fi
+
+        # If no reply (terminal doesn't support it), default to dark
+        if [ -z "$reply" ]; then
+                echo "dark"
+                return 0
+        fi
+
+        # Strip everything up to and including the colon
+        rgb=${reply#*:}
+
+        # Extract hex values (format: rgb:rrrr/gggg/bbbb or similar)
+        r=$((16#${rgb:0:4}))
+        g=$((16#${rgb:5:4}))
+        b=$((16#${rgb:10:4}))
+
+        # Scale down to 0-255
+        r=$((r / 256))
+        g=$((g / 256))
+        b=$((b / 256))
+
+        # Relative luminance (same weights as before)
+        luma=$((r * 299 + g * 587 + b * 114))
+
+        # Threshold at roughly 50%
+        if [ "$luma" -gt 32767 ]; then
+                echo "light"
+        else
+                echo "dark"
+        fi
+}
+
+# detect_bg_grok_zsh() {
+#   # Save current terminal settings
+#          local old_tty=$(stty -g)
+#
+#   # Put terminal in raw mode (no echo, no processing)
+#   stty raw -echo
+#
+#   # Send the query
+#   printf '\e]11;?\e\\'
+#
+#   # Read the response (up to the ST terminator '\')
+#   local reply
+#   IFS= read -r -d '\' -t 1 reply || true  # timeout in case no response
+#
+#   # Restore terminal settings
+#   stty "$old_tty"
+#
+#   # If no reply, fallback to dark
+#   [[ -z $reply ]] && { echo dark; return }
+#
+#   # Extract rgb part after ':'
+#   local rgb=${reply#*:}
+#
+#   # Parse hex channels (handle both rgb:ffff/ffff/ffff and rgb:ffff/ffff/ffff/)
+#   local r=$((16#${rgb:0:4}))
+#   local g=$((16#${rgb:5:4}))
+#   local b=$((16#${rgb:10:4}))
+#
+#   # Scale to 0-255
+#   ((r /= 256, g /= 256, b /= 256))
+#
+#   # Compute relative luminance (standard formula)
+#   local luma=$((r * 299 + g * 587 + b * 114))
+#
+#   # Threshold ~0.5 (32768 out of 65535)
+#   ((luma > 32767)) && echo light || echo dark
+# }
+
+detect_bg_kimi() {
+        local reply
+        printf '\e]11;?\e\\'
+        IFS= read -d '\' -t 0.05 reply
+        local rgb=${reply#*:}                       # 1919/1717/2424
+        local r=$(((16#${rgb:0:4}) / 256))          # 25
+        local g=$(((16#${rgb:5:4}) / 256))          # 23
+        local b=$(((16#${rgb:10:4}) / 256))         # 36
+        local luma=$((r * 299 + g * 587 + b * 114)) # 0-65535
+        [[ $luma -gt 32767 ]] && echo light || echo dark
+}
+
 # does what `ls -l` should have done (list final symlink targets)
 lsl() {
         local dir f
@@ -54,6 +204,8 @@ current_theme_ghostty() {
         which_theme "$(grep '^[^#]*theme' ~/.dotfiles/ghostty/config | cut -d= -f2)"
 }
 export BAT_THEME="$(current_theme_ghostty)"
+# export BAT_THEME="$(detect_bg_universal)"
+# export BAT_THEME="$(detect_bg_ghostty)"
 
 compare_dirs() {
         local dir1=$1 dir2=$2
@@ -1316,8 +1468,43 @@ function getBundleId() {
         # mdls -name kMDItemCFBundleIdentifier -raw "$1" | cut -d '"' -f 2 #not as robust
 }
 
-# old way; new way with 'rat'
 function rat() {
+        local use_bat=''
+
+        # --- optional flag ---------------------------------------------------------
+        if [[ $1 == -c || $1 == --color ]]; then
+                use_bat=1
+                shift
+        fi
+
+        local comment_char=$1
+        local file=$2
+
+        # --- build the two sed expressions -----------------------------------------
+        local sed_rm="/^[[:blank:]]*${comment_char}/d; s/${comment_char}.*//"
+        local sed_blank='/^$/{ N; /^\n$/D; }'
+
+        # --- decide where the data come from ---------------------------------------
+        if [[ -p /dev/stdin ]]; then
+                if [[ -n $use_bat ]]; then
+                        sed "$sed_rm" | sed "$sed_blank" | bat --language=lua --file-name='<stdin>'
+                else
+                        sed "$sed_rm" | sed "$sed_blank"
+                fi
+        elif [[ -n $file ]]; then
+                if [[ -n $use_bat ]]; then
+                        sed "$sed_rm" "$file" | sed "$sed_blank" | bat --file-name="$file"
+                else
+                        sed "$sed_rm" "$file" | sed "$sed_blank"
+                fi
+        else
+                echo "Error: no input supplied.  Usage: rem [-c|--color] COMMENT_CHAR [FILE]" >&2
+                return 1
+        fi
+}
+
+# old way; new way with 'rat'
+function rat_broken() {
         local comment_char file use_bat=''
         # --- simple option parsing ----
         while [[ $1 == -* ]]; do

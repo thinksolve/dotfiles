@@ -20,6 +20,7 @@ _plugins_txt=$HOME/.zsh_plugins.txt
 
 if [[ -f $_plugins_txt && ( ! -f $_plugins_zsh || $_plugins_txt -nt $_plugins_zsh ) ]]; then
     # txt is newer (or static file missing) → regenerate
+    echo 'sourcing plugins txt file'
     source "$NIX_CURRENT_USER/share/antidote/antidote.zsh"
     antidote load
 elif [[ -f $_plugins_zsh ]]; then

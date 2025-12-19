@@ -22,10 +22,10 @@ window-height = 1000
 #theme = AyuLight
 
 #theme = srcery.dark
-theme = rose-pine.dark
+#theme = rose-pine.dark
 #theme = Afterglow
 #theme = xcodedarkhc 
-#theme = tokyonight
+theme = tokyonight
 #theme = Cyberdyne
 #theme =catppuccin-mocha
 
