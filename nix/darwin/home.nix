@@ -114,6 +114,7 @@
       "iterm2"
       "nix"
       "nvim"
+      "s"
       "yazi"
       "zsh/after_compinit.zsh"
       "zsh/aliases.zsh"

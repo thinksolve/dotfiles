@@ -1,0 +1,8 @@
+
+customProviders [
+  {
+    name: grokipedia
+    url: "https://grokipedia.com/search?q=%s"
+    tags: [groki] 
+  }
+]

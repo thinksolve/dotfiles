@@ -40,13 +40,16 @@ local function handler(evt)
 	local key = evt:getKeyCode()
 	local mods = evt:getFlags()
 
-	-- swallow every event that carries *any* modifier
-	if next(mods) then
+	-- if next(mods) then  --- short syntax to check if any mods was pressed
+	if mods.alt or mods.ctrl or mods.shift or (mods.cmd and key ~= hs.keycodes.map["v"]) then
 		return true
 	end
 
-	-- allow only the three control keys
-	if key == hs.keycodes.map["return"] then
+	if mods.cmd and key == hs.keycodes.map["v"] then -- ⌘V
+		local clip = hs.pasteboard.getContents() or ""
+		buf = buf .. clip
+		return true
+	elseif key == hs.keycodes.map["return"] then
 		tap:stop()
 		tap = nil
 		done(true, buf)

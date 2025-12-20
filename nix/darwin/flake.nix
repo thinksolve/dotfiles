@@ -105,6 +105,7 @@
             ];
 
             brews = [
+              "s-search"
               "mas"
               {
                 name = "emacs-plus@30";
