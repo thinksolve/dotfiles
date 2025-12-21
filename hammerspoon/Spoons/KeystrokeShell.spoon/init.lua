@@ -15,8 +15,24 @@ local V = hs.keycodes.map["v"]
 
 -- current capture state
 local buf, tap, done = "", nil, nil
+local cancel_tap = function()
+	if tap then
+		tap:stop()
+		tap = nil
+	end
+end
 
 local timeoutTimer = nil
+local cancel_timeout = function()
+	if timeoutTimer then
+		timeoutTimer:stop()
+		timeoutTimer = nil
+	end
+end
+
+local function escape_quotes(q)
+	return q:gsub('"', '\\"'):gsub("'", "'\\''")
+end
 
 ------------------------------------------------------------
 -- public: bind a hot-key
@@ -31,29 +47,29 @@ function obj:bind(mods, key, opts)
 	hs.hotkey.bind(mods, key, function()
 		buf = ""
 		done = function(ok, text)
+			-- irrespective of 'ok', when done is called cancel tap and timeout
+			cancel_tap()
+			cancel_timeout()
+
 			if not ok then
 				return false
 			end
 
-			local cmd = builder(text)
+			local cmd = builder(text, escape_quotes) --NOTE: works but maybe needs better type definition for builder
 			log.f("running: %s", cmd)
 
 			local output, status, _type, _rc = hs.execute(cmd .. " 2>&1", true)
 			if not status then
-				hs.alert("❌ " .. (output or "unknown error"), 5)
+				hs.alert("❌ " .. (output or "unknown error"), 2)
 			end
 		end
 
-		-- local timeoutTimer = nil -- NOTE: should this be here or top level of module .. does it matter?
 		resetTimeout = function(_TIMEOUT)
-			if timeoutTimer then
-				timeoutTimer:stop()
-			end
-			timeoutTimer = hs.timer.doAfter(_TIMEOUT or 5, function()
-				tap:stop()
-				tap = nil
+			cancel_timeout()
+
+			timeoutTimer = hs.timer.doAfter(_TIMEOUT or 1.5, function()
 				done(nil)
-				hs.alert.show("cancelled", 0.8)
+				hs.alert("cancelled", 0.8)
 			end)
 		end
 
@@ -79,15 +95,12 @@ function obj:bind(mods, key, opts)
 					if buf == "" then
 						buf = hs.pasteboard.getContents() or ""
 					end
-					tap:stop()
-					tap = nil
+
 					done(true, buf)
 					return true
 				elseif key == ESC or key == CAPS then
-					tap:stop()
-					tap = nil
 					done(nil)
-					hs.alert.show("cancelled", 0.8)
+					hs.alert("cancelled", 0.8)
 					return true
 				elseif key == DEL then
 					buf = #buf > 0 and buf:sub(1, -2) or ""

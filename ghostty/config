@@ -19,13 +19,13 @@ window-height = 1000
 
 #theme = adwaita.light 
 #theme = AtomOneLight 
-#theme = AyuLight
+#theme = CLRS.light
 
 #theme = srcery.dark
-#theme = rose-pine.dark
+theme = rose-pine.dark
 #theme = Afterglow
 #theme = xcodedarkhc 
-theme = tokyonight
+#theme = tokyonight
 #theme = Cyberdyne
 #theme =catppuccin-mocha
 

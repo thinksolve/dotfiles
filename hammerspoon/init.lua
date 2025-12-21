@@ -681,26 +681,29 @@ hs.hotkey.bind({ "cmd", "alt" }, "c", function()
 	hs.alert("Type…  ⏎ copy  ⎋ cancel")
 end)
 
---TEST: some hotkey binds should be disabled in the callback .. likely better to abstract hs.hotkey.bind itself
-local function withHotkeyDisabled(hotkey, fn)
-	hotkey:disable()
-	local ok, result = pcall(fn)
-	hs.timer.doAfter(0.2, function()
-		hotkey:enable()
-	end)
-	return ok, result
-end
-
-local function s_search(engine, q)
-	engine = engine:gsub('"', '\\"')
-	return string.format('s -p "%s" "%s"', engine, q)
-end
-
-local function escape_quotes(q)
-	return q:gsub('"', '\\"'):gsub("'", "'\\''")
-end
+-- "cap 'n crunch"
 hs.loadSpoon("KeystrokeShell")
+
 spoon.KeystrokeShell
+	:bind({ "option", "control", "command" }, "g", {
+		command_string = function(q, esc)
+			return string.format("s -p google '%s'", esc(q))
+
+			-- return string.format('s -p google "%s"', esc(q))
+			-- return "open 'https://www.google.com/search?q=" .. hs.http.encodeForQuery(q) .. "'"
+		end,
+	})
+	:bind({ "option", "control", "command" }, "y", {
+		command_string = function(q, esc)
+			return string.format("s -p youtube '%s'", esc(q))
+		end,
+	})
+	:bind({ "option", "control", "command" }, "p", {
+		command_string = function(q, esc)
+			return string.format("s -p perplexity '%s'", esc(q))
+			-- return "open 'https://www.perplexity.ai/?q=" .. q .. "'"
+		end,
+	})
 	:bind({ "option", "control", "command" }, "t", {
 		command_string = function(q)
 			return string.format("%s", q)
@@ -708,25 +711,6 @@ spoon.KeystrokeShell
 	})
 	:bind({ "option", "control", "command" }, "o", {
 		command_string = function(q)
-			q = q:gsub('"', '\\"'):gsub("'", "'\\''")
-
-			return string.format("open -a '%s'", escape_quotes(q))
-		end,
-	})
-	:bind({ "option", "control", "command" }, "g", {
-		command_string = function(q)
-			return string.format("s -p google '%s'", escape_quotes(q))
-			-- return "open 'https://www.google.com/search?q=" .. hs.http.encodeForQuery(q) .. "'"
-		end,
-	})
-	:bind({ "option", "control", "command" }, "y", {
-		command_string = function(q)
-			return string.format("s -p youtube '%s'", escape_quotes(q))
-		end,
-	})
-	:bind({ "option", "control", "command" }, "p", {
-		command_string = function(q)
-			return string.format("s -p perplexity '%s'", escape_quotes(q))
-			-- return "open 'https://www.perplexity.ai/?q=" .. q .. "'"
+			return string.format("open -a '%s'", q)
 		end,
 	})

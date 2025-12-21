@@ -1469,11 +1469,64 @@ function getBundleId() {
 }
 
 function rat() {
+        local bat_mode='' # '' = none, 'full' = pretty, 'numbers' = clean numbered
+
+        if [[ $1 == -f || $1 == --full ]]; then
+                bat_mode=full
+                shift
+        elif [[ $1 == -n || $1 == --numbers ]]; then
+                bat_mode=numbers
+                shift
+        fi
+
+        local comment_char=$1
+        local file=$2
+
+        if [[ -z $comment_char ]]; then
+                echo "Error: COMMENT_CHAR is required." >&2
+                echo "Usage: rat [-f|--full] [-n|--numbers] COMMENT_CHAR [FILE]" >&2
+                return 1
+        fi
+
+        local escaped_char=$(printf '%s' "$comment_char" | sed 's/[.[\*^$()+?{|]/\\&/g')
+        local sed_rm="/^[[:blank:]]*${escaped_char}/d; s/${escaped_char}.*//"
+        local sed_blank='/^$/{ N; /^\n$/D; }'
+
+        # Use an ARRAY — this is the safe way
+        local bat_cmd=()
+        if [[ -n $bat_mode ]]; then
+                bat_cmd=(bat)
+                [[ $bat_mode == numbers ]] && bat_cmd+=(--style=numbers)
+        fi
+
+        if [[ -p /dev/stdin ]]; then
+                if [[ ${#bat_cmd[@]} -gt 0 ]]; then
+                        sed "$sed_rm" | sed "$sed_blank" | "${bat_cmd[@]}" --file-name='<stdin>'
+                else
+                        sed "$sed_rm" | sed "$sed_blank"
+                fi
+        elif [[ -n $file ]]; then
+                if [[ ${#bat_cmd[@]} -gt 0 ]]; then
+                        sed "$sed_rm" "$file" | sed "$sed_blank" | "${bat_cmd[@]}" --file-name="$file"
+                else
+                        sed "$sed_rm" "$file" | sed "$sed_blank"
+                fi
+        else
+                echo "Error: no input supplied." >&2
+                return 1
+        fi
+}
+
+# manually written; rat is better now
+function ratt() {
         local use_bat=''
 
         # --- optional flag ---------------------------------------------------------
-        if [[ $1 == -c || $1 == --color ]]; then
-                use_bat=1
+        if [[ $1 == -f || $1 == --full ]]; then
+                use_bat='full'
+                shift
+        elif [[ $1 == -n || $1 == --numbers ]]; then
+                use_bat='numbers'
                 shift
         fi
 
@@ -1486,14 +1539,18 @@ function rat() {
 
         # --- decide where the data come from ---------------------------------------
         if [[ -p /dev/stdin ]]; then
-                if [[ -n $use_bat ]]; then
+                if [[ $use_bat == 'full' ]]; then
                         sed "$sed_rm" | sed "$sed_blank" | bat --language=lua --file-name='<stdin>'
+                elif [[ $use_bat == 'numbers' ]]; then
+                        sed "$sed_rm" | sed "$sed_blank" | bat --language=lua --file-name='<stdin>' --style=numbers
                 else
                         sed "$sed_rm" | sed "$sed_blank"
                 fi
         elif [[ -n $file ]]; then
-                if [[ -n $use_bat ]]; then
+                if [[ $use_bat == 'full' ]]; then
                         sed "$sed_rm" "$file" | sed "$sed_blank" | bat --file-name="$file"
+                elif [[ $use_bat == 'numbers' ]]; then
+                        sed "$sed_rm" "$file" | sed "$sed_blank" | bat --file-name="$file" --style=numbers
                 else
                         sed "$sed_rm" "$file" | sed "$sed_blank"
                 fi
