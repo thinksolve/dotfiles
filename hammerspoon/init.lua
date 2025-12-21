@@ -693,24 +693,29 @@ end
 
 hs.loadSpoon("KeystrokeShell")
 spoon.KeystrokeShell
+	:bind({ "option", "control", "command" }, "o", {
+		command_string = function(q)
+			return "open -a '" .. q .. "'"
+			-- hs.application.launchOrFocus(q) -- fuzzy launch, no shell needed
+			-- return "true"
+		end,
+	})
 	:bind({ "option", "control", "command" }, "g", {
 		command_string = function(q)
-			-- return "open -a " .. q .. ".app"
+			return "s -p google " .. q
 			-- return "open 'https://www.google.com/search?q=" .. hs.http.encodeForQuery(q) .. "'"
-			return "open 'https://www.google.com/search?q=" .. q .. "'"
-			-- return "s -p google " .. q
+			-- return "open 'https://www.google.com/search?q=" .. q .. "'"
 		end,
 	})
 	:bind({ "option", "control", "command" }, "y", {
 		command_string = function(q)
-			-- return "open 'https://www.youtube.com/results?search_query=" .. hs.http.encodeForQuery(q) .. "'"
-			return "open 'https://www.youtube.com/results?search_query=" .. q .. "'"
-			-- return "s -p youtube " .. q .. " "
+			return "s -p youtube " .. q
+			-- return "open 'https://www.youtube.com/results?search_query=" .. q .. "'"
 		end,
 	})
 	:bind({ "option", "control", "command" }, "p", {
 		command_string = function(q)
-			-- return "s -p perplexity " .. q .. " "
-			return "open 'https://www.perplexity.ai/?q='" .. q
+			return "s -p perplexity " .. q
+			-- return "open 'https://www.perplexity.ai/?q=" .. q .. "'"
 		end,
 	})
