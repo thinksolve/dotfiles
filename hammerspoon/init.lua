@@ -313,7 +313,7 @@ end
 -- end
 
 -- Interactive translation with real-time results in chooser
-hs.hotkey.bind({ "ctrl", "option", "command" }, "t", function()
+hs.hotkey.bind({ "ctrl", "option", "shift" }, "t", function()
 	translate_prompt_with_realtime()
 end)
 
@@ -691,31 +691,42 @@ local function withHotkeyDisabled(hotkey, fn)
 	return ok, result
 end
 
+local function s_search(engine, q)
+	engine = engine:gsub('"', '\\"')
+	return string.format('s -p "%s" "%s"', engine, q)
+end
+
+local function escape_quotes(q)
+	return q:gsub('"', '\\"'):gsub("'", "'\\''")
+end
 hs.loadSpoon("KeystrokeShell")
 spoon.KeystrokeShell
+	:bind({ "option", "control", "command" }, "t", {
+		command_string = function(q)
+			return string.format("%s", q)
+		end,
+	})
 	:bind({ "option", "control", "command" }, "o", {
 		command_string = function(q)
-			return "open -a '" .. q .. "'"
-			-- hs.application.launchOrFocus(q) -- fuzzy launch, no shell needed
-			-- return "true"
+			q = q:gsub('"', '\\"'):gsub("'", "'\\''")
+
+			return string.format("open -a '%s'", escape_quotes(q))
 		end,
 	})
 	:bind({ "option", "control", "command" }, "g", {
 		command_string = function(q)
-			return "s -p google " .. q
+			return string.format("s -p google '%s'", escape_quotes(q))
 			-- return "open 'https://www.google.com/search?q=" .. hs.http.encodeForQuery(q) .. "'"
-			-- return "open 'https://www.google.com/search?q=" .. q .. "'"
 		end,
 	})
 	:bind({ "option", "control", "command" }, "y", {
 		command_string = function(q)
-			return "s -p youtube " .. q
-			-- return "open 'https://www.youtube.com/results?search_query=" .. q .. "'"
+			return string.format("s -p youtube '%s'", escape_quotes(q))
 		end,
 	})
 	:bind({ "option", "control", "command" }, "p", {
 		command_string = function(q)
-			return "s -p perplexity " .. q
+			return string.format("s -p perplexity '%s'", escape_quotes(q))
 			-- return "open 'https://www.perplexity.ai/?q=" .. q .. "'"
 		end,
 	})
