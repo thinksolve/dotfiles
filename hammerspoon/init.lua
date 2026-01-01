@@ -684,33 +684,54 @@ end)
 -- "cap 'n crunch"
 hs.loadSpoon("KeystrokeShell")
 
+local spoon_bind_mods = { "shift", "option" }
 spoon.KeystrokeShell
-	:bind({ "option", "control", "command" }, "g", {
+	:bind(spoon_bind_mods, "g", {
 		command_string = function(q, esc)
 			return string.format("s -p google '%s'", esc(q))
-
-			-- return string.format('s -p google "%s"', esc(q))
 			-- return "open 'https://www.google.com/search?q=" .. hs.http.encodeForQuery(q) .. "'"
 		end,
 	})
-	:bind({ "option", "control", "command" }, "y", {
+	:bind(spoon_bind_mods, "y", {
 		command_string = function(q, esc)
 			return string.format("s -p youtube '%s'", esc(q))
 		end,
 	})
-	:bind({ "option", "control", "command" }, "p", {
+	:bind(spoon_bind_mods, "p", {
 		command_string = function(q, esc)
 			return string.format("s -p perplexity '%s'", esc(q))
 			-- return "open 'https://www.perplexity.ai/?q=" .. q .. "'"
 		end,
 	})
-	:bind({ "option", "control", "command" }, "t", {
+	:bind(spoon_bind_mods, "t", {
 		command_string = function(q)
 			return string.format("%s", q)
 		end,
 	})
-	:bind({ "option", "control", "command" }, "o", {
+	:bind(spoon_bind_mods, "o", {
 		command_string = function(q)
 			return string.format("open -a '%s'", q)
 		end,
 	})
+	:bind(spoon_bind_mods, "w", {
+		command_string = function(q, esc)
+			return string.format("s -p wolfram '%s'", esc(q))
+		end,
+	})
+
+spoon.KeystrokeShell:startModal({ "option" }, "space")
+--
+-- k = hs.hotkey.modal.new({ "option" }, "space")
+--
+-- function k:entered()
+-- 	hs.alert("Entered mode")
+-- end
+-- function k:exited()
+-- 	hs.alert("Exited mode")
+-- end
+-- k:bind({}, "escape", function()
+-- 	k:exit()
+-- end)
+-- k:bind({}, "K", "Pressed K", function()
+-- 	print("let the record show that K was pressed")
+-- end)

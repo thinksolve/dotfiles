@@ -12,8 +12,6 @@ local function escape_quotes(q)
 	return q:gsub('"', '\\"'):gsub("'", "'\\''")
 end
 
-local DO_AFTER_TIME = 2
-
 -- keys
 local CAPS = 0x39 -- alternate escape key
 local ESC = hs.keycodes.map["escape"]
@@ -21,11 +19,7 @@ local RET = hs.keycodes.map["return"]
 local DEL = hs.keycodes.map["delete"]
 local V = hs.keycodes.map["v"]
 
-local buf, tap, done = "", nil, nil
-
-local timeoutTimer, modalTimer = nil, nil
-local m = nil --modal
-local modalMode = false
+local buf, tap, done, m, timeoutTimer = "", nil, nil, nil, nil
 
 local function cancelTimeout()
 	if timeoutTimer then
@@ -34,27 +28,19 @@ local function cancelTimeout()
 	end
 end
 
-local function cancelModalTimeout()
-	if modalTimer then
-		modalTimer:stop()
-		modalTimer = nil
+--WIP
+local function cancelModal()
+	if timeoutTimer and m then
+		timeoutTimer = hs.timer.doAfter(4, function()
+			-- hs.alert("cancel model", 0.8)
+			m:exit()
+		end)
+		-- = nil
 	end
 end
 
-local function resetModalTimer()
-	cancelModalTimeout()
-	modalTimer = hs.timer.doAfter(DO_AFTER_TIME or 2, function()
-		-- hs.alert("cancel model", 0.8)
-		print("modalTimer doAfter")
-		if m then
-			m:exit()
-		end
-	end)
-end
-
 local function cancelAll()
-	cancelTimeout()
-	-- cancelModalTimeout()
+	cancelTimeout() -- this made into its own function because used directly in resetTimeout
 
 	-- cancel tap
 	if tap then
@@ -62,32 +48,24 @@ local function cancelAll()
 		tap = nil
 	end
 
-	-- NOTE: dont uncomment this .. it cancels modalMode before delays ..
-	-- if modalMode and m then
-	-- 	m:exit()
-	-- 	-- m = nil -- i think nilling this is really problematic
+	-- cancel tap (WIP doesnt quite work)
+	-- if modal then
+	-- 	modal:exit()
+	-- 	modal = nil
 	-- end
 
 	buf, done = "", nil
 end
 
 local function resetTimeout()
-	cancelTimeout()
-	timeoutTimer = hs.timer.doAfter(DO_AFTER_TIME or 2, function()
-		print("timeoutTimer doAfter")
-
-		hs.alert("cancelled regular mode", 0.5)
-
+	cancelTimeout() -- clear pre-existing timer variable if it exists before starting new one
+	timeoutTimer = hs.timer.doAfter(4, function()
+		hs.alert("cancelled", 0.8)
 		cancelAll()
 	end)
 end
 
-local function startCapture(opts, isModal)
-	modalMode = isModal or false
-
-	-- hs.alert.show(tostring(modalMode))
-	-- hs.alert.show("isModal: ", tostring(isModal))
-
+local function startCapture(opts)
 	buf = ""
 	done = function(ok, text)
 		cancelAll()
@@ -104,23 +82,12 @@ local function startCapture(opts, isModal)
 			hs.alert("❌ " .. (out or "unknown error"), 2)
 		end
 	end
-
 	resetTimeout()
-	-- if modalMode then
-	-- 	resetModalTimer()
-	-- else
-	-- 	resetTimeout()
-	-- end
-
 	-- identical eventtap you already had
 	tap = hs.eventtap
 		.new({ hs.eventtap.event.types.keyDown }, function(evt)
-			-- WIP: this jank guard until i figure out how to separate modal from non-modal modes better
-			if modalMode then
-				resetModalTimer()
-			else
-				resetTimeout()
-			end
+			resetTimeout()
+			cancelModal()
 
 			local key = evt:getKeyCode()
 			local mods = evt:getFlags()
@@ -170,40 +137,71 @@ function obj:bind(mods, key, opts)
 
 	self._binds[key] = opts -- remember key → opts
 
-	-- local builder = opts.command_string or function(q)
-	-- 	return "echo " .. q -- safest no-op default
-	-- end
+	local builder = opts.command_string or function(q)
+		return "echo " .. q -- safest no-op default
+	end
 	hs.hotkey.bind(mods, key, function()
 		startCapture(opts)
 	end)
 
 	return self
 end
---
+
+-- - ATTEMPT 1 modal fail
 function obj:startModal(mod, key)
 	-- create and enter the modal exactly like the demo
 	m = hs.hotkey.modal.new(mod, key)
-
 	function m:entered()
-		hs.alert("entered modal mode", 0.5)
+		hs.alert("Entered mode")
 	end
 	function m:exited()
-		hs.alert("exited modal mode", 0.5)
+		hs.alert("Exited mode")
 	end
 
 	-- bind every registered letter
 	for letter, opts in pairs(self._binds or {}) do
 		m:bind("", letter, function()
+			-- toying with this (WIP
+			-- hs.timer.doAfter(3.5, function()
+			-- 	m:exit()
+			-- end)
+			--
 			print("letter pressed:", letter)
-			startCapture(opts, true)
+			startCapture(opts)
 		end)
 	end
 
 	m:bind("", "escape", function()
 		m:exit()
 	end)
+	-- self.modal = m --need this?
 
+	modal = m --need this?
 	return self
 end
+--
+--
+-- - ATTEMPT 2 modal fail:
+-- function obj:startModal(mod, key)
+-- 	obj.modal = hs.hotkey.modal.new(mod, key) -- no ‘local m’
+-- 	function obj.modal:entered()
+-- 		hs.alert("Entered mode")
+-- 	end
+-- 	function obj.modal:exited()
+-- 		hs.alert("Exited mode")
+-- 	end
+--
+-- 	for letter, opts in pairs(self._binds or {}) do
+-- 		obj.modal:bind("", letter, function()
+-- 			print("letter pressed:", letter)
+-- 			startCapture(opts)
+-- 		end)
+-- 	end
+--
+-- 	obj.modal:bind("", "escape", function()
+-- 		obj.modal:exit()
+-- 	end)
+-- 	return self
+-- end
 
 return obj
