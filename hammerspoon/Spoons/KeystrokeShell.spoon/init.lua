@@ -1,18 +1,16 @@
 local obj = {}
 obj.__index = obj
 
-obj._binds = obj._binds or {} --useful to collect all bind key and opts into a table
+obj._binds = obj._binds or {}
 
 obj.name = "KeystrokeShell"
-obj.version = "3.0.testing"
+obj.version = "4.0"
 
 local log = hs.logger.new("KeystrokeShell", "info")
 
 local function escape_quotes(q)
 	return q:gsub('"', '\\"'):gsub("'", "'\\''")
 end
-
-local DO_AFTER_TIME = 2
 
 -- keys
 local CAPS = 0x39 -- alternate escape key
@@ -23,59 +21,98 @@ local V = hs.keycodes.map["v"]
 
 local buf, tap, done = "", nil, nil
 
-local timeoutTimer = nil
-local m = nil --modal
+local DO_AFTER_TIME = 3
+local timer = nil
+
+-- useful for one common timer variable
+local function timerDoAfter(fn, delay)
+	if timer then
+		timer:stop()
+		timer = nil
+	end
+
+	timer = hs.timer.doAfter(delay or DO_AFTER_TIME, fn)
+end
+
+local modal = nil
 local modalMode = false
 
-local function cancelTimeout()
-	if timeoutTimer then
-		timeoutTimer:stop()
-		timeoutTimer = nil
+local function exit_modal()
+	if modal and modalMode then
+		modal:exit()
 	end
 end
 
-local function cancelAll()
-	cancelTimeout()
+local function modal_exited()
+	local msg = "exited modal mode"
+	hs.alert(msg, 0.2)
+	print(msg)
+
+	modalMode = false
+	buf = ""
+end
+
+local function modal_entered()
+	modalMode = true
+
+	local msg = "entered modal mode"
+	hs.alert(msg, 0.2)
+	print(msg)
+
+	timerDoAfter(exit_modal, 3)
+end
+
+local function onDone()
+	if timer then
+		timer:stop()
+		timer = nil
+	end
 
 	if tap then
 		tap:stop()
 		tap = nil
 	end
 
-	buf = ""
+	-- bug also cleared in 'modal_exited' hook logic
+	if not modalMode then
+		buf = ""
+	end
+
 	done = nil
 
-	-- NOTE: dont uncomment this .. it cancels modalMode before delays ..
-	-- if modalMode and m then
-	-- 	m:exit()
-	-- 	-- m = nil -- i think nilling this is really problematic
-	-- end
+	-- this alert needs better guard against first run of onDone
+	hs.alert("startcapture ended", 0.3)
+	print("startcapture ended")
 end
 
-local function resetTimeout()
-	cancelTimeout()
-	timeoutTimer = hs.timer.doAfter(DO_AFTER_TIME or 2, function()
-		cancelAll() -- this does not cancel modal for logic reasons below
-
-		if modalMode and m then
-			m:exit()
-		end
+local function armTimer()
+	timerDoAfter(function()
+		onDone()
+		exit_modal()
 	end)
 end
 
-local function startCapture(opts, isModal)
-	modalMode = isModal or false
+local function startCapture(opts, mode)
+	hs.alert("startcapture", 0.3)
+	print("startcapture")
 
-	buf = ""
+	modalMode = (mode == "modal") or false
+
+	-- buf = ""
+	if not (modalMode and modal) then
+		buf = ""
+	end
+
+	-- onDone()
 
 	-- note: this HAS to be defined inside startCapture, otherwise 'done=nil' destroys this spoons functionality in future instances
 	done = function(ok, text)
-		cancelAll()
+		onDone()
 
 		if not ok then
 			return
 		end
-		local cmd = (opts.command_string or function(q)
+		local cmd = (opts.command_string or function(q, _esc)
 			return "echo " .. q
 		end)(text, escape_quotes)
 
@@ -86,11 +123,11 @@ local function startCapture(opts, isModal)
 		end
 	end
 
-	resetTimeout()
+	armTimer()
 
 	tap = hs.eventtap
 		.new({ hs.eventtap.event.types.keyDown }, function(evt)
-			resetTimeout()
+			armTimer()
 
 			local key = evt:getKeyCode()
 			local mods = evt:getFlags()
@@ -105,7 +142,7 @@ local function startCapture(opts, isModal)
 				buf = buf .. clip
 				return true
 			elseif key == RET then
-				-- nothing typed → use clipboard (better than  ⌘V logic above!
+				-- nothing typed → use clipboard
 				if buf == "" then
 					buf = hs.pasteboard.getContents() or ""
 				end
@@ -113,12 +150,15 @@ local function startCapture(opts, isModal)
 				done(true, buf)
 
 				if modalMode and (done == nil) then
-					resetTimeout()
+					armTimer()
 				end
+
 				return true
-			elseif key == ESC or key == CAPS then
+			-- elseif key == ESC or key == CAPS then
+			elseif key == ESC then
 				done(nil)
-				hs.alert("cancelled", 0.8)
+				-- hs.alert("startcapture cancelled", 0.3)
+				print("cancelled keystrokeshell")
 				return true
 			elseif key == DEL then
 				buf = #buf > 0 and buf:sub(1, -2) or ""
@@ -151,28 +191,26 @@ function obj:bind(mods, key, opts)
 	return self
 end
 --
-function obj:startModal(mod, key)
-	-- create and enter the modal exactly like the demo
-	m = hs.hotkey.modal.new(mod, key)
+function obj:bindModal(mod, key)
+	modal = hs.hotkey.modal.new(mod, key)
 
-	function m:entered()
-		hs.alert("entered modal mode", 0.5)
+	function modal:entered()
+		modal_entered()
 	end
-	function m:exited()
-		hs.alert("exited modal mode", 0.5)
+
+	function modal:exited()
+		modal_exited()
 	end
 
 	-- bind every registered letter
 	for letter, opts in pairs(self._binds or {}) do
-		m:bind("", letter, function()
+		modal:bind("", letter, function()
 			print("letter pressed:", letter)
-			startCapture(opts, true)
+			startCapture(opts, "modal")
 		end)
 	end
 
-	m:bind("", "escape", function()
-		m:exit()
-	end)
+	modal:bind("", "escape", exit_modal)
 
 	return self
 end

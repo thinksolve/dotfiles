@@ -682,7 +682,6 @@ hs.hotkey.bind({ "cmd", "alt" }, "c", function()
 end)
 
 hs.loadSpoon("KeystrokeShell")
--- hs.loadSpoon("KeystrokeShell2") -- wip broken
 
 local spoon_bind_mods = { "shift", "option" }
 
@@ -721,7 +720,7 @@ ks:bind(spoon_bind_mods, "g", {
 		end,
 	})
 
-ks:startModal({ "option" }, "space")
+ks:bindModal({ "option" }, "space")
 
 --
 -- k = hs.hotkey.modal.new({ "option" }, "space")
