@@ -1,3 +1,4 @@
+hs.alert("keystrokeshell2 loaded (WIP)")
 local obj = {}
 obj.__index = obj
 
@@ -55,8 +56,8 @@ local function doneTimer(ok)
 		buf = ""
 	end
 
-	if ok then
-		-- if true then
+	-- if ok then
+	if true then
 		if timer then
 			timer:stop()
 			timer = nil
@@ -73,32 +74,43 @@ local function doneTimer(ok)
 	-- timer = hs.timer.doAfter(DO_AFTER_TIME or 2, doAfterCallback)
 end
 
-done = function(ok, text)
-	doneTimer(ok)
-
-	if not ok then
-		return
-	end
-
-	local cmd = (text and onDone) and onDone(text, escape_quotes) or ("echo " .. escape_quotes(text or ""))
-
-	log.f("running: %s", cmd)
-	local out, st = hs.execute(cmd .. " 2>&1", true)
-	if not st then
-		hs.alert("❌ " .. (out or "unknown error"), 2)
-	end
-end
-
 local function startCapture(opts, isModal)
 	modalMode = (isModal == "modal") or false
 
-	-- hs.alert.show("isModal: ", tostring(isModal))
-
-	onDone = opts.command_string or function(q)
-		return "echo " .. q
-	end
-
+	-- onDone = opts.command_string or function(q)
+	-- 	return "echo " .. q
+	-- end
+	--
 	buf = ""
+
+	--NOTE: this has to be local to startCapture; if its a top levle variable then nil-ing it in ESC branch
+	--- becomes problematic for future calls of this spoon!
+	done = function(ok, text)
+		-- WIP using this block instead of donetimer
+		buf, done = "", nil
+		if tap then
+			tap:stop()
+			tap = nil
+		end
+
+		-- doneTimer(ok)
+
+		if not ok then
+			return
+		end
+
+		-- local cmd = (text and onDone) and onDone(text, escape_quotes) or ("echo " .. escape_quotes(text or ""))
+
+		local cmd = (opts.command_string or function(q)
+			return "echo " .. q
+		end)(text, escape_quotes)
+
+		log.f("running: %s", cmd)
+		local out, st = hs.execute(cmd .. " 2>&1", true)
+		if not st then
+			hs.alert("❌ " .. (out or "unknown error"), 2)
+		end
+	end
 
 	-- resetTimeout()
 	doneTimer()
@@ -111,6 +123,9 @@ local function startCapture(opts, isModal)
 			-- else
 			-- 	resetTimeout()
 			-- end
+
+			doneTimer()
+
 			local key = evt:getKeyCode()
 			local mods = evt:getFlags()
 
@@ -133,10 +148,17 @@ local function startCapture(opts, isModal)
 				return true
 			-- elseif key == ESC or key == CAPS then
 			elseif key == ESC then
-				done(nil)
+				buf, done = "", nil
+				if tap then
+					tap:stop()
+					tap = nil
+				end
+
 				if modalMode and m then
 					m:exit()
 				end
+
+				-- done(nil)
 				hs.alert("cancelled", 0.8)
 				return true
 			elseif key == DEL then
@@ -144,7 +166,6 @@ local function startCapture(opts, isModal)
 				return true
 			end
 
-			doneTimer(true)
 			print("tap after if-else block reached")
 
 			-- ordinary printable key

@@ -681,17 +681,19 @@ hs.hotkey.bind({ "cmd", "alt" }, "c", function()
 	hs.alert("Type…  ⏎ copy  ⎋ cancel")
 end)
 
--- "cap 'n crunch"
 hs.loadSpoon("KeystrokeShell")
+-- hs.loadSpoon("KeystrokeShell2") -- wip broken
 
 local spoon_bind_mods = { "shift", "option" }
-spoon.KeystrokeShell
-	:bind(spoon_bind_mods, "g", {
-		command_string = function(q, esc)
-			return string.format("s -p google '%s'", esc(q))
-			-- return "open 'https://www.google.com/search?q=" .. hs.http.encodeForQuery(q) .. "'"
-		end,
-	})
+
+local ks = spoon.KeystrokeShell
+
+ks:bind(spoon_bind_mods, "g", {
+	command_string = function(q, esc)
+		return string.format("s -p google '%s'", esc(q))
+		-- return "open 'https://www.google.com/search?q=" .. hs.http.encodeForQuery(q) .. "'"
+	end,
+})
 	:bind(spoon_bind_mods, "y", {
 		command_string = function(q, esc)
 			return string.format("s -p youtube '%s'", esc(q))
@@ -719,7 +721,8 @@ spoon.KeystrokeShell
 		end,
 	})
 
-spoon.KeystrokeShell:startModal({ "option" }, "space")
+ks:startModal({ "option" }, "space")
+
 --
 -- k = hs.hotkey.modal.new({ "option" }, "space")
 --

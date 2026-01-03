@@ -4,7 +4,7 @@ obj.__index = obj
 obj._binds = obj._binds or {} --useful to collect all bind key and opts into a table
 
 obj.name = "KeystrokeShell"
-obj.version = "3.0.testing"
+obj.version = "3.0"
 
 local log = hs.logger.new("KeystrokeShell", "info")
 
@@ -23,7 +23,7 @@ local V = hs.keycodes.map["v"]
 
 local buf, tap, done = "", nil, nil
 
-local timeoutTimer = nil
+local timeoutTimer, modalTimer = nil, nil
 local m = nil --modal
 local modalMode = false
 
@@ -34,44 +34,66 @@ local function cancelTimeout()
 	end
 end
 
+local function cancelModalTimeout()
+	if modalTimer then
+		modalTimer:stop()
+		modalTimer = nil
+	end
+end
+
+local function resetModalTimer()
+	cancelModalTimeout()
+	modalTimer = hs.timer.doAfter(DO_AFTER_TIME or 2, function()
+		-- hs.alert("cancel model", 0.8)
+		print("modalTimer doAfter")
+		if m then
+			m:exit()
+		end
+	end)
+end
+
 local function cancelAll()
 	cancelTimeout()
+	-- cancelModalTimeout()
 
+	-- cancel tap
 	if tap then
 		tap:stop()
 		tap = nil
 	end
-
-	buf = ""
-	done = nil
 
 	-- NOTE: dont uncomment this .. it cancels modalMode before delays ..
 	-- if modalMode and m then
 	-- 	m:exit()
 	-- 	-- m = nil -- i think nilling this is really problematic
 	-- end
+
+	buf = ""
+	done = nil
 end
 
 local function resetTimeout()
 	cancelTimeout()
 	timeoutTimer = hs.timer.doAfter(DO_AFTER_TIME or 2, function()
-		cancelAll() -- this does not cancel modal for logic reasons below
+		print("timeoutTimer doAfter")
 
-		if modalMode and m then
-			m:exit()
-		end
+		hs.alert("cancelled regular mode", 0.5)
+
+		cancelAll()
 	end)
 end
 
 local function startCapture(opts, isModal)
 	modalMode = isModal or false
 
+	-- hs.alert.show(tostring(modalMode))
+	-- hs.alert.show("isModal: ", tostring(isModal))
+
 	buf = ""
 
 	-- note: this HAS to be defined inside startCapture, otherwise 'done=nil' destroys this spoons functionality in future instances
 	done = function(ok, text)
 		cancelAll()
-
 		if not ok then
 			return
 		end
@@ -87,10 +109,21 @@ local function startCapture(opts, isModal)
 	end
 
 	resetTimeout()
+	-- if modalMode then
+	-- 	resetModalTimer()
+	-- else
+	-- 	resetTimeout()
+	-- end
 
+	-- identical eventtap you already had
 	tap = hs.eventtap
 		.new({ hs.eventtap.event.types.keyDown }, function(evt)
-			resetTimeout()
+			-- WIP: this jank guard until i figure out how to separate modal from non-modal modes better
+			if modalMode then
+				resetModalTimer()
+			else
+				resetTimeout()
+			end
 
 			local key = evt:getKeyCode()
 			local mods = evt:getFlags()
@@ -111,10 +144,6 @@ local function startCapture(opts, isModal)
 				end
 
 				done(true, buf)
-
-				if modalMode and (done == nil) then
-					resetTimeout()
-				end
 				return true
 			elseif key == ESC or key == CAPS then
 				done(nil)
@@ -144,6 +173,9 @@ function obj:bind(mods, key, opts)
 
 	self._binds[key] = opts -- remember key → opts
 
+	-- local builder = opts.command_string or function(q)
+	-- 	return "echo " .. q -- safest no-op default
+	-- end
 	hs.hotkey.bind(mods, key, function()
 		startCapture(opts)
 	end)
