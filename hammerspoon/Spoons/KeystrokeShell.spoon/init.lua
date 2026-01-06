@@ -22,17 +22,18 @@ local V = hs.keycodes.map["v"]
 local buf, tap, done = "", nil, nil
 
 local DO_AFTER_TIME = 3
-local timer = nil
 
--- useful for one common timer variable
-local function timerDoAfter(fn, delay)
-	if timer then
-		timer:stop()
-		timer = nil
+-- timer variable never needed explicitly; keep encapsulated
+local timerDoAfter = (function()
+	local timer = nil
+	return function(fn, delay)
+		if timer then
+			timer:stop()
+			timer = nil
+		end
+		timer = hs.timer.doAfter(delay or DO_AFTER_TIME, fn)
 	end
-
-	timer = hs.timer.doAfter(delay or DO_AFTER_TIME, fn)
-end
+end)()
 
 local modal = nil
 local modalMode = false
@@ -62,7 +63,7 @@ local function modal_entered()
 	timerDoAfter(exit_modal, 3)
 end
 
-local function onDone()
+local function onDone(cb)
 	if timer then
 		timer:stop()
 		timer = nil
@@ -73,22 +74,24 @@ local function onDone()
 		tap = nil
 	end
 
-	-- bug also cleared in 'modal_exited' hook logic
-	if not modalMode then
-		buf = ""
-	end
+	-- in modalMode 'modal:exited' hook handles the buf clearing
+	-- if not modalMode then
+	-- 	buf = ""
+	-- end
+
+	buf = ""
 
 	done = nil
 
-	-- this alert needs better guard against first run of onDone
-	hs.alert("startcapture ended", 0.3)
-	print("startcapture ended")
+	if cb then
+		cb()
+	end
 end
 
 local function armTimer()
+	-- create a timer for startCapture
 	timerDoAfter(function()
-		onDone()
-		exit_modal()
+		onDone(exit_modal)
 	end)
 end
 
@@ -99,16 +102,21 @@ local function startCapture(opts, mode)
 	modalMode = (mode == "modal") or false
 
 	-- buf = ""
-	if not (modalMode and modal) then
-		buf = ""
-	end
+	-- if not (modalMode and modal) then
+	-- 	buf = ""
+	-- end
 
-	-- onDone()
+	-- onDone replaces buf clearing in the above commented out lines
+	onDone()
 
 	-- note: this HAS to be defined inside startCapture, otherwise 'done=nil' destroys this spoons functionality in future instances
 	done = function(ok, text)
-		onDone()
+		onDone(function()
+			hs.alert("startcapture ended", 0.3)
+			print("startcapture ended")
+		end)
 
+		-- stuff below depends on ok status
 		if not ok then
 			return
 		end
@@ -191,6 +199,7 @@ function obj:bind(mods, key, opts)
 	return self
 end
 --
+
 function obj:bindModal(mod, key)
 	modal = hs.hotkey.modal.new(mod, key)
 
@@ -207,6 +216,11 @@ function obj:bindModal(mod, key)
 		modal:bind("", letter, function()
 			print("letter pressed:", letter)
 			startCapture(opts, "modal")
+			-- NOTE: idea pass letter in startCapture like startCapture(opts, letter, "modal") so can handle double tap like 'gg
+			-- abnd defined the following either module level or startCapture level?:
+			-- local lastLetter = nil
+			-- local lastLetterTime = 0
+			-- local DOUBLE_TAP_THRESHOLD = 1.0
 		end)
 	end
 
