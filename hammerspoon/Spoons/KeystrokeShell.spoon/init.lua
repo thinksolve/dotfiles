@@ -18,22 +18,48 @@ local ESC = hs.keycodes.map["escape"]
 local RET = hs.keycodes.map["return"]
 local DEL = hs.keycodes.map["delete"]
 local V = hs.keycodes.map["v"]
+local SPACE = hs.keycodes.map["space"]
 
 local buf, tap, done = "", nil, nil
 
 local DO_AFTER_TIME = 3
 
--- timer variable never needed explicitly; keep encapsulated
-local timerDoAfter = (function()
+-- factory function .. inner timer variable never exposed, nor ever needed externally
+--
+-----@return fun(fn: function, delay: number?):nil, fun():nil
+local function createRunAfter()
 	local timer = nil
-	return function(fn, delay)
+
+	---@type fun():nil
+	local _stopTimer = function()
 		if timer then
 			timer:stop()
 			timer = nil
 		end
-		timer = hs.timer.doAfter(delay or DO_AFTER_TIME, fn)
 	end
-end)()
+
+	---@type fun(fn: function, delay: number?):nil
+	local _startTimer = function(fn, delay)
+		_stopTimer()
+		timer = hs.timer.doAfter(delay or DO_AFTER_TIME or 2, fn)
+	end
+
+	return _startTimer, _stopTimer
+end
+
+local runAfter, stopTimer = createRunAfter()
+
+-- -- timer variable never needed explicitly (inline factory)
+-- local runAfter = (function()
+-- 	local timer = nil
+-- 	return function(fn, delay)
+-- 		if timer then
+-- 			timer:stop()
+-- 			timer = nil
+-- 		end
+-- 		timer = hs.timer.doAfter(delay or DO_AFTER_TIME, fn)
+-- 	end
+-- end)()
 
 local modal = nil
 local modalMode = false
@@ -60,14 +86,16 @@ local function modal_entered()
 	hs.alert(msg, 0.2)
 	print(msg)
 
-	timerDoAfter(exit_modal, 3)
+	runAfter(exit_modal, 3)
 end
 
 local function onDone(cb)
-	if timer then
-		timer:stop()
-		timer = nil
-	end
+	-- if timer then
+	-- 	timer:stop()
+	-- 	timer = nil
+	-- end
+
+	stopTimer()
 
 	if tap then
 		tap:stop()
@@ -90,7 +118,7 @@ end
 
 local function armTimer()
 	-- create a timer for startCapture
-	timerDoAfter(function()
+	runAfter(function()
 		onDone(exit_modal)
 	end)
 end
@@ -141,6 +169,14 @@ local function startCapture(opts, mode)
 			local mods = evt:getFlags()
 
 			-- if next(mods) then  --- short syntax to check if any mods was pressed
+			--
+
+			if mods.alt and (key == SPACE) and modalMode then
+				exit_modal()
+				done(nil) -- tell startCapture to finish
+				return true
+			end
+			--
 			if mods.alt or mods.ctrl or mods.shift or (mods.cmd and key ~= V) then
 				return true
 			end
@@ -225,6 +261,7 @@ function obj:bindModal(mod, key)
 	end
 
 	modal:bind("", "escape", exit_modal)
+	modal:bind(mod, key, exit_modal) -- easier
 
 	return self
 end

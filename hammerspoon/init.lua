@@ -684,7 +684,6 @@ end)
 hs.loadSpoon("KeystrokeShell")
 
 local spoon_bind_mods = { "shift", "option" }
-
 local ks = spoon.KeystrokeShell
 
 ks:bind(spoon_bind_mods, "g", {
@@ -719,9 +718,13 @@ ks:bind(spoon_bind_mods, "g", {
 			return string.format("s -p wolfram '%s'", esc(q))
 		end,
 	})
+	:bind(spoon_bind_mods, "s", {
+		command_string = function(q, esc)
+			return string.format("s -p grokipedia '%s'", esc(q))
+		end,
+	})
 
-ks:bindModal({ "option" }, "space")
-
+ks:bindModal({ "option" }, "space") -- uses all the key->action pairs from `:bind` instantiation
 --
 -- k = hs.hotkey.modal.new({ "option" }, "space")
 --
