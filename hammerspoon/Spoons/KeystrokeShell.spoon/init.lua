@@ -4,9 +4,38 @@ obj.__index = obj
 obj._binds = obj._binds or {}
 
 obj.name = "KeystrokeShell"
-obj.version = "4.0"
+obj.version = "5.0"
 
 local log = hs.logger.new("KeystrokeShell", "info")
+
+local function createMenuIcon(home_rel_path)
+	home_rel_path = home_rel_path or "/.hammerspoon/keyboard-xxl.png"
+	-- or "/.hammerspoon/hs-icon.png"
+	-- or "/.hammerspoon/small-mic.png"
+	local path_from_home = os.getenv("HOME") .. home_rel_path
+	local icon_dims = 20 --in px
+
+	local mb = nil
+
+	local function showIcon()
+		mb = hs.menubar.new()
+
+		local icon = hs.image.imageFromPath(path_from_home):setSize({ w = icon_dims, h = icon_dims })
+
+		mb:setIcon(icon, false) -- false as second allows any color icon to display
+	end
+
+	local function hideIcon() -- call on exit
+		if mb then
+			mb:delete()
+			mb = nil
+		end
+	end
+
+	return showIcon, hideIcon
+end
+
+local showIcon, hideIcon = createMenuIcon()
 
 local function escape_quotes(q)
 	return q:gsub('"', '\\"'):gsub("'", "'\\''")
@@ -24,10 +53,8 @@ local buf, tap, done = "", nil, nil
 
 local DO_AFTER_TIME = 3
 
--- factory function .. inner timer variable never exposed, nor ever needed externally
---
 -----@return fun(fn: function, delay: number?):nil, fun():nil
-local function createRunAfter()
+local function createTimer()
 	local timer = nil
 
 	---@type fun():nil
@@ -39,18 +66,17 @@ local function createRunAfter()
 	end
 
 	---@type fun(fn: function, delay: number?):nil
-	local _startTimer = function(fn, delay)
+	local _setTimer = function(fn, delay)
 		_stopTimer()
 		timer = hs.timer.doAfter(delay or DO_AFTER_TIME or 2, fn)
 	end
 
-	return _startTimer, _stopTimer
+	return _setTimer, _stopTimer
 end
 
-local runAfter, stopTimer = createRunAfter()
+local setTimer, stopTimer = createTimer()
 
--- -- timer variable never needed explicitly (inline factory)
--- local runAfter = (function()
+-- local setTimer = (function()
 -- 	local timer = nil
 -- 	return function(fn, delay)
 -- 		if timer then
@@ -71,8 +97,9 @@ local function exit_modal()
 end
 
 local function modal_exited()
+	hideIcon()
 	local msg = "exited modal mode"
-	hs.alert(msg, 0.2)
+	-- hs.alert(msg, 0.2)
 	print(msg)
 
 	modalMode = false
@@ -80,13 +107,14 @@ local function modal_exited()
 end
 
 local function modal_entered()
+	showIcon()
 	modalMode = true
 
 	local msg = "entered modal mode"
-	hs.alert(msg, 0.2)
+	-- hs.alert(msg, 0.2)
 	print(msg)
 
-	runAfter(exit_modal, 3)
+	setTimer(exit_modal, 3)
 end
 
 local function onDone(cb)
@@ -118,13 +146,14 @@ end
 
 local function armTimer()
 	-- create a timer for startCapture
-	runAfter(function()
+
+	setTimer(function()
 		onDone(exit_modal)
 	end)
 end
 
 local function startCapture(opts, mode)
-	hs.alert("startcapture", 0.3)
+	-- hs.alert("startcapture", 0.3)
 	print("startcapture")
 
 	modalMode = (mode == "modal") or false
@@ -136,12 +165,15 @@ local function startCapture(opts, mode)
 
 	-- onDone replaces buf clearing in the above commented out lines
 	onDone()
+	showIcon()
 
 	-- note: this HAS to be defined inside startCapture, otherwise 'done=nil' destroys this spoons functionality in future instances
 	done = function(ok, text)
+		hideIcon()
 		onDone(function()
-			hs.alert("startcapture ended", 0.3)
+			-- hs.alert("startcapture ended", 0.3)
 			print("startcapture ended")
+			-- hideIcon()
 		end)
 
 		-- stuff below depends on ok status

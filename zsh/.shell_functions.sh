@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+apps() {
+        open -a "$(ls /Applications | fzf)"
+}
+
 detect_bg_ghostty() {
         local line=$(ghostty +show-config 2>/dev/null | grep '^background =' || echo "")
         if [ -z "$line" ]; then
