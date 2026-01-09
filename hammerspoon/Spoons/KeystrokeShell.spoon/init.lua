@@ -4,9 +4,14 @@ obj.__index = obj
 obj._binds = obj._binds or {}
 
 obj.name = "KeystrokeShell"
-obj.version = "5.0"
+obj.version = "6.alpha"
 
 local log = hs.logger.new("KeystrokeShell", "info")
+
+local function alert(msg, duration)
+	hs.alert(msg, duration or 0.6)
+	print(msg)
+end
 
 local function createMenuIcon(home_rel_path)
 	home_rel_path = home_rel_path or "/.hammerspoon/keyboard-xxl.png"
@@ -17,14 +22,6 @@ local function createMenuIcon(home_rel_path)
 
 	local mb = nil
 
-	local function showIcon()
-		mb = hs.menubar.new()
-
-		local icon = hs.image.imageFromPath(path_from_home):setSize({ w = icon_dims, h = icon_dims })
-
-		mb:setIcon(icon, false) -- false as second allows any color icon to display
-	end
-
 	local function hideIcon() -- call on exit
 		if mb then
 			mb:delete()
@@ -32,6 +29,14 @@ local function createMenuIcon(home_rel_path)
 		end
 	end
 
+	local function showIcon()
+		hideIcon() --cleanup is crucial, otherwise many icons will linger
+		mb = hs.menubar.new()
+
+		local icon = hs.image.imageFromPath(path_from_home):setSize({ w = icon_dims, h = icon_dims })
+
+		mb:setIcon(icon, false) -- false allows any color icon to display
+	end
 	return showIcon, hideIcon
 end
 
@@ -76,17 +81,6 @@ end
 
 local setTimer, stopTimer = createTimer()
 
--- local setTimer = (function()
--- 	local timer = nil
--- 	return function(fn, delay)
--- 		if timer then
--- 			timer:stop()
--- 			timer = nil
--- 		end
--- 		timer = hs.timer.doAfter(delay or DO_AFTER_TIME, fn)
--- 	end
--- end)()
-
 local modal = nil
 local modalMode = false
 
@@ -98,9 +92,8 @@ end
 
 local function modal_exited()
 	hideIcon()
-	local msg = "exited modal mode"
-	-- hs.alert(msg, 0.2)
-	print(msg)
+
+	alert("exited modal mode", 0.2)
 
 	modalMode = false
 	buf = ""
@@ -108,11 +101,10 @@ end
 
 local function modal_entered()
 	showIcon()
+
 	modalMode = true
 
-	local msg = "entered modal mode"
-	-- hs.alert(msg, 0.2)
-	print(msg)
+	alert("entered modal mode", 0.2)
 
 	setTimer(exit_modal, 3)
 end
@@ -123,99 +115,89 @@ local function onDone(cb)
 	-- 	timer = nil
 	-- end
 
-	stopTimer()
+	-- stopTimer()
+
+	-- previously wrapped this in delay-less setTimer without 'done==nil'; this is better
+	if modalMode and done == nil then
+		exit_modal()
+	else
+		hideIcon()
+	end
 
 	if tap then
 		tap:stop()
 		tap = nil
 	end
 
-	-- in modalMode 'modal:exited' hook handles the buf clearing
 	-- if not modalMode then
 	-- 	buf = ""
 	-- end
 
 	buf = ""
-
 	done = nil
-
 	if cb then
 		cb()
 	end
 end
 
-local function armTimer()
-	-- create a timer for startCapture
-
-	setTimer(function()
-		onDone(exit_modal)
-	end)
-end
+-- local function armTimer()
+-- 	setTimer(onDone)
+--
+-- 	-- hs.alert("timer armed")
+-- 	--
+-- 	-- setTimer(function()
+-- 	-- 	onDone()
+-- 	-- 	hs.alert("timer done")
+-- 	-- end)
+-- end
 
 local function startCapture(opts, mode)
-	-- hs.alert("startcapture", 0.3)
-	print("startcapture")
+	alert("startcapture", 0.3)
 
 	modalMode = (mode == "modal") or false
 
-	-- buf = ""
 	-- if not (modalMode and modal) then
 	-- 	buf = ""
 	-- end
 
-	-- onDone replaces buf clearing in the above commented out lines
-	onDone()
+	buf = ""
 	showIcon()
 
 	-- note: this HAS to be defined inside startCapture, otherwise 'done=nil' destroys this spoons functionality in future instances
 	done = function(ok, text)
-		hideIcon()
-		onDone(function()
-			-- hs.alert("startcapture ended", 0.3)
-			print("startcapture ended")
-			-- hideIcon()
-		end)
+		onDone()
 
-		-- stuff below depends on ok status
-		if not ok then
+		if ok then
+			local cmd = (opts.command_string or function(q, _esc)
+				return "echo " .. q
+			end)(text, escape_quotes)
+
+			log.f("running: %s", cmd)
+			local out, st = hs.execute(cmd .. " 2>&1", true)
+			if not st then
+				hs.alert("❌ " .. (out or "unknown error"), 2)
+			end
+		else
+			exit_modal()
 			return
-		end
-		local cmd = (opts.command_string or function(q, _esc)
-			return "echo " .. q
-		end)(text, escape_quotes)
-
-		log.f("running: %s", cmd)
-		local out, st = hs.execute(cmd .. " 2>&1", true)
-		if not st then
-			hs.alert("❌ " .. (out or "unknown error"), 2)
 		end
 	end
 
-	armTimer()
+	setTimer(onDone)
 
 	tap = hs.eventtap
 		.new({ hs.eventtap.event.types.keyDown }, function(evt)
-			armTimer()
+			setTimer(onDone)
 
 			local key = evt:getKeyCode()
 			local mods = evt:getFlags()
 
 			-- if next(mods) then  --- short syntax to check if any mods was pressed
-			--
 
-			if mods.alt and (key == SPACE) and modalMode then
-				exit_modal()
-				done(nil) -- tell startCapture to finish
-				return true
-			end
-			--
-			if mods.alt or mods.ctrl or mods.shift or (mods.cmd and key ~= V) then
-				return true
-			end
-
-			if mods.cmd and key == V then -- ⌘V
-				local clip = hs.pasteboard.getContents() or ""
-				buf = buf .. clip
+			-- NOTE: placing terminal keys upfront before any filtering
+			if key == ESC or (modalMode and mods.alt and (key == SPACE)) then
+				done(nil)
+				alert("ESC keystrokeshell", 0.3)
 				return true
 			elseif key == RET then
 				-- nothing typed → use clipboard
@@ -226,15 +208,21 @@ local function startCapture(opts, mode)
 				done(true, buf)
 
 				if modalMode and (done == nil) then
-					armTimer()
+					setTimer(onDone)
+					-- setTimer(exit_modal)
 				end
 
 				return true
-			-- elseif key == ESC or key == CAPS then
-			elseif key == ESC then
-				done(nil)
-				-- hs.alert("startcapture cancelled", 0.3)
-				print("cancelled keystrokeshell")
+			end
+
+			-- NOTE: not sure i need this
+			-- if mods.alt or mods.ctrl or mods.shift or (mods.cmd and key ~= V) then
+			-- 	return true
+			-- end
+
+			if mods.cmd and key == V then -- ⌘V
+				local clip = hs.pasteboard.getContents() or ""
+				buf = buf .. clip
 				return true
 			elseif key == DEL then
 				buf = #buf > 0 and buf:sub(1, -2) or ""
