@@ -4,15 +4,17 @@ obj.__index = obj
 obj._binds = obj._binds or {}
 
 obj.name = "KeystrokeShell"
-obj.version = "6.0"
+obj.version = "7.0"
 
 local log = hs.logger.new("KeystrokeShell", "info")
 
+-- Useful for debugging
 local function alert(msg, duration)
 	hs.alert(msg, duration or 0.6)
 	print(msg)
 end
 
+-- Useful for toggling custom spoon .. might move to hs/init.lua
 local function createMenuIcon(opt)
 	opt = opt or {}
 
@@ -21,6 +23,7 @@ local function createMenuIcon(opt)
 
 	local path = os.getenv("HOME") .. (opt.home_rel_path or fallback_rel_path)
 
+	---@type hs.menubar|nil
 	local mbar = nil
 
 	local function hideIcon() -- call on exit
@@ -32,43 +35,24 @@ local function createMenuIcon(opt)
 
 	local function showIcon()
 		hideIcon() --cleanup is crucial, otherwise many icons will linger
+
+		---@type hs.menubar|nil
 		mbar = hs.menubar.new()
 
-		local icon = hs.image.imageFromPath(path):setSize({ w = size, h = size })
+		---@type hs.image|nil
+		local icon = hs.image.imageFromPath(path)
 
-		mbar:setIcon(icon, false) -- false allows any color icon to display
+		if mbar and icon then
+			mbar:setIcon(icon:setSize({ w = size, h = size }), false) -- false allows any color icon to display
+		end
 	end
 	return showIcon, hideIcon
 end
 
 local showIcon, hideIcon = createMenuIcon()
 
-local function escape_quotes(q)
-	return q:gsub('"', '\\"'):gsub("'", "'\\''")
-end
-
--- keys
-local CAPS = 0x39 -- alternate escape key
-local ESC = hs.keycodes.map["escape"]
-local RET = hs.keycodes.map["return"]
-local DEL = hs.keycodes.map["delete"]
-local V = hs.keycodes.map["v"]
-local SPACE = hs.keycodes.map["space"]
-
-local buf, tap, done = "", nil, nil
-
-local function stopCapture()
-	if tap then
-		tap:stop()
-		tap = nil
-	end
-
-	buf = ""
-end
-
+-- Useful for handling/disposing of 'doAfter' timers; in this spoon just need a single timer instance
 local DO_AFTER_TIME = 3
-
------@return fun(fn: function, delay: number?):nil, fun():nil
 local function createTimer()
 	local timer = nil
 
@@ -96,7 +80,23 @@ end
 
 local setTimer, stopTimer = createTimer()
 
-local modal = nil
+-- When startCapture runs buf is the text input formed from keyboard 'tap's
+local buf = ""
+
+---@type hs.eventtap|nil
+local tap = nil
+
+local function stopCapture()
+	if tap then
+		tap:stop()
+		tap = nil
+	end
+
+	buf = ""
+end
+
+---@type hs.hotkey.modal
+local modal
 local modalMode = false
 
 local function exit_modal()
@@ -118,99 +118,118 @@ local function modal_entered()
 
 	modalMode = true
 	showIcon()
-	setTimer(exit_modal, 3)
+	setTimer(exit_modal, 4)
 end
 
-local function onDone(ok)
-	-- stopTimer()
+---@type fun(ok:true|nil,text:string?) | nil
+local done = nil
+-- note: onDone called without parameters basically behaves like done(nil) from ESC branch ... below
+local function onDone(ok, text, command_str)
+	ok = ok or nil
+	text = text or ""
+	command_str = command_str
+		or function(q, _esc)
+			alert("❌ supply command_string in ~/.hammerspoon/init.lua", 5)
+			return "echo " .. q
+		end
 
+	-- stopTimer()
 	stopCapture()
 
 	if not modalMode then
 		hideIcon()
-	elseif modalMode and (done == nil or ok == nil) then
-		exit_modal() -- this also hide's icon
+	elseif modalMode and (ok == nil or done == nil) then
+		exit_modal()
+	end
+
+	if ok and text then
+		local function escape_quotes(q)
+			return q:gsub('"', '\\"'):gsub("'", "'\\''")
+		end
+
+		local cmd = command_str(text, escape_quotes)
+
+		log.f("running: %s", cmd)
+		local out, st = hs.execute(cmd .. " 2>&1", true)
+		if not st then
+			hs.alert("❌ " .. (out or "unknown error"), 2)
+		end
 	end
 
 	done = nil
 end
+
+-- keys
+local CAPS = 0x39 -- alternate escape key
+local ESC = hs.keycodes.map["escape"]
+local RET = hs.keycodes.map["return"]
+local DEL = hs.keycodes.map["delete"]
+local V = hs.keycodes.map["v"]
+local SPACE = hs.keycodes.map["space"]
 
 local function startCapture(opts)
 	alert("startcapture", 0.3)
 
 	stopCapture()
 	showIcon()
+	setTimer(onDone)
 
 	-- note: this HAS to be defined inside startCapture, otherwise 'done=nil' destroys this spoons functionality in future instances
 	done = function(ok, text)
-		onDone(ok)
-
-		if ok then
-			local cmd = (opts.command_string or function(q, _esc)
-				return "echo " .. q
-			end)(text, escape_quotes)
-
-			log.f("running: %s", cmd)
-			local out, st = hs.execute(cmd .. " 2>&1", true)
-			if not st then
-				hs.alert("❌ " .. (out or "unknown error"), 2)
-			end
-		end
+		onDone(ok, text, opts.command_string)
 	end
 
-	setTimer(onDone)
+	tap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(evt)
+		setTimer(onDone)
 
-	tap = hs.eventtap
-		.new({ hs.eventtap.event.types.keyDown }, function(evt)
-			setTimer(onDone)
+		local key = evt:getKeyCode()
+		local mods = evt:getFlags()
 
-			local key = evt:getKeyCode()
-			local mods = evt:getFlags()
-
-			-- NOTE: placing terminal keys upfront before any filtering
-			if key == ESC or (mods.alt and (key == SPACE)) then -- could do `modalMode to second case .. but nah
-				done(nil)
-				alert("ESC keystrokeshell", 0.3)
-				return true
-			elseif key == RET then
-				-- nothing typed → use clipboard
-				if buf == "" then
-					buf = hs.pasteboard.getContents() or ""
-				end
-
-				done(true, buf)
-
-				if modalMode and (done == nil) then
-					setTimer(onDone)
-				end
-
-				return true
+		-- NOTE: placing terminal keys upfront before any filtering
+		if key == ESC or (mods.alt and (key == SPACE)) then -- could do `modalMode to second case .. but nah
+			done(nil)
+			alert("ESC keystrokeshell", 0.3)
+			return true
+		elseif key == RET then
+			-- nothing typed → use clipboard
+			if buf == "" then
+				buf = hs.pasteboard.getContents() or ""
 			end
 
-			-- NOTE: not sure i need this
-			-- if mods.alt or mods.ctrl or mods.shift or (mods.cmd and key ~= V) then
-			-- 	return true
-			-- end
+			done(true, buf)
 
-			if mods.cmd and key == V then -- ⌘V
-				local clip = hs.pasteboard.getContents() or ""
-				buf = buf .. clip
-				return true
-			elseif key == DEL then
-				buf = #buf > 0 and buf:sub(1, -2) or ""
-				return true
+			if modalMode and (done == nil) then
+				setTimer(onDone)
 			end
 
-			-- ordinary printable key
-			local chars = evt:getCharacters()
-			if chars and #chars > 0 then -- printable key
-				buf = buf .. chars
-				return true
-			end
+			return true
+		end
 
-			return false
-		end)
-		:start()
+		-- NOTE: not sure i need this
+		-- if mods.alt or mods.ctrl or mods.shift or (mods.cmd and key ~= V) then
+		-- 	return true
+		-- end
+
+		if mods.cmd and key == V then -- ⌘V
+			local clip = hs.pasteboard.getContents() or ""
+			buf = buf .. clip
+			return true
+		elseif key == DEL then
+			buf = #buf > 0 and buf:sub(1, -2) or ""
+			return true
+		end
+
+		-- ordinary printable key
+		local chars = evt:getCharacters()
+		if chars and #chars > 0 then -- printable key
+			buf = buf .. chars
+			return true
+		end
+
+		return false
+	end)
+
+	tap:start()
 end
 
 ------------------------------------------------------------
