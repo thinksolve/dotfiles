@@ -4,7 +4,7 @@ obj.__index = obj
 obj._binds = obj._binds or {}
 
 obj.name = "KeystrokeShell"
-obj.version = "8.alpha"
+obj.version = "8.0"
 
 local log = hs.logger.new("KeystrokeShell", "info")
 
@@ -100,10 +100,7 @@ local done = nil
 
 ---@type fun(opt?: {hide_icon: boolean}): nil
 local function stopCapture(opt)
-	local hide_icon = (opt and opt.hide_icon) or not modalMode
-	if hide_icon then
-		hideIcon()
-	end
+	stopTimer()
 
 	buf = ""
 
@@ -112,14 +109,9 @@ local function stopCapture(opt)
 		tap = nil
 	end
 
-	stopTimer()
-
-	-- hideIcon()
-
-	-- NOTE: this causes infinite recursion if stopCapture called unsafely in modal_exited hook
-	-- if opt.exitModal then
-	-- 	exit_modal()
-	-- end
+	if (opt and opt.hide_icon) or not modalMode then
+		hideIcon()
+	end
 end
 
 local function exit_modal()
@@ -130,8 +122,6 @@ end
 
 local function modal_exited()
 	alert("exited modal mode", 0.2)
-
-	-- stopCapture({ exitModal = true }) --recursion: called modal_exit which would call this hook, and then this stopCapture again
 
 	-- stopCapture({ hide_icon = true })
 	modalMode = false
@@ -147,7 +137,8 @@ local function modal_entered()
 end
 
 -- note: onDone called without parameters basically behaves like done(nil) from ESC branch ... below
-local onDone = function(ok, text, command_str)
+local onDone
+onDone = function(ok, text, command_str)
 	ok = ok or nil
 	text = text or ""
 	command_str = command_str
@@ -163,6 +154,13 @@ local onDone = function(ok, text, command_str)
 	-- would call exit_modal (via stopCapture) ...
 	if modalMode and (ok == nil or done == nil) then
 		exit_modal()
+	end
+
+	--WIP: calling onDone without parameters effectively aborts modal mode
+	-- ... desirable after idle timeout
+	--  'modalMode and ok' here translates to the (modal mode) RET branch below
+	if modalMode and ok then
+		setTimer(onDone)
 	end
 
 	-- run command logic
@@ -193,6 +191,7 @@ local function startCapture(opts)
 	-- note: this HAS to be defined inside startCapture, otherwise 'done=nil' destroys this spoons functionality in future instances
 	done = function(ok, text)
 		onDone(ok, text, opts.command_string)
+
 		done = nil -- makes more sense here than in onDone
 	end
 
@@ -202,24 +201,21 @@ local function startCapture(opts)
 		local key = evt:getKeyCode()
 		local mods = evt:getFlags()
 
-		-- NOTE: placing terminal keys upfront before any filtering
-		if key == ESC or (mods.alt and (key == SPACE)) then -- could do `modalMode to second case .. but nah
+		local ACCEPT = key == RET
+		local ABORT = key == ESC or (mods.alt and (key == SPACE))
+
+		if ABORT then
 			done(nil)
 
 			alert("ESC keystrokeshell", 0.3)
 			return true
-		elseif key == RET then
-			hs.alert("yooooo")
+		elseif ACCEPT then
 			-- nothing typed → use clipboard
 			if buf == "" then
 				buf = hs.pasteboard.getContents() or ""
 			end
 
 			done(true, buf)
-
-			if modalMode and (done == nil) then
-				setTimer(onDone)
-			end
 
 			return true
 		end
@@ -265,35 +261,66 @@ function obj:bind(mods, key, opts)
 	return self
 end
 
---NOTE: rec guards are very useful for debugging infinite recusion in hooks
+--NOTE: rec guards are very useful for debugging recursion in hooks
 -- e.g., f called in modal:exited() hook, but f contains modal:exit()
 -- lifecycle function ... this would cause infinite recursion
-local function create_recursion_guard(name)
+-- NOTE2: this works for `re-entrance` i.e. same stack recursive calls (RCs)
+-- like:
+--    `f() if true then f() end end`
+-- not `re-scheduling` i.e. cross-stack RCs like:
+--    `f() doAfter(3,f) end`
+
+local function create_recursion_guard()
 	local in_hook = false
-	return function(potentially_problematic_fn)
+	return function(fn, fn_name)
 		if in_hook then
-			log.e(string.format("⚠️  Recursion prevented in %s - check your logic!", name or "hook"))
+			log.e(string.format("⚠️  Recursion prevented in %s - check your logic!", fn_name or "hook"))
 			return
 		end
 
 		in_hook = true
-		potentially_problematic_fn()
+		fn()
 		in_hook = false
 	end
 end
 
-local modal_exited_guard = create_recursion_guard("modal_exited")
-local modal_entered_guard = create_recursion_guard("modal_entered")
+local function create_limiter(max_calls)
+	local count = 0
+
+	return function(fn, name)
+		name = name or "anonymous"
+
+		count = count + 1
+		if count > max_calls then
+			log.e(string.format("⚠️ %s exceeded %d calls, resetting", name, max_calls))
+			count = 0
+			return
+		end
+
+		fn()
+		count = 0
+	end
+end
 
 function obj:bindModal(mod, key)
 	modal = hs.hotkey.modal.new(mod, key)
 
-	function modal:entered()
-		modal_exited_guard(modal_entered)
-	end
+	-- local modal_exited_guard = create_recursion_guard()
+	-- local modal_entered_guard = create_recursion_guard()
+	--
+
+	local limit_exited = create_limiter(1)
+	local limit_entered = create_limiter(1)
 
 	function modal:exited()
-		modal_entered_guard(modal_exited)
+		-- modal_exited_guard(modal_exited, "modal_exited")
+		limit_exited(modal_exited, "modal_exited")
+	end
+
+	function modal:entered()
+		-- modal_entered_guard(modal_entered, "modal_entered")
+
+		limit_entered(modal_entered, "modal_entered")
 	end
 
 	-- bind every registered letter
