@@ -11,6 +11,16 @@
   home.username = "brightowl";
   home.homeDirectory = "/Users/brightowl";
   home.stateVersion = "23.11";
+
+  #TEST: adding this since im now letting nix manage it rather than placing this in my own zshenv .. annoying
+  home.sessionPath = [
+    "$HOME/.local/state/nix/profiles/home-manager/bin"
+    "/run/current-system/sw/bin"
+    "$HOME/.nix-profile/bin"
+    "$HOME/.local/bin"
+    "$HOME/.config/emacs/bin"
+    "/opt/homebrew/bin"
+  ];
   # home.sessionPath = [
   #   "/run/current-system/sw/bin"
   #   "$HOME/.nix-profile/bin"
@@ -98,22 +108,6 @@
           (lib.filter (s: s != ""))
           (map lib.trim)
         ];
-      sections =
-        lib.pipe
-          [
-            "${config.home.homeDirectory}/.dotfiles/zsh/constants.zsh"
-            "${config.home.homeDirectory}/.dotfiles/zsh/.shell_functions.sh"
-            "${config.home.homeDirectory}/.dotfiles/zsh/aliases.zsh"
-          ]
-          [
-            (lib.imap1 (
-              i: path: ''
-                # Section ${toString i} sourcing ${path}
-                ${builtins.readFile path}
-              ''
-            ))
-            (lib.concatStringsSep "\n\n")
-          ];
 
     in
     {
@@ -123,7 +117,7 @@
       ".shell_functions.sh".source = dotfiles "/zsh/.shell_functions.sh";
       ".tmux.conf".source = dotfiles "/tmux/.tmux.conf";
       ".zsh_plugins.txt".source = dotfiles "/zsh/.zsh_plugins.txt";
-      ".zshrc".source = dotfiles "/zsh/.zshrc";
+      # ".zshrc".source = dotfiles "/zsh/.zshrc"; #TEST: seeing if i want nix to manage zshrc
       "/Library/Application Support/com.mitchellh.ghostty/config".source = dotfiles "/ghostty/config";
       # ".doom.d/init.el".source = dotfiles "/doom/init.el";
       # ".doom.d/config.el".source = dotfiles "/doom/config.el";
@@ -244,4 +238,111 @@
   #   {
   #   };
   #
+
+  ## ---- TEST: WIP ------------------
+  programs.zsh = {
+    enable = true;
+    # Disable HM's default initExtra (history, compinit, etc.)
+    enableCompletion = false; # Don't add compinit
+    history = {
+      # Disable or match your preferences
+      size = 10000;
+      save = 10000;
+      path = "${config.home.homeDirectory}/.zsh_history";
+      # ... other options to match your old setup
+    };
+
+    # Or completely disable HM's default init
+    initExtraFirst = ""; # Empty, don't prepend anything
+    initContent = ''
+      export ZSH_CONFIG="${config.home.homeDirectory}/.dotfiles/zsh"
+      export ANTIDOTE_PATH="${pkgs.antidote}/share/antidote/antidote.zsh"
+
+      source $ZSH_CONFIG/constants.zsh
+      source $ZSH_CONFIG/.shell_functions.sh
+      source $ZSH_CONFIG/aliases.zsh
+      source $ZSH_CONFIG/bindkeys.zsh
+      source $ZSH_CONFIG/preferences.zsh
+      source $ZSH_CONFIG/terminal_styling.zsh
+      source $ZSH_CONFIG/fast_compinit.zsh
+      source $ZSH_CONFIG/after_compinit.zsh
+
+      _plugins_zsh=$HOME/.zsh_plugins.zsh
+      _plugins_txt=$HOME/.zsh_plugins.txt
+
+      if [[ -f $_plugins_txt && ( ! -f $_plugins_zsh || $_plugins_txt -nt $_plugins_zsh ) ]]; then
+          echo 'sourcing plugins txt file'
+          source "${pkgs.antidote}/share/antidote/antidote.zsh" #this written by nix at build time
+          antidote load
+      elif [[ -f $_plugins_zsh ]]; then
+          source $_plugins_zsh
+      fi
+
+      do_exit_cleanup() {
+          fzd.cleanup
+      }
+
+      trap do_exit_cleanup EXIT
+    '';
+
+    #readFIle way requires these files to be moved within the flake tree ~/.dotfiles/nix/darwin/
+    # initExtra =
+    #   let
+    #     zsh_dir = "${config.home.homeDirectory}/.dotfiles/zsh/";
+    #
+    #     #creates sections in flattend zshrc file
+    #     sections =
+    #       lib.pipe
+    #         [
+    #           "${zsh_dir}/constants.zsh"
+    #           "${zsh_dir}/.shell_functions.sh"
+    #           "${zsh_dir}/aliases.zsh"
+    #           "${zsh_dir}/bindkeys.zsh"
+    #           "${zsh_dir}/preferences.zsh"
+    #           "${zsh_dir}/terminal_styling.zsh"
+    #           "${zsh_dir}/fast_compinit.zsh"
+    #           "${zsh_dir}/after_compinit.zsh" # carapace, fbat
+    #
+    #         ] # files array
+    #         [
+    #           (lib.imap1 (
+    #             i: file: ''
+    #               # Section ${toString i} sourcing ${file}
+    #               ${builtins.readFile file}
+    #             ''
+    #           ))
+    #           (lib.concatStringsSep "\n\n")
+    #         ];
+    #   in
+    #   ''
+    #     export ZSH_CONFIG="${zsh_dir}"
+    #
+    #     ${sections}
+    #
+    #     _plugins_zsh=$HOME/.zsh_plugins.zsh
+    #     _plugins_txt=$HOME/.zsh_plugins.txt
+    #
+    #     if [[ -f $_plugins_txt && ( ! -f $_plugins_zsh || $_plugins_txt -nt $_plugins_zsh ) ]]; then
+    #         # txt is newer (or static file missing) → regenerate
+    #         echo 'sourcing plugins txt file'
+    #
+    #         # source "$NIX_CURRENT_USER/share/antidote/antidote.zsh"
+    #         source "${pkgs.antidote}/share/antidote/antidote.zsh"
+    #         antidote load
+    #     elif [[ -f $_plugins_zsh ]]; then
+    #         source $_plugins_zsh
+    #     fi
+    #
+    #     # eval "$(direnv hook zsh)" ... #was replaced by 'dev' in shell_functions, but no longer using either
+    #
+    #     # export FZD_MAXDEPTH=5
+    #     do_exit_cleanup() {
+    #         fzd.cleanup
+    #         # echo "Shell exit: Cleanups complete" >&2
+    #     }
+    #
+    #     trap do_exit_cleanup EXIT
+    #   '';
+
+  };
 }
