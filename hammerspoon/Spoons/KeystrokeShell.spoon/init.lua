@@ -1,10 +1,42 @@
+------ TYPES SECTION
+---@alias SetTimer fun(fn: function, delay: number?):nil
+---@alias StopTimer fun():nil
+---@alias Tap hs.eventtap|nil
+---@alias Modal hs.hotkey.modal
+---@alias StopCapture fun(opt?: {hide_icon: boolean}): nil
+---@alias EscapeQuotes fun(q:string):string?
+---@alias CommandString  fun(q:string, esc?:EscapeQuotes):string
+---@alias OptsStartCapture {command_string: CommandString}
+---
+
+---@alias Done (fun(ok?:true, text?:string):nil)|nil
+
+---`ok == true`  → success, use `text`
+---`ok == nil` → abort/cancelled (equivalent to supplying no arguments)
+---@alias OnDone (fun(ok?:true, text?:string, command_str?:CommandString):nil)
+---
+
+--- TESTING
+-- ---@class StrictOpts
+-- ---@field ok true | 'abort'
+-- ---@field text? string
+--
+-- ---@type fun(opts:StrictOpts):nil
+-- local function done(opts) end
+--
+-- done({ ok = true, text = "string" })
+-- done({ ok = "abort" })
+--- TESTING
+
+------ TYPES SECTION
+
 local obj = {}
 obj.__index = obj
 
 obj._binds = obj._binds or {}
 
 obj.name = "KeystrokeShell"
-obj.version = "8.0"
+obj.version = "9.0.alpha"
 
 local log = hs.logger.new("KeystrokeShell", "info")
 
@@ -18,7 +50,7 @@ local SPACE = hs.keycodes.map["space"]
 
 -- Useful for debugging
 local function alert(msg, duration)
-	hs.alert(msg, duration or 2)
+	-- hs.alert(msg, duration or 2)
 	print(msg)
 end
 
@@ -61,18 +93,23 @@ local showIcon, hideIcon = createMenuIcon()
 
 -- Useful for handling/disposing of 'doAfter' timers; in this spoon just need a single timer instance
 local DO_AFTER_TIME = 3
+
+---@type SetTimer, StopTimer
+local setTimer, stopTimer = nil, nil
+
 local function createTimer()
 	local timer = nil
 
-	---@type fun():nil
-	local _stopTimer = function()
+	---@type StopTimer
+	local function _stopTimer()
+		-- local _stopTimer = function()
 		if timer then
 			timer:stop()
 			timer = nil
 		end
 	end
 
-	---@type fun(fn: function, delay: number?):nil
+	---@type SetTimer
 	local _setTimer = function(fn, delay)
 		_stopTimer()
 
@@ -82,23 +119,23 @@ local function createTimer()
 	return _setTimer, _stopTimer
 end
 
-local setTimer, stopTimer = createTimer()
+setTimer, stopTimer = createTimer()
 
 local buf = ""
 
----@type hs.eventtap|nil
+---@type Tap
 local tap = nil
 
----@type hs.hotkey.modal
+---@type Modal
 local modal
 local modalMode = false
 
----@type fun(ok:true|nil, text:string?)|nil
+---@type Done
 local done = nil
 
 -- When startCapture runs buf is the text input formed from keyboard 'tap's
 
----@type fun(opt?: {hide_icon: boolean}): nil
+---@type StopCapture
 local function stopCapture(opt)
 	stopTimer()
 
@@ -136,11 +173,13 @@ local function modal_entered()
 	setTimer(exit_modal, 4)
 end
 
--- note: onDone called without parameters basically behaves like done(nil) from ESC branch ... below
+---@type OnDone
 local onDone
+
 onDone = function(ok, text, command_str)
 	ok = ok or nil
 	text = text or ""
+
 	command_str = command_str
 		or function(q, _esc)
 			alert("❌ supply command_string in ~/.hammerspoon/init.lua", 5)
@@ -165,8 +204,10 @@ onDone = function(ok, text, command_str)
 
 	-- run command logic
 	if ok and text then
+		---@type EscapeQuotes
 		local function escape_quotes(q)
-			return q:gsub('"', '\\"'):gsub("'", "'\\''")
+			local qq = q:gsub('"', '\\"'):gsub("'", "'\\''")
+			return qq
 		end
 
 		local cmd = command_str(text, escape_quotes)
@@ -179,6 +220,7 @@ onDone = function(ok, text, command_str)
 	end
 end
 
+---@param opts OptsStartCapture
 local function startCapture(opts)
 	alert("startcapture", 0.3)
 
@@ -192,7 +234,7 @@ local function startCapture(opts)
 	done = function(ok, text)
 		onDone(ok, text, opts.command_string)
 
-		done = nil -- makes more sense here than in onDone
+		done = nil
 	end
 
 	tap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(evt)
@@ -247,6 +289,94 @@ local function startCapture(opts)
 	tap:start()
 end
 
+---NOTE: wip
+function create_capture()
+	local _buf, _tap, _done = "", nil, nil
+
+	---@type StopCapture
+	local function stop_capture(opt)
+		-- stopTimer()
+
+		_buf = ""
+
+		if _tap then
+			_tap:stop()
+			_tap = nil
+		end
+
+		if (opt and opt.hide_icon) or not modalMode then
+			hideIcon()
+		end
+	end
+
+	local function start_capture(opts)
+		alert("start_capture", 0.3)
+
+		stop_capture()
+
+		showIcon()
+
+		setTimer(onDone)
+
+		-- note: this HAS to be defined inside startCapture, otherwise 'done=nil' destroys this spoons functionality in future instances
+		_done = function(ok, text)
+			onDone(ok, text, opts.command_string)
+
+			_done = nil -- makes more sense here than in onDone
+		end
+
+		_tap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(evt)
+			setTimer(onDone) --resets timer on each keypress
+
+			local key = evt:getKeyCode()
+			local mods = evt:getFlags()
+
+			local ACCEPT = key == RET
+			local ABORT = key == ESC or (mods.alt and (key == SPACE))
+
+			if ABORT then
+				_done(nil)
+
+				alert("_ESC keystrokeshell", 0.3)
+				return true
+			elseif ACCEPT then
+				-- nothing typed → use clipboard
+				if _buf == "" then
+					_buf = hs.pasteboard.getContents() or ""
+				end
+
+				_done(true, _buf)
+
+				return true
+			end
+
+			if mods.cmd and key == V then -- ⌘V
+				local clip = hs.pasteboard.getContents() or ""
+				_buf = _buf .. clip
+				return true
+			elseif key == DEL then
+				_buf = #_buf > 0 and _buf:sub(1, -2) or ""
+				return true
+			end
+
+			-- ordinary printable key
+			local chars = evt:getCharacters()
+			if chars and #chars > 0 then -- printable key
+				_buf = _buf .. chars
+				return true
+			end
+
+			return false
+		end)
+
+		_tap:start()
+	end
+
+	return start_capture, stop_capture
+end
+
+---NOTE: wip
+
 ------------------------------------------------------------
 -- public: bind a hot-key
 function obj:bind(mods, key, opts)
@@ -284,7 +414,7 @@ local function create_recursion_guard()
 	end
 end
 
-local function create_limiter(max_calls)
+local function create_limiter_per_fn(max_calls)
 	local count = 0
 
 	return function(fn, name)
@@ -309,8 +439,8 @@ function obj:bindModal(mod, key)
 	-- local modal_entered_guard = create_recursion_guard()
 	--
 
-	local limit_exited = create_limiter(1)
-	local limit_entered = create_limiter(1)
+	local limit_exited = create_limiter_per_fn(1)
+	local limit_entered = create_limiter_per_fn(1)
 
 	function modal:exited()
 		-- modal_exited_guard(modal_exited, "modal_exited")

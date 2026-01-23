@@ -740,3 +740,14 @@ ks:bindModal({ "option" }, "space") -- uses all the key->action pairs from `:bin
 -- k:bind({}, "K", "Pressed K", function()
 -- 	print("let the record show that K was pressed")
 -- end)
+
+-- TEST: ASSERTS
+-- hs.hotkey.bind({ "cmd" }, "1", function()
+-- 	assert(false, "Hotkey 1 failed!")
+-- 	print("This never runs")
+-- end)
+--
+-- hs.hotkey.bind({ "cmd" }, "2", function()
+-- 	print("Hotkey 2 works fine")
+-- end)
+-- TEST: ASSERTS

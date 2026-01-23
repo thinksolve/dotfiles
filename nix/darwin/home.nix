@@ -22,6 +22,15 @@
   #     [[ -f $HOME/.zshrc ]] && zcompile -Uz $HOME/.zshrc
   #   '
   # '';
+
+  # # #TEST:
+  # programs.direnv = {
+  #   enable = true;
+  #   enableZshIntegration = true;
+  #   nix-direnv.enable = true;
+  # };
+  # # #TEST:
+
   programs.git = {
     enable = true;
     settings = {
@@ -39,6 +48,7 @@
     let
       dotfiles_dir = "${config.home.homeDirectory}/.dotfiles";
       dotfiles = path: config.lib.file.mkOutOfStoreSymlink "${dotfiles_dir}/${path}";
+      from_home = path: config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${path}";
 
       # Makes bearable symlinking many (but not all) items with identical basenames (generally relative paths!).
       # e.g. "${symPrefix}/${basename}".source = config.lib.file.mkOutOfStoreSymlink "${targetPrefix}/${basename}"
@@ -88,9 +98,26 @@
           (lib.filter (s: s != ""))
           (map lib.trim)
         ];
+      sections =
+        lib.pipe
+          [
+            "${config.home.homeDirectory}/.dotfiles/zsh/constants.zsh"
+            "${config.home.homeDirectory}/.dotfiles/zsh/.shell_functions.sh"
+            "${config.home.homeDirectory}/.dotfiles/zsh/aliases.zsh"
+          ]
+          [
+            (lib.imap1 (
+              i: path: ''
+                # Section ${toString i} sourcing ${path}
+                ${builtins.readFile path}
+              ''
+            ))
+            (lib.concatStringsSep "\n\n")
+          ];
 
     in
     {
+      # ".local/bin/teal-language-server".source = from_home "/.luarocks/bin/teal-language-server"; #might remove along with ~/teal-language-server/ and ~/.dotfiles/dev/lua
       ".config/nix-darwin".source = dotfiles "/nix/darwin";
       ".hammerspoon".source = dotfiles "/hammerspoon";
       ".shell_functions.sh".source = dotfiles "/zsh/.shell_functions.sh";
@@ -162,6 +189,8 @@
       dev_tools = [
         pkgs.gh
         pkgs.git
+        # pkgs.lua54Packages.luarocks
+        # pkgs.nodejs_22 # when trying to open tl files in nvim its complaining i dont have node
         # pkgs.lua5_4
         # pkgs.lua54Packages.luasocket
         pkgs.htmlq

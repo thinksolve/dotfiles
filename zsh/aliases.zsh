@@ -1,3 +1,4 @@
+# alias dev-lua="cd ~/.dotfiles/dev/lua"
 alias dotfiles="cd ~/.dotfiles/"
 alias rop="recent"
 alias wvim="$RECENT_NVIM"

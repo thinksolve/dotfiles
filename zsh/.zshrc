@@ -27,6 +27,7 @@ elif [[ -f $_plugins_zsh ]]; then
     source $_plugins_zsh
 fi
 
+# eval "$(direnv hook zsh)" ... 'dev' function better now
 
 # export FZD_MAXDEPTH=5
 do_exit_cleanup() {

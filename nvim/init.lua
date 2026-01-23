@@ -959,6 +959,7 @@ require("lazy").setup({
 			},
 		},
 	},
+	-- LSP Plugins
 	{ "Bilal2453/luvit-meta", lazy = true },
 	{
 		-- Main LSP Configuration
@@ -1098,18 +1099,19 @@ require("lazy").setup({
 				astro = {},
 				svelte = {},
 				lua_ls = {
+					-- mason = false, -- Use the Nix-provided binary instead of Mason
+					-- your existing settings
 					-- cmd = {...},
 					-- filetypes = { ...},
 					-- capabilities = {},
+					--- moved ALL hammersppon config to ~/.hammerspoon/.luarc.json (?)
 					settings = {
 						Lua = {
-							completion = {
-								callSnippet = "Replace",
-							},
-							-- moved ALL hammersppon config to ~/.hammerspoon/.luarc.json
+							completion = { callSnippet = "Replace" },
 						},
 					},
 				},
+				-- teal_ls = {},
 			}
 
 			-- Ensure the servers and tools above are installed

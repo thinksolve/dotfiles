@@ -13,6 +13,15 @@
     "checkThirdParty": false
   },
   "diagnostics": {
-    "globals": ["hs"]
+    "globals": ["hs"],
+    "neededFileStatus": {
+      "missing-fields": "Any!"
+    },
+    "groupSeverity": {
+      "missing-fields": "Warning"
+    },
+  },
+  "type": {
+    "checkTableShape": true
   }
 }

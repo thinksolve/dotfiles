@@ -1,5 +1,48 @@
 #!/usr/bin/env bash
 
+# # WIP: Currently used in `~/.dotfiles/dev/PROJECT_NAME` which has a flake.nix to specify shell environment, and .envrc to automate 'nix develop'
+# #      For instance `dev lua` brings me to `~/.dotfiles/dev/lua` and activates development environment. I can now use 'tl' and 'lua' tools there.
+# dev() {
+#         # 1. One-time direnv hook activation
+#         if ! typeset -f _direnv_hook >/dev/null 2>&1; then
+#                 if command -v direnv >/dev/null 2>&1; then
+#                         eval "$(direnv hook zsh)"
+#                         export DIRENV_LOG_FORMAT="$(printf "\033[2mdirenv: %s\033[0m")" # optional: dim output
+#                 else
+#                         echo "direnv not found" >&2
+#                         return 1
+#                 fi
+#         fi
+#
+#         local base="$HOME/.dotfiles/dev"
+#         local target="$base" # default fallback
+#
+#         if [[ -n "$1" ]]; then
+#                 # Try literal path first
+#                 if [[ -d "$1" ]]; then
+#                         target="$1"
+#                 else
+#                         # Then try as subdir under base
+#                         local candidate="$base/$1"
+#                         if [[ -d "$candidate" ]]; then
+#                                 target="$candidate"
+#                         fi
+#                         # If neither → target stays as $base (fallback), no error
+#                 fi
+#         fi
+#
+#         # cd only if needed
+#         if [[ "$PWD" != "$target" ]]; then
+#                 cd "$target" || return 1
+#         fi
+#
+#         # Activate/reload env
+#         # direnv reload 2>/dev/null || true
+#
+#         # Feedback (shows the basename of where we ended up)
+#         echo "Dev env ready in $(basename "$target")"
+# }
+
 apps() {
         open -a "$(ls /Applications | fzf)"
 }
