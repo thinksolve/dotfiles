@@ -13,6 +13,7 @@ alias config='cd ~/.dotfiles/ && yazi .'
 alias config-nix='cd ~/.dotfiles/nix/darwin && yazi .'
 # alias evim='emacs -nw' # not really useful now that im using emacsclient
 alias zshrc='nvim ~/.zshrc'
+alias zshenv='nvim ~/.zshenv'
 alias hist='nvim ~/.zsh_history'
 alias shell_functions='nvim ~/.shell_functions.sh'
 alias SCREENSAVERS='cd "/Library/Application Support/com.apple.idleassetsd/Customer/4KSDR240FPS"'
