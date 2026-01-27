@@ -210,11 +210,11 @@
   # home.sessionPath = [
   # ];
 
-  #updates nix block in zshenv if necessary
-  home.activation.ensureNixPkgPaths =
+  #updates nix block in zshenv (~/.dotfiles/zsh/.zshenv) if 'nixBlock' has been changed or is stale (pkgs update)
+  home.activation.conditionallyMutateZshenv =
     let
-      startMarker = "# ═══════════════════════ NIX-MANAGED-BLOCK-START ═══════════════════════";
-      endMarker = "# ═══════════════════════ NIX-MANAGED-BLOCK-END ═══════════════════════";
+      startMarker = "# ═══════════════════════ NIX-MANAGED-BLOCK-START  ═══════════════════════";
+      endMarker = "# ═══════════════════════ NIX-MANAGED-BLOCK-END  ═══════════════════════";
       outputFile = "${config.home.homeDirectory}/.dotfiles/zsh/.zshenv";
       nixBlock = ''
         ${startMarker}

@@ -1,9 +1,7 @@
-# ═══════════════════════ NIX-MANAGED-BLOCK-START ═══════════════════════
+# ═══════════════════════ NIX-MANAGED-BLOCK-START  ═══════════════════════
 export PKGS_ANTIDOTE=/nix/store/wnhffjdkbk4xwbf32flnzl03rdjbx00h-antidote-1.9.10
 export PKGS_NVIM=/nix/store/rpm9l8ji9a9pb2q5kjwi7r2dbbm3hl1p-neovim-0.11.5
-# ═══════════════════════ NIX-MANAGED-BLOCK-END ═══════════════════════
-
-
+# ═══════════════════════ NIX-MANAGED-BLOCK-END  ═══════════════════════
 
 # Locale
 export LANG=en_US.UTF-8
@@ -20,9 +18,6 @@ export HM_PROFILE="$HOME/.local/state/nix/profiles/home-manager"
 export HOMEBREW_BIN="/opt/homebrew/bin"
 export PNPM_HOME=$HOME/Library/pnpm
 
-
-# Nix package paths
-#not useful anymore?: export REAL_NVIM="/nix/store/rpm9l8ji9a9pb2q5kjwi7r2dbbm3hl1p-neovim-0.11.5/bin/nvim"
 
 # PATH
 export PATH="$HM_PROFILE/bin:$NIX_CURRENT_SYSTEM/bin:$NIX_CURRENT_USER/bin:$HOME/.local/bin:$HOME/.config/emacs/bin:$HOME/bin:/usr/local/bin:$PNPM_HOME:$HOMEBREW_BIN:$PATH"

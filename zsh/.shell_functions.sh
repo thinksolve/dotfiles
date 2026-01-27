@@ -247,9 +247,30 @@ which_theme() {
         echo "dark (fallback)"
 }
 
-current_theme_ghostty() {
+current_theme_ghostty_og() {
         which_theme "$(grep '^[^#]*theme' ~/.dotfiles/ghostty/config | cut -d= -f2)"
 }
+
+current_theme_ghostty() {
+
+        local config="$HOME/.dotfiles/ghostty/config"
+        local cache="$HOME/.cache/ghostty_theme"
+
+        if [[ -f "$cache" && "$cache" -nt "$config" ]]; then
+                # echo "Cache hit" >&2 # to terminal, not captured
+                cat "$cache"
+                return
+        fi
+
+        # echo "Cache miss" >&2 # to terminal, not captured
+
+        mkdir -p "$(dirname "$cache")"
+        local theme
+        theme=$(which_theme "$(grep '^[^#]*theme' "$config" | cut -d= -f2)")
+        echo "$theme" >"$cache"
+        echo "$theme"
+}
+
 export BAT_THEME="$(current_theme_ghostty)"
 # export BAT_THEME="$(detect_bg_universal)"
 # export BAT_THEME="$(detect_bg_ghostty)"
