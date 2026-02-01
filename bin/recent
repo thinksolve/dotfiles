@@ -23,6 +23,16 @@ __editable_path() {
     return 1
 }
 
+MAX=${MAX:-75}
+__log_to_recent() {
+    local target=$(realpath "$1")
+    local tmp=$(mktemp)
+    [[ -f $RECENT_DB ]] && grep -Fxv "$target" "$RECENT_DB" >"$tmp" || true
+    printf '%s\n' "$target" >>"$tmp"
+    tail -n "$MAX" "$tmp" >"$tmp.2" && mv "$tmp.2" "$RECENT_DB"
+    rm -f "$tmp"
+}
+
 _recent_pick() {
     local recent_pick_db="${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}"
     local editor="${RECENT_OPEN:-nvim}"
@@ -95,28 +105,56 @@ PREVIEW
             --ansi -m |
         awk -F'\t' '{print $2}' | (
         open_now=()
-        edit_later=()
+        # edit_later=()
+        edit_files=()
+        edit_dirs=()
         while IFS= read -r pick; do
             [[ -e "$pick" ]] || continue
+            # 1. LOG FIRST (always, for everything)
+            __log_to_recent "$pick"
+
             if __editable_path "$pick" 2>/dev/null; then
-                edit_later+=("$pick")
+
+                if [[ -d $pick ]]; then
+                    edit_dirs+=("$pick")
+                else
+                    edit_files+=("$pick")
+                fi
+                # edit_later+=("$pick")
             else
                 open_now+=("$pick")
             fi
         done
 
-        ((${#open_now[@]} + ${#edit_later[@]})) || return 0
+        ((${#open_now[@]} + ${#edit_files[@]} + ${#edit_dirs[@]})) || return 0
+        # ((${#open_now[@]} + ${#edit_later[@]})) || return 0
 
-        for p in "${open_now[@]}"; do
-            open "$p"
-        done
-        for p in "${edit_later[@]}"; do
-            if [[ -d $p ]]; then
-                cd "$p" && $dir_viewer .
-            else
-                $editor "$p"
-            fi
-        done
+        for p in "${open_now[@]}"; do open "$p"; done
+
+        #NOTE: using nvim directly since 'nvim -p' handles many files at once ... so $editor no longer a useful abstraction here
+        # still useful for fzf preview logic above
+
+        [[ ${#edit_files[@]} -gt 0 ]] && nvim -p "${edit_files[@]}"
+
+        for p in "${edit_dirs[@]}"; do cd "$p" && yazi .; done
+
+        # for p in "${edit_later[@]}"; do
+        #     if [[ -d $p ]]; then
+        #         cd "$p" && $dir_viewer .
+        #     # else
+        #     #     # __log_to_recent "$p" #WIP
+        #     #     $editor "$p"
+        #     fi
+        #     __log_to_recent "$p" #WIP
+        # done
+        #
+        # # # Open all editables in one nvim session
+        # if [[ ${#edit_later[@]} -gt 0 ]]; then
+        #     if [[ -d $p ]]; then
+        #         return 0
+        #     fi
+        #     nvim -p "${edit_later[@]}"
+        # fi
 
         (($? == 0)) && _recent_pick "$filter"
     )

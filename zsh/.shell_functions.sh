@@ -735,7 +735,7 @@ function nix_dot_snapshots() {
         yazi "$tmp"
 }
 
-function nix-generations() {
+function nix_generations() {
         local cmd="${1---help}"
         case "$cmd" in
         --list | -l) sudo darwin-rebuild --list-generations ;;
