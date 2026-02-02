@@ -1536,7 +1536,69 @@ function getBundleId() {
         # mdls -name kMDItemCFBundleIdentifier -raw "$1" | cut -d '"' -f 2 #not as robust
 }
 
-function rat() {
+# just works .. from chatgpt feb2 2026, doesnt run into the comment char '--' edge case as in previous versions of bat
+rat() {
+        local bat_mode=''
+        local bat_lang=''
+        while [[ $1 == -* ]]; do
+                case "$1" in
+                -f | --full)
+                        bat_mode=full
+                        shift
+                        ;;
+                -n | --numbers)
+                        bat_mode=numbers
+                        shift
+                        ;;
+                -l | --language)
+                        bat_lang=$2
+                        shift 2
+                        ;;
+                --language=*)
+                        bat_lang=${1#--language=}
+                        shift
+                        ;;
+                *) break ;;
+                esac
+        done
+        local comment_char=$1
+        local file=$2
+
+        if [[ -z $comment_char || (-n $comment_char && -z $file && -f $comment_char) ]]; then
+                echo "Error: COMMENT_CHAR is required." >&2
+                echo "Usage: rat [FLAGS] COMMENT_CHAR [FILE]" >&2
+                return 1
+        fi
+
+        local escaped_char
+        escaped_char=$(printf '%s' "$comment_char" | sed 's/[.[\*^$()+?{|]/\\&/g')
+        local sed_rm="/^[[:blank:]]*${escaped_char}/d; s/${escaped_char}.*//"
+        local sed_blank='/^$/{ N; /^\n$/D; }'
+        local bat_cmd=()
+        if [[ -n $bat_mode ]]; then
+                bat_cmd=(bat)
+                [[ $bat_mode == numbers ]] && bat_cmd+=(--style=numbers)
+                [[ -n $bat_lang ]] && bat_cmd+=(--language="$bat_lang")
+        fi
+        if [[ -p /dev/stdin ]]; then
+                if [[ ${#bat_cmd[@]} -gt 0 ]]; then
+                        sed "$sed_rm" | sed "$sed_blank" | "${bat_cmd[@]}" --file-name='<stdin>'
+                else
+                        sed "$sed_rm" | sed "$sed_blank"
+                fi
+        elif [[ -n $file ]]; then
+                if [[ ${#bat_cmd[@]} -gt 0 ]]; then
+                        sed "$sed_rm" "$file" | sed "$sed_blank" | "${bat_cmd[@]}" --file-name="$file"
+                else
+                        sed "$sed_rm" "$file" | sed "$sed_blank"
+                fi
+        else
+                echo "Error: no input supplied." >&2
+                return 1
+        fi
+}
+
+function rat_feb2_2026() {
         local bat_mode='' # '' = none, 'full' = pretty, 'numbers' = clean numbered
 
         if [[ $1 == -f || $1 == --full ]]; then

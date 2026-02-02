@@ -1138,7 +1138,12 @@ require("lazy").setup({
 						-- by the server configuration above. Useful when disabling
 						-- certain features of an LSP (for example, turning off formatting for ts_ls)
 						server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
-						require("lspconfig")[server_name].setup(server)
+
+						-- NOTE: fixed deprecated lspconfig syntax (feb-2-2026)
+						-- require("lspconfig")[server_name].setup(server)
+
+						local config = require("lspconfig")[server_name] -- Still load for backward compat
+						vim.lsp.config(config, server)
 					end,
 				},
 			})
@@ -1346,7 +1351,16 @@ require("lazy").setup({
 
 			-- NEW: LSP Configuration Section (add this after cmp.setup)
 			-- Migrate nil_ls to new vim.lsp.config API (replaces old require("lspconfig").nil_ls.setup)
-			require("lspconfig").nil_ls.setup({
+			-- NOTE: fixed deprecated lspconfig syntax (feb-2-2026)
+			-- require("lspconfig").nil_ls.setup({
+			-- 	settings = {
+			-- 		nixd = {
+			-- 			flake = { autoEvalInputs = true },
+			-- 		},
+			-- 	},
+			-- })
+
+			vim.lsp.config("nil_ls", {
 				settings = {
 					nixd = {
 						flake = { autoEvalInputs = true },
