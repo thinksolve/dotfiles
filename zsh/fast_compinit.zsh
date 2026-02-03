@@ -2,8 +2,15 @@
 autoload -Uz compinit
 ZC="${ZDOTDIR:-$HOME}/.zcompdump"
 
-# Use cache if fresh
-compinit -C -d "$ZC"
+# # Use cache if fresh; NOTE: when nuking zcompdump this logic doesnt return autocompletion in all cases
+# compinit -C -d "$ZC"
+
+# Only use cache if it exists, otherwise rebuild
+if [[ -f "$ZC" ]]; then
+    compinit -C -d "$ZC"
+else
+    compinit -d "$ZC"   # rebuild if dump missing
+fi
 
 # Compile cache (silent)
 if [[ -f "$ZC" && (! -f "$ZC.zwc" || "$ZC" -nt "$ZC.zwc") ]]; then

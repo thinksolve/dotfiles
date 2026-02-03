@@ -21,6 +21,9 @@ elif [[ -f $_plugins_zsh ]]; then
     source $_plugins_zsh
 fi
 
+
+
+
 do_exit_cleanup() {
     fzd.cleanup
 }

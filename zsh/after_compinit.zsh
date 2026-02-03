@@ -1,4 +1,5 @@
 # ~/.dotfiles/zsh/after_compinit.zsh
+#
 autoload -Uz add-zsh-hook
 
 _lazy_wrapper() {
@@ -7,8 +8,14 @@ _lazy_wrapper() {
         autoload -Uz compinit && compinit -C
     fi
 
+ 
     # -----  CARAPACE  -----
     source <(carapace _carapace zsh)
+    
+    # NOTE: Force file completions to use standard _files instead of carapace
+    # This allows fzf-tab to work again with ls, nvim, etc 
+    compdef _files ls nvim cat bat vim code
+    compdef _path_files cd pushd rmdir
 
 
     # -----  FBAT  -----

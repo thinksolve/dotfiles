@@ -24,3 +24,10 @@ zstyle ':completion:*' select-prompt '%SScrolling active: current selection at %
 zstyle ':completion:*' menu yes select
 zstyle ':completion:*' use-cache yes             # speed
 zstyle ':completion:*' cache-path "$HOME/.zcompcache"
+
+
+
+
+
+
+
