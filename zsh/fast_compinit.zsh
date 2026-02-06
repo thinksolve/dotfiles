@@ -1,3 +1,5 @@
+# ~/.dotfiles/zsh/fast_compinit.zsh
+
 # --- completion system -------------------------------------------------------
 autoload -Uz compinit
 ZC="${ZDOTDIR:-$HOME}/.zcompdump"

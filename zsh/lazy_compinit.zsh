@@ -1,3 +1,5 @@
+# ~/.dotfiles/zsh/lazy_compinit.zsh
+
 autoload -Uz add-zsh-hook
 
 _maybe_compinit() {

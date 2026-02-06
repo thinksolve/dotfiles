@@ -1,5 +1,11 @@
 # ~/.dotfiles/zsh/after_compinit.zsh
-#
+_carapace_patch_for_fzf-tab_path_completions(){
+    #NOTE: without this fzf-tab breaks on _path_ completions for the listed tools below
+    # I.e., i only want carapace to handle _flag_ completions
+    compdef _files bat cat code cp eza head less ls more mv nvim rat rm tail touch tree vim
+    compdef _path_files cd mkdir pushd rmdir
+}
+
 autoload -Uz add-zsh-hook
 
 _lazy_wrapper() {
@@ -8,26 +14,13 @@ _lazy_wrapper() {
         autoload -Uz compinit && compinit -C
     fi
 
- 
     # -----  CARAPACE  -----
     source <(carapace _carapace zsh)
-    
-    # NOTE: Force file completions to use standard _files instead of carapace
-    # This allows fzf-tab to work again with ls, nvim, etc 
-    compdef _files ls nvim cat bat vim code
-    compdef _path_files cd pushd rmdir
+    _carapace_patch_for_fzf-tab_path_completions
 
-
-    # -----  FBAT  -----
-    fbat() {
-      (($#)) && functions "$1" | bat -l zsh --color=always \
-             || echo "Usage: fbat <function>"
-    }
-
-    # compdef  ''  fbat           # erase any previous completer
-    compdef  _functions  fbat   # assign the right one
-    # -----  FBAT  -----
-
+    # these functions are typically found in ~/.shell_functions.sh
+    compdef  _functions  fbat   
+    compdef _command_names wdef
 
     add-zsh-hook -d precmd _lazy_wrapper
 }

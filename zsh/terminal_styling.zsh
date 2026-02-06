@@ -1,3 +1,5 @@
+# ~/.dotfiles/zsh/terminal_styling.zsh
+
 # ------ styling essentially replaces pure prompt --------------
 autoload -Uz add-zsh-hook vcs_info
 zstyle ':vcs_info:git:*' formats ' %F{#8a8a8a}(%b%u)%f'
@@ -17,17 +19,11 @@ add-zsh-hook precmd vcs_info
 #     autoload -Uz compinit && compinit -C
 # fi
 
-# ------ styling for tab completion?  --------------
-zstyle ':completion:*' verbose yes
-zstyle ':completion:*' list-prompt ''
-zstyle ':completion:*' select-prompt '%SScrolling active: current selection at %p%s'
-zstyle ':completion:*' menu yes select
-zstyle ':completion:*' use-cache yes             # speed
-zstyle ':completion:*' cache-path "$HOME/.zcompcache"
-
-
-
-
-
-
+# # ------ feb-4-2026 currently not needed since fzf-tab overrides --------------
+# zstyle ':completion:*' verbose yes
+# zstyle ':completion:*' list-prompt ''
+# zstyle ':completion:*' select-prompt '%SScrolling active: current selection at %p%s'
+# zstyle ':completion:*' menu yes select
+# zstyle ':completion:*' use-cache yes             # speed
+# zstyle ':completion:*' cache-path "$HOME/.zcompcache"
 

@@ -1,4 +1,5 @@
-# ~/.config/zsh/preferences.zsh   (or options.zsh, settings.zsh, etc.)
+# ~/.dotfiles/zsh/preferences.zsh
+
 # All setopt, variables that affect zsh behavior, etc. — one place.
 
 # ── History ─────────────────────────────────────────────────────

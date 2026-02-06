@@ -1,5 +1,22 @@
 #!/usr/bin/env bash
 
+# ----- Note these functions registered work with completion system, so their 'compdefs' are defined in after_compinit.zsh
+wdef() {
+        if [[ $1 ]]; then
+
+                type "$1" 2>/dev/null | awk '{print $NF}'
+        else
+                echo "need single argument"
+        fi
+}
+
+fbat() {
+        (($#)) && functions "$1" | bat -l zsh --color=always ||
+                echo "Usage: fbat <function>"
+}
+
+# ----- Note these functions registered work with completion system, so their 'compdefs' are defined in after_compinit.zsh
+
 # # WIP: Currently used in `~/.dotfiles/dev/PROJECT_NAME` which has a flake.nix to specify shell environment, and .envrc to automate 'nix develop'
 # #      For instance `dev lua` brings me to `~/.dotfiles/dev/lua` and activates development environment. I can now use 'tl' and 'lua' tools there.
 # dev() {
@@ -464,6 +481,8 @@ fzd.cleanup() {
         [[ $SHLVL -eq 1 ]] || return # Run only in top-level shell
         rm -f "/tmp/deep-fzf-full"-* || true
         rm -f "/tmp/deep-fzf-file"-* || true
+
+        echo 'cleanup'
 }
 
 function fzd() {

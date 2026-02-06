@@ -1,3 +1,5 @@
+# ~/.dotfiles/zsh/constants.zsh
+
 export DIRVIEWER=yazi 
 export DOTFILES=$HOME/.dotfiles  
 export RECENT_OPEN=recent

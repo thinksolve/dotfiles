@@ -1,3 +1,5 @@
+# ~/.dotfiles/zsh/aliases.zsh
+
 # alias dev-lua="cd ~/.dotfiles/dev/lua"
 alias dotfiles="cd ~/.dotfiles/"
 alias rop="recent"

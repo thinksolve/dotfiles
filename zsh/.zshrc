@@ -6,9 +6,9 @@ source $ZSH_CONFIG/aliases.zsh
 source $ZSH_CONFIG/bindkeys.zsh
 source $ZSH_CONFIG/preferences.zsh
 source $ZSH_CONFIG/terminal_styling.zsh
-source $ZSH_CONFIG/fast_compinit.zsh
-source $ZSH_CONFIG/after_compinit.zsh
-
+source $ZSH_CONFIG/completions.zsh
+# source $ZSH_CONFIG/fast_compinit.zsh
+# source $ZSH_CONFIG/after_compinit.zsh
 
 _plugins_zsh=$HOME/.zsh_plugins.zsh
 _plugins_txt=$HOME/.zsh_plugins.txt
@@ -19,8 +19,7 @@ if [[ -f $_plugins_txt && ( ! -f $_plugins_zsh || $_plugins_txt -nt $_plugins_zs
     antidote load
 elif [[ -f $_plugins_zsh ]]; then
     source $_plugins_zsh
-fi
-
+fi 
 
 
 
