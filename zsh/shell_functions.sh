@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+#only useful in conjunction with abbr plugin (in ~/.zsh_plugins.txt)
+aa() {
+        local selected
+        selected=$(abbr list | fzf | cut -d'=' -f1 | tr -d '"')
+        if [[ -n $selected ]]; then
+                print -z "$selected" # Puts it in the line editor
+        fi
+}
+
 # simpler version of 'rat' without bells and whistles
 strip() {
         [[ (-p /dev/stdin && -z $1) || (! -p /dev/stdin && -z $2) ]] && {
