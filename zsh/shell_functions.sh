@@ -1,5 +1,17 @@
 #!/usr/bin/env bash
 
+# simpler version of 'rat' without bells and whistles
+strip() {
+        [[ (-p /dev/stdin && -z $1) || (! -p /dev/stdin && -z $2) ]] && {
+                echo "usage: ... | strip CHAR" >&2
+                echo "usage: strip CHAR [FILE]" >&2
+                return 1
+        }
+
+        # $1 -> CHAR, $2 -> FILE .. or '-', which is special syntax for stdin
+        awk -F"$1" '{print $1}' "${2:--}"
+}
+
 # ----- Note these functions registered work with completion system, so their 'compdefs' are defined in after_compinit.zsh
 wdef() {
         if [[ $1 ]]; then
@@ -2415,7 +2427,7 @@ EOF
 }
 
 # And so on up to 9
-alias removeUnsupportedSimulatorDevices='xcrun simctl delete unavailable'
+# alias removeUnsupportedSimulatorDevices='xcrun simctl delete unavailable'
 
 # NOTE: this file exists since formatting is unsupported in zsh files;
 # this file then sourced into `.zshrc`

@@ -1,7 +1,7 @@
 export ZSH_CONFIG="$HOME/.dotfiles/zsh"
 
 source $ZSH_CONFIG/constants.zsh
-source $ZSH_CONFIG/.shell_functions.sh
+source $ZSH_CONFIG/shell_functions.sh
 source $ZSH_CONFIG/aliases.zsh
 source $ZSH_CONFIG/bindkeys.zsh
 source $ZSH_CONFIG/preferences.zsh

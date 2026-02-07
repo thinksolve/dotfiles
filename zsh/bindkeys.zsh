@@ -68,14 +68,16 @@ for mode in viins vicmd; do
 done
 
 
-# #WIP: allows expansion of aliases when hitting space (feb-3-2026)
-autoload -Uz _expand_alias  # force load
-rationalise-space() {
-  zle _expand_alias
-  zle self-insert
-}
-zle -N rationalise-space
-bindkey ' ' rationalise-space
-
+#@ NOTE: this is now hanlded by 'abbr' plugin (it has 'abbr import-aliases') 
+#
+# autoload -Uz _expand_alias  # force load
+# rationalise-space() {
+#   zle _expand_alias
+#   # zle self-insert
+# }
+# zle -N rationalise-space
+# # bindkey ' ' rationalise-space
+#
 # Ctrl-Space inserts a literal space
-bindkey '^ ' self-insert
+# bindkey '^ ' self-insert
+

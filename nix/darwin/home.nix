@@ -79,13 +79,14 @@
     in
     {
       # ".local/bin/teal-language-server".source = from_home "/.luarocks/bin/teal-language-server"; #might remove along with ~/teal-language-server/ and ~/.dotfiles/dev/lua
+      ".config/zsh-abbr".source = dotfiles "/zsh/zsh-abbr";
       ".config/nix-darwin".source = dotfiles "/nix/darwin";
       ".hammerspoon".source = dotfiles "/hammerspoon";
-      ".shell_functions.sh".source = dotfiles "/zsh/.shell_functions.sh";
-      ".tmux.conf".source = dotfiles "/tmux/.tmux.conf";
-      ".zsh_plugins.txt".source = dotfiles "/zsh/.zsh_plugins.txt";
-      ".zshrc".source = dotfiles "/zsh/.zshrc";
-      ".zshenv".source = dotfiles "/zsh/.zshenv";
+      ".shell_functions.sh".source = dotfiles "/zsh/shell_functions.sh";
+      ".tmux.conf".source = dotfiles "/tmux/tmux.conf";
+      ".zsh_plugins.txt".source = dotfiles "/zsh/zsh_plugins.txt";
+      ".zshrc".source = dotfiles "/zsh/zshrc";
+      ".zshenv".source = dotfiles "/zsh/zshenv";
 
       "/Library/Application Support/com.mitchellh.ghostty/config".source = dotfiles "/ghostty/config";
       # ".doom.d/init.el".source = dotfiles "/doom/init.el";
@@ -216,7 +217,7 @@
     let
       startMarker = "# ═══════════════════════ NIX-MANAGED-BLOCK-START  ═══════════════════════";
       endMarker = "# ═══════════════════════ NIX-MANAGED-BLOCK-END  ═══════════════════════";
-      outputFile = "${config.home.homeDirectory}/.dotfiles/zsh/.zshenv";
+      outputFile = "${config.home.homeDirectory}/.dotfiles/zsh/zshenv";
       nixBlock = ''
         ${startMarker}
         export PKGS_ANTIDOTE=${pkgs.antidote}
