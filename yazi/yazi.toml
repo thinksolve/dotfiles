@@ -1,4 +1,8 @@
 [opener]
+edit = [
+  { run = 'nvim "$@"', block = true }
+]
+
 markdown = [
   { run = 'nvim "$@"', block = true, for = "unix" },
   { run = "open -a MacDown.app \"$1\"", desc = "Open with MacDown" },
@@ -26,6 +30,8 @@ show_hidden=true
 
 [preview]
 wrap = "yes"
+
+
 
 
 

@@ -2,7 +2,8 @@
 
 # alias dev-lua="cd ~/.dotfiles/dev/lua"
 alias dotfiles="cd ~/.dotfiles/"
-alias rop="recent"
+alias dotdiff="cd ~/.dotfiles/ && git diff"
+alias v="recent"
 alias wvim="$RECENT_NVIM"
 
 alias rm='trash-put' 

@@ -17,8 +17,26 @@ export NIX_CURRENT_USER=$HOME/.nix-profile
 export HM_PROFILE="$HOME/.local/state/nix/profiles/home-manager"
 export HOMEBREW_BIN="/opt/homebrew/bin"
 export PNPM_HOME=$HOME/Library/pnpm
-
+export NPM_GLOBAL_BIN=$HOME/.npm-global/bin
 
 # PATH
-export PATH="$HM_PROFILE/bin:$NIX_CURRENT_SYSTEM/bin:$NIX_CURRENT_USER/bin:$HOME/.local/bin:$HOME/.config/emacs/bin:$HOME/bin:/usr/local/bin:$PNPM_HOME:$HOMEBREW_BIN:$PATH"
+# PATH="$HM_PROFILE/bin:$NIX_CURRENT_SYSTEM/bin:$NIX_CURRENT_USER/bin:$HOME/.local/bin:$PATH"
+# PATH="$HOME/.config/emacs/bin:$HOME/bin:/usr/local/bin:$PNPM_HOME:$HOMEBREW_BIN:$NPM_GLOBAL_BIN:$PATH"
+# export PATH
 
+path_prepend() {
+  [ -n "$1" ] && PATH="$1:$PATH"
+}
+
+path_prepend "$HM_PROFILE/bin"
+path_prepend "$HOME/.config/emacs/bin"
+path_prepend "$HOME/.local/bin"
+path_prepend "$HOME/bin"
+path_prepend "$HOMEBREW_BIN"
+path_prepend "$NIX_CURRENT_SYSTEM/bin"
+path_prepend "$NIX_CURRENT_USER/bin"
+path_prepend "$NPM_GLOBAL_BIN"
+path_prepend "$PNPM_HOME"
+path_prepend "/usr/local/bin"
+
+export PATH

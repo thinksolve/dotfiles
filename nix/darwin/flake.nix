@@ -97,6 +97,7 @@
               "iina"
               "keka"
               "krita"
+              "libreoffice"
               "shottr"
 
             ];

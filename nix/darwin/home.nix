@@ -81,6 +81,7 @@
       # ".local/bin/teal-language-server".source = from_home "/.luarocks/bin/teal-language-server"; #might remove along with ~/teal-language-server/ and ~/.dotfiles/dev/lua
       ".config/zsh-abbr".source = dotfiles "/zsh/zsh-abbr";
       ".config/nix-darwin".source = dotfiles "/nix/darwin";
+      ".config/nvim".source = dotfiles "/nvim/lazyvim";
       ".hammerspoon".source = dotfiles "/hammerspoon";
       ".shell_functions.sh".source = dotfiles "/zsh/shell_functions.sh";
       ".tmux.conf".source = dotfiles "/tmux/tmux.conf";
@@ -104,17 +105,17 @@
       "ghostty"
       "iterm2"
       "nix"
-      "nvim"
+      # "nvim"
       "s"
       "yazi"
-      # "zsh/after_compinit.zsh"
       "zsh/aliases.zsh"
       "zsh/bindkeys.zsh"
       "zsh/constants.zsh"
       "zsh/completions.zsh"
-      # "zsh/fast_compinit.zsh"
       "zsh/preferences.zsh"
       "zsh/terminal_styling.zsh"
+      # "after_compinit.zsh"
+      # "fast_compinit.zsh"
     ])
     // (affixLinks ".dotfiles/ghostty/themes"
       "/Applications/Ghostty.app/Contents/Resources/ghostty/themes/"
@@ -155,7 +156,7 @@
         pkgs.gh
         pkgs.git
         # pkgs.lua54Packages.luarocks
-        # pkgs.nodejs_22 # when trying to open tl files in nvim its complaining i dont have node
+        pkgs.nodejs_22 # when trying to open tl files in nvim its complaining i dont have node
         # pkgs.lua5_4
         # pkgs.lua54Packages.luasocket
         pkgs.htmlq

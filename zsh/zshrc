@@ -1,3 +1,4 @@
+
 export ZSH_CONFIG="$HOME/.dotfiles/zsh"
 
 source $ZSH_CONFIG/constants.zsh
@@ -21,11 +22,10 @@ elif [[ -f $_plugins_zsh ]]; then
     source $_plugins_zsh
 fi 
 
-
-
 do_exit_cleanup() {
     fzd.cleanup
 }
+
 
 trap do_exit_cleanup EXIT
 

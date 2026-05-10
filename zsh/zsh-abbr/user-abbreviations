@@ -1,5 +1,6 @@
 abbr "config-nix"="cd ~/.dotfiles/nix/darwin && yazi ."
 abbr "config"="cd ~/.dotfiles/ && yazi ."
+abbr "dotdiff"="cd ~/.dotfiles/ && git diff"
 abbr "dotfiles"="cd ~/.dotfiles/"
 abbr "drs"="sudo darwin-rebuild switch --flake ~/.dotfiles/nix/darwin"
 abbr "fn"="function  (){\n\n}"

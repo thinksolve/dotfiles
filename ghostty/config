@@ -21,13 +21,13 @@ window-height = 1000
 #theme = AtomOneLight 
 # theme = CLRS.light
 
-theme = tokyonight
+#theme = tokyonight
 #theme = srcery.dark
 #theme = rose-pine.dark
 #theme = Afterglow
 #theme = xcodedarkhc 
 #theme = Cyberdyne
-#theme =catppuccin-mocha
+theme =catppuccin-mocha
 
 # window-position-x = 0
 # window-position-y = 0

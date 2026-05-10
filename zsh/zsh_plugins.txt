@@ -2,6 +2,6 @@ jeffreytse/zsh-vi-mode kind:defer
 zsh-users/zsh-history-substring-search kind:defer  
 zsh-users/zsh-autosuggestions kind:defer  
 zdharma-continuum/fast-syntax-highlighting kind:defer  
-Aloxaf/fzf-tab kind:defer #this can interfere with carapace; see ~/.dotfiles/zsh/after_compinit.zsh for fix
-#direnv/direnv kind:fpath path:lib
+Aloxaf/fzf-tab kind:defer #this can interfere with carapace; see ~/.dotfiles/zsh/completions.zsh for fix
 olets/zsh-abbr kind:defer
+#direnv/direnv kind:fpath path:lib

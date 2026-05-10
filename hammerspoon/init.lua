@@ -143,9 +143,12 @@ local function runCommandInTerminal(command)
     ]]
 	hs.osascript.applescript(script)
 end
-
 hs.hotkey.bind({ "ctrl", "option" }, "z", function()
 	runCommandInTerminal("get_latex")
+end)
+
+hs.hotkey.bind({ "ctrl", "option" }, "h", function()
+	runSilent("toggle_desktop")
 end)
 
 --TEST: tiny, fast, corner alert ---------------------------------------------------
@@ -618,6 +621,10 @@ LSB.bind({ "option" }, "h", function()
 	-- })
 end)
 
+LSB.bind({ "option" }, "n", function()
+	open_term_and_run({ cmd = "nvim ~/.config/nvim" })
+end)
+
 --
 
 -- local TG = require("termGuard")
@@ -751,3 +758,16 @@ ks:bindModal({ "option" }, "space") -- uses all the key->action pairs from `:bin
 -- 	print("Hotkey 2 works fine")
 -- end)
 -- TEST: ASSERTS
+--
+-- Block only the Music app from staying open
+local blockedApps = {
+	["Music"] = true, -- Apple Music
+}
+
+local appWatcher = hs.application.watcher.new(function(appName, eventType, app)
+	if eventType == hs.application.watcher.launched and blockedApps[appName] then
+		app:kill()
+	end
+end)
+
+appWatcher:start()

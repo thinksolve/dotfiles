@@ -15,44 +15,44 @@ RECENT_DB=${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/recent/files}
 RECENT_DIR=$(dirname "$RECENT_DB")
 
 __editable_path() {
-    local p=$1
-    [[ -d $p ]] && return 0
-    case $(file --mime-type -b -- "$p") in
-    text/* | application/json | application/x-yaml | application/xml | application/x-shellscript) return 0 ;;
-    esac
-    return 1
+  local p=$1
+  [[ -d $p ]] && return 0
+  case $(file --mime-type -b -- "$p") in
+  text/* | application/json | application/x-yaml | application/xml | application/x-shellscript) return 0 ;;
+  esac
+  return 1
 }
 
 MAX=${MAX:-75}
 __log_to_recent() {
-    local target=$(realpath "$1")
-    local tmp=$(mktemp)
-    [[ -f $RECENT_DB ]] && grep -Fxv "$target" "$RECENT_DB" >"$tmp" || true
-    printf '%s\n' "$target" >>"$tmp"
-    tail -n "$MAX" "$tmp" >"$tmp.2" && mv "$tmp.2" "$RECENT_DB"
-    rm -f "$tmp"
+  local target=$(realpath "$1")
+  local tmp=$(mktemp)
+  [[ -f $RECENT_DB ]] && grep -Fxv "$target" "$RECENT_DB" >"$tmp" || true
+  printf '%s\n' "$target" >>"$tmp"
+  tail -n "$MAX" "$tmp" >"$tmp.2" && mv "$tmp.2" "$RECENT_DB"
+  rm -f "$tmp"
 }
 
 _recent_pick() {
-    local recent_pick_db="${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}"
-    local editor="${RECENT_OPEN:-nvim}"
-    local dir_viewer="${RECENT_OPEN:-yazi}"
-    local filter="${1:-}"
-    local pixel_width=$((16 * $(tput cols)))
-    local -x _preview_width=$(($pixel_width * 50 / 100))
+  local recent_pick_db="${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}"
+  local editor="${RECENT_OPEN:-nvim}"
+  local dir_viewer="${RECENT_OPEN:-yazi}"
+  local filter="${1:-}"
+  local pixel_width=$((16 * $(tput cols)))
+  local -x _preview_width=$(($pixel_width * 50 / 100))
 
-    #WIP: broken
-    #     SAVE_IDX=$(
-    #         cat <<'IDX'
-    # # printf %s {n} >"$IDX_FILE"
-    # printf %s {1} >"$IDX_FILE"
-    #
-    # IDX
-    #     )
-    # SAVE_IDX='printf %s {n} >"$IDX_FILE"'
+  #WIP: broken
+  #     SAVE_IDX=$(
+  #         cat <<'IDX'
+  # # printf %s {n} >"$IDX_FILE"
+  # printf %s {1} >"$IDX_FILE"
+  #
+  # IDX
+  #     )
+  # SAVE_IDX='printf %s {n} >"$IDX_FILE"'
 
-    local FZF_PREVIEW=$(
-        cat <<-'PREVIEW'
+  local FZF_PREVIEW=$(
+    cat <<-'PREVIEW'
                 printf "\e_Ga=d,d=a\e\\"
 
                 p=$1
@@ -79,134 +79,140 @@ _recent_pick() {
                         cat "$p" 2>/dev/null || highlight -O ansi "$p" 2>/dev/null || cat "$p"
                 fi
 PREVIEW
-    )
+  )
 
-    #NOTE: WIP: this works but i only want it to work for specific binds not all
-    # --bind "load:pos:$(cat "$IDX_FILE" 2>/dev/null || echo 1)" \
-    #
-    #  --bind "left:execute(printf %s {n} >\"$IDX_FILE\"; parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; \"$0\"'$filter')+abort" \
-    #
-    tac "$recent_pick_db" 2>/dev/null | while IFS= read -r path; do
-        [[ -e "$path" ]] || continue
-        if [[ -d "$path" ]]; then
-            printf '\e[34mDIR\e[0m\t%s\n' "$path"
+  #NOTE: WIP: this works but i only want it to work for specific binds not all
+  # --bind "load:pos:$(cat "$IDX_FILE" 2>/dev/null || echo 1)" \
+  #
+  #  --bind "left:execute(printf %s {n} >\"$IDX_FILE\"; parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; \"$0\"'$filter')+abort" \
+  #
+
+  # --bind "change:reload(rg --color=always -n {q} $(cat "$RECENT_DB") 2>/dev/null || true)" \
+  # --bind "start:unbind(change)" \
+  # --bind "ctrl-s:change-prompt(grep> )+disable-search+rebind(change)" \
+  # --bind "ctrl-f:change-prompt(recent> )+enable-search+unbind(change)" \
+
+  tac "$recent_pick_db" 2>/dev/null | while IFS= read -r path; do
+    [[ -e "$path" ]] || continue
+    if [[ -d "$path" ]]; then
+      printf '\e[34mDIR\e[0m\t%s\n' "$path"
+    else
+      printf '\e[33mFILE\e[0m\t%s\n' "$path"
+    fi
+  done |
+    fzf --preview "bash -c '$FZF_PREVIEW' bash {2}" \
+      --preview-window=right:50%:wrap \
+      --delimiter=$'\t' \
+      --query="$filter" --prompt='recent> ' \
+      --header='CTRL-E (edit list); LEFT (parent directory); RIGHT (accept)' \
+      --bind "right:accept" \
+      --bind "left:execute(parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; \"$0\"'$filter')+abort" \
+      --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty; \"$0\"'$filter')+abort" \
+      --ansi -m |
+    awk -F'\t' '{print $2}' | (
+    open_now=()
+    # edit_later=()
+    edit_files=()
+    edit_dirs=()
+    while IFS= read -r pick; do
+      [[ -e "$pick" ]] || continue
+      # 1. LOG FIRST (always, for everything)
+      __log_to_recent "$pick"
+
+      if __editable_path "$pick" 2>/dev/null; then
+
+        if [[ -d $pick ]]; then
+          edit_dirs+=("$pick")
         else
-            printf '\e[33mFILE\e[0m\t%s\n' "$path"
+          edit_files+=("$pick")
         fi
-    done |
-        fzf --preview "bash -c '$FZF_PREVIEW' bash {2}" \
-            --preview-window=right:50%:wrap \
-            --delimiter=$'\t' \
-            --query="$filter" --prompt='recent> ' \
-            --header='CTRL-E (edit list); LEFT (parent directory); RIGHT (accept)' \
-            --bind "right:accept" \
-            --bind "left:execute(parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; \"$0\"'$filter')+abort" \
-            --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty; \"$0\"'$filter')+abort" \
-            --ansi -m |
-        awk -F'\t' '{print $2}' | (
-        open_now=()
-        # edit_later=()
-        edit_files=()
-        edit_dirs=()
-        while IFS= read -r pick; do
-            [[ -e "$pick" ]] || continue
-            # 1. LOG FIRST (always, for everything)
-            __log_to_recent "$pick"
+        # edit_later+=("$pick")
+      else
+        open_now+=("$pick")
+      fi
+    done
 
-            if __editable_path "$pick" 2>/dev/null; then
+    ((${#open_now[@]} + ${#edit_files[@]} + ${#edit_dirs[@]})) || return 0
+    # ((${#open_now[@]} + ${#edit_later[@]})) || return 0
 
-                if [[ -d $pick ]]; then
-                    edit_dirs+=("$pick")
-                else
-                    edit_files+=("$pick")
-                fi
-                # edit_later+=("$pick")
-            else
-                open_now+=("$pick")
-            fi
-        done
+    for p in "${open_now[@]}"; do open "$p"; done
 
-        ((${#open_now[@]} + ${#edit_files[@]} + ${#edit_dirs[@]})) || return 0
-        # ((${#open_now[@]} + ${#edit_later[@]})) || return 0
+    #NOTE: using nvim directly since 'nvim -p' handles many files at once ... so $editor no longer a useful abstraction here
+    # still useful for fzf preview logic above
 
-        for p in "${open_now[@]}"; do open "$p"; done
+    [[ ${#edit_files[@]} -gt 0 ]] && nvim -p "${edit_files[@]}"
 
-        #NOTE: using nvim directly since 'nvim -p' handles many files at once ... so $editor no longer a useful abstraction here
-        # still useful for fzf preview logic above
+    for p in "${edit_dirs[@]}"; do cd "$p" && yazi .; done
 
-        [[ ${#edit_files[@]} -gt 0 ]] && nvim -p "${edit_files[@]}"
+    # for p in "${edit_later[@]}"; do
+    #     if [[ -d $p ]]; then
+    #         cd "$p" && $dir_viewer .
+    #     # else
+    #     #     # __log_to_recent "$p" #WIP
+    #     #     $editor "$p"
+    #     fi
+    #     __log_to_recent "$p" #WIP
+    # done
+    #
+    # # # Open all editables in one nvim session
+    # if [[ ${#edit_later[@]} -gt 0 ]]; then
+    #     if [[ -d $p ]]; then
+    #         return 0
+    #     fi
+    #     nvim -p "${edit_later[@]}"
+    # fi
 
-        for p in "${edit_dirs[@]}"; do cd "$p" && yazi .; done
-
-        # for p in "${edit_later[@]}"; do
-        #     if [[ -d $p ]]; then
-        #         cd "$p" && $dir_viewer .
-        #     # else
-        #     #     # __log_to_recent "$p" #WIP
-        #     #     $editor "$p"
-        #     fi
-        #     __log_to_recent "$p" #WIP
-        # done
-        #
-        # # # Open all editables in one nvim session
-        # if [[ ${#edit_later[@]} -gt 0 ]]; then
-        #     if [[ -d $p ]]; then
-        #         return 0
-        #     fi
-        #     nvim -p "${edit_later[@]}"
-        # fi
-
-        (($? == 0)) && _recent_pick "$filter"
-    )
+    (($? == 0)) && _recent_pick "$filter"
+  )
 }
 
 _recent_open() {
 
-    # ---- log the first existing argument -------------------------------
-    for arg; do
-        [[ -e $arg ]] && TARGET=$(realpath "$arg") && break
-    done
+  # ---- log the first existing argument -------------------------------
+  for arg; do
+    [[ -e $arg ]] && TARGET=$(realpath "$arg") && break
+  done
 
-    [[ ! -e "$TARGET" ]] && {
-        echo "recent: no existing files/directories found" >&2
-        return 1
-    }
+  [[ ! -e "$TARGET" ]] && {
+    echo "recent: no existing files/directories found" >&2
+    return 1
+  }
 
-    MAX=75
+  MAX=75
 
-    # ---- pick launcher -------------------------------------------------
-    OPENER="" # start empty
-    if [[ ${1:-} == --yazi ]]; then
-        OPENER=yazi
-        shift
-    elif [[ ${1:-} == --nvim ]]; then
-        OPENER=nvim
-        shift
-    elif [[ ${1:-} == --open ]]; then
-        OPENER=open
-        shift
+  # ---- pick launcher -------------------------------------------------
+  OPENER="" # start empty
+  if [[ ${1:-} == --yazi ]]; then
+    OPENER=yazi
+    shift
+  elif [[ ${1:-} == --nvim ]]; then
+    OPENER=nvim
+    shift
+  elif [[ ${1:-} == --open ]]; then
+    OPENER=open
+    shift
+  fi
+
+  # ---- aut_o-detect if no override -----------------------------------
+  if [[ -z $OPENER ]]; then
+    if [[ -d ${1:-} ]]; then
+      OPENER=yazi
+    elif __editable_path "$1"; then
+      OPENER=nvim
+    else
+      OPENER=open
     fi
+  fi
 
-    # ---- aut_o-detect if no override -----------------------------------
-    if [[ -z $OPENER ]]; then
-        if [[ -d ${1:-} ]]; then
-            OPENER=yazi
-        elif __editable_path "$1"; then
-            OPENER=nvim
-        else
-            OPENER=open
-        fi
-    fi
+  if [[ -n ${TARGET:-} ]]; then
+    tmp=$(mktemp)
+    [[ -f $RECENT_DB ]] && grep -Fxv "$TARGET" "$RECENT_DB" >"$tmp" || true
+    printf '%s\n' "$TARGET" >>"$tmp"
+    tail -n "$MAX" "$tmp" >"$tmp.2" && mv "$tmp.2" "$RECENT_DB"
+    rm -f "$tmp"
+  fi
 
-    if [[ -n ${TARGET:-} ]]; then
-        tmp=$(mktemp)
-        [[ -f $RECENT_DB ]] && grep -Fxv "$TARGET" "$RECENT_DB" >"$tmp" || true
-        printf '%s\n' "$TARGET" >>"$tmp"
-        tail -n "$MAX" "$tmp" >"$tmp.2" && mv "$tmp.2" "$RECENT_DB"
-        rm -f "$tmp"
-    fi
-
-    exec "$OPENER" "$@"
+  exec "$OPENER" "$@"
 
 }
 
