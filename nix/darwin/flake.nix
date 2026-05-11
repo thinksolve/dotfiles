@@ -90,8 +90,8 @@
               cleanup = "none";
             };
             casks = [
-              "ghostty@tip"
               "brave-browser"
+              "ghostty@tip"
               "gimp"
               "hammerspoon"
               "iina"
@@ -99,6 +99,7 @@
               "krita"
               "libreoffice"
               "shottr"
+              "wezterm@nightly"
 
             ];
             taps = [
@@ -147,7 +148,7 @@
           nixpkgs.hostPlatform = hostPlatform;
 
           system.defaults = {
-            universalaccess.reduceMotion = true;
+            # universalaccess.reduceMotion = true;
             NSGlobalDomain = {
               InitialKeyRepeat = 15;
               KeyRepeat = 2;
@@ -163,6 +164,19 @@
             screencapture.location = "~/screenshots";
             screensaver.askForPasswordDelay = 10;
             loginwindow.LoginwindowText = "kalimba";
+            
+          
+             CustomUserPreferences = {
+               "com.brave.Browser" = {
+                 NSUserKeyEquivalents = {
+                   # Brave keys below are essentially freed (F19 and F18 never used)
+                   # Their defaults (`CMD+;`` and `CMD+'``) are used by sustem wide key binds
+                   "Check Document Now" = "@F19";  
+                   "Show Spelling and Grammar" = "@F18"; 
+                 };
+               };
+             };
+
           };
         };
     in

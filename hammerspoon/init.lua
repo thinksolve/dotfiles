@@ -6,8 +6,9 @@ local TERM = {
 	kitty = "net.kovidgoyal.kitty", -- kinda broken when using hotkey and app already running
 	-- iterm2 = "com.googlecode.iterm2",
 	terminal = "com.apple.Terminal",
+	wezterm = "com.github.wez.wezterm",
 }
-local DEFAULT_TERM_ID = TERM.ghostty
+local DEFAULT_TERM_ID = TERM.wezterm
 local DEFAULT_TERM_NAME = DEFAULT_TERM_ID:match("[^.]+$") -- e.g. print(("com.mitchellh.ghostty"):match("[^.]+$")) --> ghostty
 
 --Commmented these 2 out on 4-25-25 since not really using
@@ -64,10 +65,10 @@ hs.hotkey.bind(screen_position_mod, "Space", window_management.FullScreen)
 -- hs.hotkey.bind(screen_position_mod, "Return", window_management.FullScreen)
 
 local cycle_windows = { "command" }
-hs.hotkey.bind(cycle_windows, ",", function()
+hs.hotkey.bind(cycle_windows, "'", function()
 	window_management.cycleWindows("right")
 end)
-hs.hotkey.bind(merge_modifiers(cycle_windows, "shift"), ",", function()
+hs.hotkey.bind(merge_modifiers(cycle_windows, "shift"), "'", function()
 	window_management.cycleWindows("left")
 end)
 
@@ -487,7 +488,7 @@ local function open_term_and_run(opts)
 	local term_name = (opts.terminal or DEFAULT_TERM_NAME):lower():match("[^.]+$")
 	local app = hs.application.get(DEFAULT_TERM_ID or error("unsupported terminal"))
 
-	if term_name == "ghostty" or term_name == "kitty" then
+	if term_name == "ghostty" or term_name == "kitty" or term_name == "wezterm" then
 		if not (app and app:isRunning()) then
 			-- start + run command in first window
 			cmd = cmd:gsub("'", "'\\''")
