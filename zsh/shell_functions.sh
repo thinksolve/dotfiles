@@ -1,5 +1,27 @@
 #!/usr/bin/env bash
 
+# fuzzy live grep, then open in nvim at the line!
+lr() {
+  local rg_cmd="rg --sort path --no-heading --color=always --line-number --column"
+
+  local selected
+  selected=$(
+    fzf --ansi --disabled --query "$1" \
+      --bind "change:reload:$rg_cmd {q} || true" \
+      --delimiter : \
+      --preview-window 'right,60%,+{2}/3' \
+      --preview 'bat --color=always --highlight-line {2} {1}'
+  ) || return 0 # user pressed Esc, just exit
+
+  [ -z "$selected" ] && return 0
+
+  # Parse file and line from "file:line:col:text"
+  local file line
+  IFS=: read -r file line _ <<<"$selected"
+
+  nvim "$file" +"$line"
+}
+
 sg() {
   local target=${1:-$PWD}
   local rg_target file_cmd

@@ -156,13 +156,14 @@
         pkgs.gh
         pkgs.git
         # pkgs.lua54Packages.luarocks
-        pkgs.nodejs_22 # when trying to open tl files in nvim its complaining i dont have node
         # pkgs.lua5_4
         # pkgs.lua54Packages.luasocket
         pkgs.htmlq
         # pkgs.math-preview # instead of 'npm install -g git+https://gitlab.com/matsievskiysv/math-preview' and change npm prefix .. due to nix immutability
         pkgs.neovim
-        pkgs.nixfmt-rfc-style
+        pkgs.nixfmt
+        pkgs.nodejs_22 # when trying to open tl files in nvim its complaining i dont have node
+        # pkgs.pnpm
         # pkgs.nodejs
         # pkgs.pandoc
         # pkgs.shellcheck
@@ -198,7 +199,7 @@
         pkgs.fastfetch
         # pkgs.ghostty ## isnt supported??
         # pkgs.iterm2
-        pkgs.kitty
+        # pkgs.kitty
         # pkgs.tmux
         pkgs.tldr
         pkgs.yazi

@@ -7,6 +7,14 @@ end
 return {
   disable_default_plugins("folke/flash.nvim", "folke/noice.nvim"), -- lazyvim flattens this .. dont need to "spread"
   {
+    "stevearc/conform.nvim",
+    opts = {
+      formatters_by_ft = {
+        nix = { "nixfmt" },
+      },
+    },
+  },
+  {
     "folke/snacks.nvim",
 
     opts = {

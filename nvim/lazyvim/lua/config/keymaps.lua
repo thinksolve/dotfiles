@@ -7,16 +7,22 @@ vim.keymap.set("n", "-", "<CMD>Ex<CR>", { desc = "Open parent directory" })
 
 -- yank fullpath, parent, and filename
 vim.keymap.set("n", "<leader>yp", function()
-  vim.fn.setreg("+", vim.fn.expand("%:p"))
+  local path = vim.fn.expand("%:p")
+  vim.fn.setreg("+", path)
+  vim.notify("yanked path:\n" .. path)
 end, { desc = "Copy path" })
 
-vim.keymap.set("n", "<leader>yt", function()
-  vim.fn.setreg("+", vim.fn.expand("%:t"))
-end, { desc = "Copy path tail (i.e. basename)" })
+vim.keymap.set("n", "<leader>yb", function()
+  local path = vim.fn.expand("%:t")
+  vim.fn.setreg("+", path)
+  vim.notify("yanked basename:\n" .. path)
+end, { desc = "Copy path basename (i.e. tail)" })
 
-vim.keymap.set("n", "<leader>yh", function()
-  vim.fn.setreg("+", vim.fn.expand("%:p:h"))
-end, { desc = "Copy path head (i.e. dirname)" })
+vim.keymap.set("n", "<leader>yd", function()
+  local path = vim.fn.expand("%:p:h")
+  vim.fn.setreg("+", path)
+  vim.notify("yanked dirname:\n" .. path)
+end, { desc = "Copy path dirname (i.e. head)" })
 
 vim.keymap.set("n", "<leader>`", function()
   --Snacks.dashboard.open()
@@ -27,3 +33,8 @@ vim.keymap.set("n", "<leader>`", function()
 end, { desc = "Open splash screen" })
 
 vim.keymap.set("i", "jk", "<Esc>")
+
+vim.keymap.set("n", "<A-down>", "4j", { silent = true })
+vim.keymap.set("n", "<A-up>", "4k", { silent = true })
+vim.keymap.set("n", "<A-j>", "4j", { silent = true })
+vim.keymap.set("n", "<A-k>", "4k", { silent = true })

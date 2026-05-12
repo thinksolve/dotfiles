@@ -1,7 +1,8 @@
 # ═══════════════════════ NIX-MANAGED-BLOCK-START  ═══════════════════════
-export PKGS_ANTIDOTE=/nix/store/wnhffjdkbk4xwbf32flnzl03rdjbx00h-antidote-1.9.10
-export PKGS_NVIM=/nix/store/rpm9l8ji9a9pb2q5kjwi7r2dbbm3hl1p-neovim-0.11.5
+export PKGS_ANTIDOTE=/nix/store/d05m1wv4pq6qv7bqs3qnf71iq6hc1g0i-antidote-1.10.3
+export PKGS_NVIM=/nix/store/wsqy7rcv5s3md14wmc1wj9nys8ra2xhj-neovim-0.12.2
 # ═══════════════════════ NIX-MANAGED-BLOCK-END  ═══════════════════════
+
 
 # Locale
 export LANG=en_US.UTF-8

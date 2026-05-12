@@ -29,3 +29,11 @@ do_exit_cleanup() {
 
 trap do_exit_cleanup EXIT
 
+
+# pnpm
+export PNPM_HOME="/Users/brightowl/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
+# pnpm end

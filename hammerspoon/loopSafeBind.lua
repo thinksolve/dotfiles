@@ -6,6 +6,7 @@ local termIDs = {
 	["com.googlecode.iterm2"] = true,
 	["com.apple.Terminal"] = true,
 	["net.kovidgoyal.kitty"] = true,
+	["com.github.wez.wezterm"] = true,
 }
 
 -- returns true  -> we are inside a terminal
