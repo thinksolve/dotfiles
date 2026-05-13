@@ -1,5 +1,35 @@
 #!/usr/bin/env bash
 
+#NOTE: temporary code .. to be used inside 'recent' script for instance
+img_preview() {
+  local img="$1"
+
+  case "$TERM_PROGRAM" in
+  WezTerm)
+    wezterm imgcat "$img"
+    ;;
+
+  ghostty)
+    printf "\e_Ga=d,d=a\e\\"
+    kitten icat --silent --transfer-mode=file "$img"
+    ;;
+
+  *)
+    if [[ "$TERM" == xterm-kitty* ]]; then
+      printf "\e_Ga=d,d=a\e\\"
+      kitten icat --silent --transfer-mode=file "$img"
+
+    elif command -v chafa >/dev/null; then
+      chafa "$img"
+
+    else
+      echo "Image preview unavailable"
+      return 1
+    fi
+    ;;
+  esac
+}
+
 # fuzzy live grep, then open in nvim at the line!
 lr() {
   local rg_cmd="rg --sort path --no-heading --color=always --line-number --column"

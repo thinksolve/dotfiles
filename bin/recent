@@ -3,10 +3,6 @@
 
 set -e
 
-# IDX_FILE=$(mktemp /tmp/recent.idx.XXXXXX)
-# IDX_FILE=/tmp/recent.idx
-# [[ -s $IDX_FILE ]] || printf 1 >"$IDX_FILE" # create empty if missing
-
 SELF=$(realpath "$0")
 RECENT_OPEN="$SELF"
 
@@ -41,16 +37,6 @@ _recent_pick() {
   local pixel_width=$((16 * $(tput cols)))
   local -x _preview_width=$(($pixel_width * 50 / 100))
 
-  #WIP: broken
-  #     SAVE_IDX=$(
-  #         cat <<'IDX'
-  # # printf %s {n} >"$IDX_FILE"
-  # printf %s {1} >"$IDX_FILE"
-  #
-  # IDX
-  #     )
-  # SAVE_IDX='printf %s {n} >"$IDX_FILE"'
-
   local FZF_PREVIEW=$(
     cat <<-'PREVIEW'
                 printf "\e_Ga=d,d=a\e\\"
@@ -61,18 +47,30 @@ _recent_pick() {
                 safe_name=${base_name//[^[:alnum:]._-]/_}
                 hash=$(printf "%s" "$p" | md5sum | cut -d" " -f1)
                 tmp="/tmp/preview-$safe_name-$hash"
+                
+                IMG_VIEWER="chafa"
+                if [[ "$TERM_PROGRAM" == "WezTerm" ]]; then
+                    # IMG_VIEWER="wezterm imgcat" #doesnt work in wezterm in this preview context, for some reason 
+                   : 
+                elif [[ "$TERM_PROGRAM" == "ghostty" || "$TERM" == "xterm-kitty" ]]; then
+                    IMG_VIEWER="kitten icat --silent --transfer-mode=file"
+                fi
+              
 
                 if [[ -d "$p" ]]; then
                         echo -e "\033[1;34mDirectory:\033[0m $p\n"
                         tree -a -C -L 2 "$p" 2>/dev/null ||  eza --tree --level=2 --color=always "$p" 2>/dev/null || ls -la "$p"
                 elif [[ $p =~ \.(jpe?g|png|gif|webp|tiff|bmp|avif|svg)$ ]]; then
-                        kitten icat --silent --transfer-mode=file "$p" 2>/dev/null || echo "Image preview unavailable"
+                         $IMG_VIEWER "$p" 2>/dev/null || echo "Image preview unavailable"
                 elif [[ $p =~ \.pdf$ ]]; then
-                        pdftoppm -f 1 -l 1 -png -singlefile "$p" "$tmp"
-                        kitten icat --silent --transfer-mode=file "${tmp}.png" 2>/dev/null || echo "PDF preview unavailable"
+                         [[ ! -f "${tmp}.png" ]] && pdftoppm -f 1 -l 1 -png -singlefile "$p" "$tmp"
+                      
+                         $IMG_VIEWER "${tmp}.png" 2>/dev/null || echo "PDF preview unavailable"
+
                 elif [[ $p =~ \.(mp4|mov|mkv|webm|avi|m4v)$ ]]; then
-                        ffmpeg -loglevel error -y -ss 00:00:03 -i "$p" -vframes 1 -vf "scale=$_preview_width:-1" "${tmp}.png"
-                        kitten icat --silent --transfer-mode=file "${tmp}.png" 2>/dev/null || echo "Video preview unavailable"
+                         [[ ! -f "${tmp}.png" ]] && ffmpeg -loglevel error -y -ss 00:00:03 -i "$p" -vframes 1 -vf "scale=$_preview_width:-1" "${tmp}.png"
+                         $IMG_VIEWER "${tmp}.png" 2>/dev/null || echo "Video preview unavailable"
+
                 elif command -v bat >/dev/null; then
                         bat --color=always --style=numbers "$p" 2>/dev/null
                 else
@@ -80,17 +78,6 @@ _recent_pick() {
                 fi
 PREVIEW
   )
-
-  #NOTE: WIP: this works but i only want it to work for specific binds not all
-  # --bind "load:pos:$(cat "$IDX_FILE" 2>/dev/null || echo 1)" \
-  #
-  #  --bind "left:execute(printf %s {n} >\"$IDX_FILE\"; parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; \"$0\"'$filter')+abort" \
-  #
-
-  # --bind "change:reload(rg --color=always -n {q} $(cat "$RECENT_DB") 2>/dev/null || true)" \
-  # --bind "start:unbind(change)" \
-  # --bind "ctrl-s:change-prompt(grep> )+disable-search+rebind(change)" \
-  # --bind "ctrl-f:change-prompt(recent> )+enable-search+unbind(change)" \
 
   tac "$recent_pick_db" 2>/dev/null | while IFS= read -r path; do
     [[ -e "$path" ]] || continue

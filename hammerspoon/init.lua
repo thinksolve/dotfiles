@@ -65,10 +65,10 @@ hs.hotkey.bind(screen_position_mod, "Space", window_management.FullScreen)
 -- hs.hotkey.bind(screen_position_mod, "Return", window_management.FullScreen)
 
 local cycle_windows = { "command" }
-hs.hotkey.bind(cycle_windows, "'", function()
+hs.hotkey.bind(cycle_windows, ".", function()
 	window_management.cycleWindows("right")
 end)
-hs.hotkey.bind(merge_modifiers(cycle_windows, "shift"), "'", function()
+hs.hotkey.bind(merge_modifiers(cycle_windows, "shift"), ".", function()
 	window_management.cycleWindows("left")
 end)
 

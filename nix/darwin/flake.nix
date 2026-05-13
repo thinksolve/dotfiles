@@ -164,18 +164,17 @@
             screencapture.location = "~/screenshots";
             screensaver.askForPasswordDelay = 10;
             loginwindow.LoginwindowText = "kalimba";
-            
-          
-             CustomUserPreferences = {
-               "com.brave.Browser" = {
-                 NSUserKeyEquivalents = {
-                   # Brave keys below are essentially freed (F19 and F18 never used)
-                   # Their defaults (`CMD+;`` and `CMD+'``) are used by sustem wide key binds
-                   "Check Document Now" = "@F19";  
-                   "Show Spelling and Grammar" = "@F18"; 
-                 };
-               };
-             };
+
+            CustomUserPreferences = {
+              "com.brave.Browser" = {
+                NSUserKeyEquivalents = {
+                  # "Check Document Now" = "@F19";
+                  # "Show Spelling and Grammar" = "@F18";
+                  "Settings..." = "@F12";
+                  #remapped 'cmd+,'  to F12 (useless) since im using the former for mac window switching
+                };
+              };
+            };
 
           };
         };
