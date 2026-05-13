@@ -81,6 +81,7 @@
       # ".local/bin/teal-language-server".source = from_home "/.luarocks/bin/teal-language-server"; #might remove along with ~/teal-language-server/ and ~/.dotfiles/dev/lua
       ".config/zsh-abbr".source = dotfiles "/zsh/zsh-abbr";
       ".config/nix-darwin".source = dotfiles "/nix/darwin";
+      ".wezterm.lua".source = dotfiles "/wezterm/config.lua";
       ".config/nvim".source = dotfiles "/nvim/lazyvim";
       ".hammerspoon".source = dotfiles "/hammerspoon";
       ".shell_functions.sh".source = dotfiles "/zsh/shell_functions.sh";
@@ -116,17 +117,19 @@
       "zsh/terminal_styling.zsh"
       # "after_compinit.zsh"
       # "fast_compinit.zsh"
-    ])
-    // (affixLinks ".dotfiles/ghostty/themes"
-      "/Applications/Ghostty.app/Contents/Resources/ghostty/themes/"
-      { sym_suffix = ".light"; }
-      (fileToList ../../ghostty/ghostty-themes-light)
-    )
-    // (affixLinks ".dotfiles/ghostty/themes"
-      "/Applications/Ghostty.app/Contents/Resources/ghostty/themes/"
-      { sym_suffix = ".dark"; }
-      (fileToList ../../ghostty/ghostty-themes-dark)
-    );
+    ]);
+
+  #NOTE: no longer using ghostty, so this is not needed
+  # // (affixLinks ".dotfiles/ghostty/themes"
+  #   "/Applications/Ghostty.app/Contents/Resources/ghostty/themes/"
+  #   { sym_suffix = ".light"; }
+  #   (fileToList ../../ghostty/ghostty-themes-light)
+  # )
+  # // (affixLinks ".dotfiles/ghostty/themes"
+  #   "/Applications/Ghostty.app/Contents/Resources/ghostty/themes/"
+  #   { sym_suffix = ".dark"; }
+  #   (fileToList ../../ghostty/ghostty-themes-dark)
+  # );
 
   home.packages =
     let
