@@ -8,19 +8,19 @@
 -- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
 
 -- Otter for embedded languages in Nix NOTE: testing ,,,might dlete
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "nix",
-  callback = function()
-    -- Languages you commonly embed in Nix (add/remove as needed)
-    require("otter").activate({
-      "python",
-      "bash", -- or "sh"
-      "lua",
-      "javascript",
-      -- "rust", etc.
-    }, true, true) -- completion = true, diagnostics = true
-  end,
-})
+-- vim.api.nvim_create_autocmd("FileType", {
+--   pattern = "nix",
+--   callback = function()
+--     -- Languages you commonly embed in Nix (add/remove as needed)
+--     require("otter").activate({
+--       "python",
+--       "bash", -- or "sh"
+--       "lua",
+--       "javascript",
+--       -- "rust", etc.
+--     }, true, true) -- completion = true, diagnostics = true
+--   end,
+-- })
 
 vim.api.nvim_create_autocmd("VimEnter", {
   callback = function()

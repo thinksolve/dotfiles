@@ -6,7 +6,7 @@ local config = wezterm.config_builder()
 local dark_themes = { "AdventureTime", "Catppuccin Mocha", "Tokyo Night Storm (Gogh)" }
 local light_themes = { "One Light (Gogh)", "Tokyo Night Day" }
 -- config.color_scheme = light_themes[2]
-config.color_scheme = dark_themes[3]
+config.color_scheme = dark_themes[2]
 config.debug_key_events = true
 config.font_size = 15.5
 config.hide_tab_bar_if_only_one_tab = true
@@ -85,30 +85,25 @@ local function get_mtime(filepath)
 	return tonumber(mtime)
 end
 
--- local wezterm_config = os.getenv("HOME") .. "/.wezterm.lua"
 local wezterm_config = os.getenv("HOME") .. "/.dotfiles/wezterm/config.lua"
-local theme_file = os.getenv("HOME") .. "/.cache/theme.txt"
--- local theme_file = wezterm.home_dir.. "/.cache/theme.txt"
+local theme_file = os.getenv("HOME") .. "/.cache/theme.txt" -- alternate: wezterm.home_dir.. "/.cache/theme.txt"
 
--- Check if wezterm.lua is newer than cache
-local wezterm_info = get_mtime(wezterm_config)
-local cache_info = get_mtime(theme_file)
+local wezterm_mtime = get_mtime(wezterm_config)
+local cache_mtime = get_mtime(theme_file)
 
-local should_recalculate = not cache_info or (wezterm_info and wezterm_info > cache_info)
-
--- Check which table this theme belongs to
-local function is_in_list(theme, themes)
-	for _, t in ipairs(themes) do
-		if t == theme then
-			return true
-		end
-	end
-	return false
-end
+local should_recalculate = not cache_mtime or (wezterm_mtime and wezterm_mtime > cache_mtime)
 
 local function update_theme_cache()
+	-- only used by this function, so scoping it here
+	local function is_in_list(theme, themes)
+		for _, t in ipairs(themes) do
+			if t == theme then
+				return true
+			end
+		end
+		return false
+	end
 	local is_light = is_in_list(config.color_scheme, light_themes)
-	-- local mode = is_light and "light" or "dark"
 
 	-- Write to cache
 	local f = io.open(theme_file, "w")

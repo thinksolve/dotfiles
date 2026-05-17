@@ -1,3 +1,8 @@
+--- NOTE: lazyvim merging (of plugins) is only useful for _dictionary_ fields since there is a stable key
+--- that lazyvim can intelligently merge against.
+--- When a field is an _array_ (see: whichkey opts.triggers) then merging will override the original field
+--- with the specification supplied
+
 local function disable_default_plugins(...)
   return vim.tbl_map(function(name)
     return { name, enabled = false }
@@ -14,6 +19,25 @@ end
 
 return {
   disable_default_plugins("folke/flash.nvim", "folke/noice.nvim"), -- lazyvim flattens this .. dont need to "spread"
+  {
+    "folke/which-key.nvim",
+    opts = {
+      triggers = { ---  NOTE:  the spec here overrides the internal one (see top note)
+        { "<leader>", mode = { "n", "v" } },
+        { "[", mode = { "n", "v" } },
+        { "]", mode = { "n", "v" } },
+      },
+      --- NOTE: this approach kinda works; disables popup for 'g' but doesnt fix combinations like 'gc'
+      -- delay = function(ctx)
+      --   -- if ctx.keys == "g" then
+      --   if ctx.keys:find("^g") then
+      --     -- if vim.startswith(ctx.keys, "gc") or vim.startswith(ctx.keys, "g") then
+      --     return math.huge
+      --   end
+      --   return 0
+      -- end,
+    },
+  },
   {
     "LazyVim/LazyVim",
     opts = {
