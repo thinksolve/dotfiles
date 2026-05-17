@@ -1,6 +1,23 @@
 #!/usr/bin/env bash
 
+#rg filter .. first arugment is the char to be filered out``
+rgf() {
+  local comment_char=$1
+  local pattern=$2
+  $()$()
+  if [[ -z "$comment_char" || -z "$pattern" ]]; then
+    echo "Usage: rgf <comment_char> <pattern> [paths...]" >&2
+    return 2
+  fi
+  shift 2
+
+  local escaped
+  escaped=$(printf '%s' "$comment_char" | sed 's/[][\/.^$*+?{}|()]/\\&/g')
+  rg --color=always "$pattern" "${@:-.}" | rg -v "^[^:]+:\s*${escaped}"
+}
+
 #NOTE: temporary code .. to be used inside 'recent' script for instance
+# 'wezterm imgcat' doesnt work inside fzf preview string context
 img_preview() {
   local img="$1"
 
@@ -31,7 +48,7 @@ img_preview() {
 }
 
 # fuzzy live grep, then open in nvim at the line!
-lr() {
+lrg() {
   local rg_cmd="rg --sort path --no-heading --color=always --line-number --column"
 
   local selected
@@ -388,7 +405,12 @@ current_theme_ghostty() {
   echo "$theme"
 }
 
-export BAT_THEME="$(current_theme_ghostty)"
+# export BAT_THEME="$(current_theme_ghostty)"
+# export BAT_THEME="$(
+#   rg '^\s*config\.color_scheme' ~/.wezterm.lua | rg -q 'light_themes' && echo light || echo dark
+# )"
+
+# export BAT_THEME=$(rg -q 'light' ~/.cache/theme.txt 2>/dev/null && echo "light" || echo "dark")
 # export BAT_THEME="$(detect_bg_universal)"
 # export BAT_THEME="$(detect_bg_ghostty)"
 

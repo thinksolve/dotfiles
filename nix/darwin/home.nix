@@ -230,7 +230,7 @@
         ${endMarker}
       '';
     in
-    lib.hm.dag.entryBefore [ "linkGeneration" ] ''
+    lib.hm.dag.entryBefore [ "linkGeneration" ] /* bash */ ''
       CURRENT_BLOCK=$(sed -n '/^${startMarker}$/,/^${endMarker}$/p' "${outputFile}" 2>/dev/null || true)
 
       read -r -d "" DESIRED_BLOCK << 'NIXBLOCK' || true

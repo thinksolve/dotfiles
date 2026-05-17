@@ -4,13 +4,29 @@ local function disable_default_plugins(...)
   end, { ... })
 end
 
+-- Read cache file at load time
+local theme_file = os.getenv("HOME") .. "/.cache/theme.txt"
+local handle = io.open(theme_file, "r")
+local mode = handle and handle:read("*a"):gsub("[\n\r%s]+", "") or "dark"
+if handle then
+  handle:close()
+end
+
 return {
   disable_default_plugins("folke/flash.nvim", "folke/noice.nvim"), -- lazyvim flattens this .. dont need to "spread"
+  {
+    "LazyVim/LazyVim",
+    opts = {
+      colorscheme = (mode == "light") and "catppuccin-latte" or "tokyonight-moon",
+    },
+  },
   {
     "stevearc/conform.nvim",
     opts = {
       formatters_by_ft = {
         nix = { "nixfmt" },
+        bash = { "shfmt" },
+        sh = { "shfmt" },
       },
     },
   },
@@ -68,6 +84,7 @@ return {
       ensure_installed = {
         "zsh",
         "nix",
+        "bash",
       },
       auto_install = true,
     },

@@ -1,4 +1,21 @@
 return {
+  -- useful for embedded code as strings in other files, such as in comment strings for nix writers scripts
+  {
+    "jmbuhr/otter.nvim",
+    event = { "BufReadPre *.nix", "BufNewFile *.nix" },
+    opts = {
+      buffers = {
+        set_filetype = true,
+        write_to_disk = false,
+      },
+      handle_leading_whitespace = true,
+      -- Try these extra settings
+      lsp = {
+        diagnostics_update_events = { "BufWritePost", "InsertLeave", "TextChanged", "TextChangedI" },
+      },
+      verbose = { no_code_found = true }, -- temporary, for debugging
+    },
+  },
   {
     "kylechui/nvim-surround",
     version = "^4.0.0",

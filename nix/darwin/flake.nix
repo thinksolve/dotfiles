@@ -170,7 +170,7 @@
                 NSUserKeyEquivalents = {
                   # "Check Document Now" = "@F19";
                   # "Show Spelling and Grammar" = "@F18";
-                  "Settings..." = "@F12";
+                  "Settings..." = "@F19";
                   #remapped 'cmd+,'  to F12 (useless) since im using the former for mac window switching
                 };
               };
