@@ -607,6 +607,43 @@ fzd.cleanup() {
   echo 'cleanup'
 }
 
+fzd.shells.init() {
+  [[ -o interactive ]] || return
+
+  mkdir -p /tmp/fzd_sessions
+
+  # prune dead sessions first
+  find /tmp/fzd_sessions -mindepth 1 -maxdepth 1 -type f 2>/dev/null |
+    while IFS= read -r f; do
+      pid=${f##*/}
+
+      kill -0 "$pid" 2>/dev/null || command rm -f "$f"
+    done
+
+  # detect whether sessions already exist
+  # NOTE: actually the initial shell will always return false for FZD_SESSIONS, so this doesnt work well
+  # if find /tmp/fzd_sessions -mindepth 1 -type f -print -quit 2>/dev/null | grep -q .; then
+  #   export FZD_SESSIONS=true
+  # else
+  #   export FZD_SESSIONS=false
+  # fi
+
+  # register current shell
+  touch "/tmp/fzd_sessions/$$"
+}
+
+fzd.shells.cleanup() {
+  [[ -o interactive ]] || return
+
+  command rm -f "/tmp/fzd_sessions/$$"
+
+  if [ -z "$(find /tmp/fzd_sessions -mindepth 1 -print -quit 2>/dev/null)" ]; then
+    command rm -f /tmp/deep-fzf-full-* 2>/dev/null
+    command rm -f /tmp/deep-fzf-file-* 2>/dev/null
+    echo 'cleanup'
+  fi
+}
+
 function fzd() {
   local mode=${1:-full} root=${2:-$HOME} root_hash cache session_id
   root_hash=$(printf '%s' "$root" | md5sum | cut -d' ' -f1)
@@ -634,7 +671,7 @@ function fzd() {
   # local dir_viewer=${DIRVIEWER:-$editor}
   local editor=recent
   local dir_viewer=$editor
-  local maxdepth=${FZD_MAXDEPTH:-3}
+  local maxdepth=${FZD_MAXDEPTH:-5}
 
   local preview='p=$1;
             if [ -d "$p" ]; then

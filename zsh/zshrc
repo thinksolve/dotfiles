@@ -25,18 +25,19 @@ elif [[ -f $_plugins_zsh ]]; then
     source $_plugins_zsh
 fi 
 
+
+
+
+
+#NOTE: WIP: idea is to persist 'fzd file' cache not per shell session (i.e. each pid)
+#but rather across all interactive shell session .. currently using marker files in /tmp/fzd_sessions/
+#Need to change fzd defintion to use marker files existence
+
+
+
+fzd.shells.init
 do_exit_cleanup() {
-    fzd.cleanup
+  fzd.shells.cleanup
 }
 
-
 trap do_exit_cleanup EXIT
-
-
-# pnpm
-export PNPM_HOME="/Users/brightowl/Library/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME/bin:"*) ;;
-  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
-esac
-# pnpm end

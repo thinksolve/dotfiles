@@ -37,18 +37,12 @@ vim.api.nvim_create_autocmd("FileType", {
   pattern = "netrw",
   --pattern = { "netrw", "snacks_picker_list" },
   callback = function()
-    local function remap_from_to(from, to)
-      return vim.keymap.set("n", to, from, { remap = true, buffer = true })
-    end
+    local opts = { remap = true, buffer = true }
 
-    -- these are yazi-like
-    remap_from_to("-", "<Left>") -- Up directory
-    remap_from_to("<CR>", "<Right>") -- Enter file/dir
-    remap_from_to("D", "d") -- Delete
-    remap_from_to("R", "r") -- Rename
-
-    -- remap_from_to("%", "a") -- Create file
-    -- Create file in yazi manner (nested directories allowed!)
+    vim.keymap.set("n", "<Right>", "<CR>", opts) -- Enter file/dir
+    vim.keymap.set("n", "<Left>", "-", opts) -- Up directory
+    vim.keymap.set("n", "d", "D", opts) --Delete
+    vim.keymap.set("n", "r", "R", opts) --Rename
     vim.keymap.set("n", "a", function()
       local path = vim.fn.input("Create file (with path): ", "", "file")
       if path == "" then
@@ -61,6 +55,6 @@ vim.api.nvim_create_autocmd("FileType", {
       end
       vim.cmd("e " .. path)
       vim.cmd("w") -- Save immediately to disk
-    end, { remap = true, buffer = true })
+    end, opts)
   end,
 })
