@@ -599,15 +599,7 @@ function editable_path() {
   return 1
 }
 
-fzd.cleanup() {
-  [[ $SHLVL -eq 1 ]] || return # Run only in top-level shell
-  rm -f "/tmp/deep-fzf-full"-* || true
-  rm -f "/tmp/deep-fzf-file"-* || true
-
-  echo 'cleanup'
-}
-
-fzd.shells.init() {
+fzd_shells_init_og() {
   [[ -o interactive ]] || return
 
   mkdir -p /tmp/fzd_sessions
@@ -620,28 +612,52 @@ fzd.shells.init() {
       kill -0 "$pid" 2>/dev/null || command rm -f "$f"
     done
 
-  # detect whether sessions already exist
-  # NOTE: actually the initial shell will always return false for FZD_SESSIONS, so this doesnt work well
-  # if find /tmp/fzd_sessions -mindepth 1 -type f -print -quit 2>/dev/null | grep -q .; then
-  #   export FZD_SESSIONS=true
-  # else
-  #   export FZD_SESSIONS=false
-  # fi
-
-  # register current shell
   touch "/tmp/fzd_sessions/$$"
 }
 
-fzd.shells.cleanup() {
+fzd_shells_cleanup_og() {
   [[ -o interactive ]] || return
 
   command rm -f "/tmp/fzd_sessions/$$"
 
-  if [ -z "$(find /tmp/fzd_sessions -mindepth 1 -print -quit 2>/dev/null)" ]; then
+  #subtle bug: find does not work with symlink and on macos '/tmp' is a symlink for '/private/tmp'
+  if [ -z "$(find /private/tmp/fzd_sessions -mindepth 1 -print -quit 2>/dev/null)" ]; then
     command rm -f /tmp/deep-fzf-full-* 2>/dev/null
     command rm -f /tmp/deep-fzf-file-* 2>/dev/null
     echo 'cleanup'
   fi
+}
+
+fzd_shells_init() {
+  [[ -o interactive ]] || return
+  mkdir -p /tmp/fzd_sessions
+
+  #glob is a zsh-ism .. breaks in bash files
+  # for f in /tmp/fzd_sessions/*(N); do
+  #   pid=${f##*/}
+  #   kill -0 "$pid" 2>/dev/null || command rm -f "$f"
+  # done
+
+  if [ -n "$(find /tmp/fzd_sessions -mindepth 1 -print -quit 2>/dev/null)" ]; then
+    for f in /tmp/fzd_sessions/*; do
+      [ -f "$f" ] || continue
+      pid=${f##*/}
+      kill -0 "$pid" 2>/dev/null || command rm -f "$f"
+    done
+  fi
+
+  : >"/tmp/fzd_sessions/$$" ## null redirect `: >` is cheapest form of (over)writing file
+}
+
+fzd_shells_cleanup() {
+  command rm -f "/tmp/fzd_sessions/$$"
+
+  # VARIANT 1: hardcode true path of /tmp which is /private/tmp for macos
+  # find "/private/tmp" -maxdepth 1 -name 'deep-fzf-file-*' -delete 2>/dev/null
+
+  #VARIANT 2: zsh-ism
+  setopt localoptions nullglob
+  command rm -f /tmp/deep-fzf-file-* /tmp/deep-fzf-full-* 2>/dev/null
 }
 
 function fzd() {
