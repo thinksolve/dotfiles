@@ -1,9 +1,28 @@
 ---
----
+
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 
-local modeDark = not true
+local home_dir = wezterm.home_dir or os.getenv("HOME")
+local theme_file = home_dir .. "/.colorscheme"
+
+wezterm.add_to_config_reload_watch_list(theme_file) -- wezterm reloads when ~/.colorscheme changes ..nice
+
+local function is_dark()
+	local f = io.open(theme_file, "r")
+	if not f then
+		return nil
+	end
+	local mode = f:read("*l") --file only contains single line
+	-- local mode = f:read("*a"):gsub("[\r\n%s]", "")
+	f:close()
+
+	-- i.e. darkmode is default
+	return mode ~= "light"
+end
+
+local modeDark = is_dark()
+-- local modeDark = true
 
 local dark_themes = { "AdventureTime", "Catppuccin Mocha", "Tokyo Night Storm (Gogh)" }
 local light_themes = { "One Light (Gogh)", "Tokyo Night Day" }
@@ -15,6 +34,11 @@ config.hide_tab_bar_if_only_one_tab = true
 config.initial_cols = 200 -- stty size yields '46 174'
 config.initial_rows = 50
 config.keys = {
+	-- {
+	-- 	key = "r",
+	-- 	mods = "CMD|SHIFT",
+	-- 	action = wezterm.action.ReloadConfiguration,
+	-- },
 	{
 		key = "-",
 		mods = "ALT",
@@ -72,56 +96,55 @@ config.window_padding = {
 	right = 0,
 }
 
-----NOTE: theme related logic
-
+----NOTE: instead of wezterm writing to ~/.colorscheme, now uptop it reads from it and its toggled outside using toggle_theme
 -- Helper function to get file modification time since 'wezterm.stat' doesnt exist in wezterm's Lua API
-local function get_mtime(filepath)
-	local handle = io.popen("/usr/bin/stat -f %m " .. filepath)
-	if not handle then
-		return nil
-	end
-	local mtime = handle:read("*a")
-	handle:close()
-	if not mtime then
-		return nil
-	end
-	mtime = mtime:gsub("[%s\n\r]+", "") -- Single backslash, not double
-	return tonumber(mtime)
-end
+-- local function get_mtime(filepath)
+-- 	local handle = io.popen("/usr/bin/stat -f %m " .. filepath)
+-- 	if not handle then
+-- 		return nil
+-- 	end
+-- 	local mtime = handle:read("*a")
+-- 	handle:close()
+-- 	if not mtime then
+-- 		return nil
+-- 	end
+-- 	mtime = mtime:gsub("[%s\n\r]+", "") -- Single backslash, not double
+-- 	return tonumber(mtime)
+-- end
+--
+-- local wezterm_config = os.getenv("HOME") .. "/.dotfiles/wezterm/config.lua"
+-- local colorscheme_file = os.getenv("HOME") .. "/.colorscheme" -- alternate: wezterm.home_dir.. "/.colorscheme"
+--
+-- local wezterm_mtime = get_mtime(wezterm_config)
+-- local cache_mtime = get_mtime(colorscheme_file)
+--
+-- local should_recalculate = not cache_mtime or (wezterm_mtime and wezterm_mtime > cache_mtime)
 
-local wezterm_config = os.getenv("HOME") .. "/.dotfiles/wezterm/config.lua"
-local colorscheme_file = os.getenv("HOME") .. "/.colorscheme" -- alternate: wezterm.home_dir.. "/.colorscheme"
+-- local function update_theme_cache()
+-- 	-- -- only used by this function, so scoping it here
+-- 	-- local function is_in_list(theme, themes)
+-- 	-- 	for _, t in ipairs(themes) do
+-- 	-- 		if t == theme then
+-- 	-- 			return true
+-- 	-- 		end
+-- 	-- 	end
+-- 	-- 	return false
+-- 	-- end
+-- 	-- local is_light = is_in_list(config.color_scheme, light_themes)
+--
+-- 	-- Write to cache
+-- 	local f = io.open(colorscheme_file, "w")
+-- 	if f then
+-- 		f:write(modeDark and "dark\n" or "light\n")
+-- 		f:close()
+-- 	end
+--
+-- 	-- print(">>> THIS CODE RAN <<<")
+-- 	wezterm.log_warn("wezterm config file changed. Current theme: " .. config.color_scheme)
+-- end
 
-local wezterm_mtime = get_mtime(wezterm_config)
-local cache_mtime = get_mtime(colorscheme_file)
-
-local should_recalculate = not cache_mtime or (wezterm_mtime and wezterm_mtime > cache_mtime)
-
-local function update_theme_cache()
-	-- -- only used by this function, so scoping it here
-	-- local function is_in_list(theme, themes)
-	-- 	for _, t in ipairs(themes) do
-	-- 		if t == theme then
-	-- 			return true
-	-- 		end
-	-- 	end
-	-- 	return false
-	-- end
-	-- local is_light = is_in_list(config.color_scheme, light_themes)
-
-	-- Write to cache
-	local f = io.open(colorscheme_file, "w")
-	if f then
-		f:write(modeDark and "dark\n" or "light\n")
-		f:close()
-	end
-
-	-- print(">>> THIS CODE RAN <<<")
-	wezterm.log_warn("wezterm config file changed. Current theme: " .. config.color_scheme)
-end
-
-if should_recalculate then
-	update_theme_cache()
-end
+-- if should_recalculate then
+-- 	update_theme_cache()
+-- end
 
 return config

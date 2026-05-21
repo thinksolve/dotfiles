@@ -9,12 +9,43 @@ local function disable_default_plugins(...)
   end, { ... })
 end
 
--- Read cache file at load time
 local colorscheme_file = os.getenv("HOME") .. "/.colorscheme"
-local handle = io.open(colorscheme_file, "r")
-local mode = handle and handle:read("*a"):gsub("[\n\r%s]+", "") or "dark"
-if handle then
+
+-- Read cache file at load time
+-- local handle = io.open(colorscheme_file, "r")
+-- local mode = handle and handle:read("*a"):gsub("[\n\r%s]+", "") or "dark"
+-- if handle then
+--   handle:close()
+-- end
+--
+local function read_mode()
+  local handle = io.open(colorscheme_file, "r")
+  if not handle then
+    return "dark"
+  end
+  local mode = handle:read("*a"):gsub("[\n\r%s]+", "")
   handle:close()
+  if mode ~= "light" and mode ~= "dark" then
+    return "dark"
+  end -- guard partial read
+  return mode
+end
+
+local function apply_colorscheme()
+  local mode = read_mode()
+  vim.schedule(function()
+    vim.cmd.colorscheme(mode == "light" and "catppuccin-latte" or "tokyonight-moon")
+  end)
+end
+
+if not _G._colorscheme_watcher then
+  local w = vim.uv.new_fs_poll()
+  w:start(colorscheme_file, 500, function(err, _, _)
+    if not err then
+      apply_colorscheme()
+    end
+  end)
+  _G._colorscheme_watcher = w
 end
 
 return {
@@ -22,7 +53,7 @@ return {
   {
     "LazyVim/LazyVim",
     opts = {
-      colorscheme = (mode == "light") and "catppuccin-latte" or "tokyonight-moon",
+      colorscheme = (read_mode() == "light") and "catppuccin-latte" or "tokyonight-moon",
     },
   },
   {

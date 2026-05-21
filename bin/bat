@@ -1,0 +1,3 @@
+#!/bin/bash
+theme=$(grep -q light ~/.colorscheme 2>/dev/null && echo light || echo dark)
+exec "$HOME/.nix-profile/bin/bat" --theme="$theme" "$@"

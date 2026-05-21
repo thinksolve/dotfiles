@@ -100,6 +100,7 @@
     // (outOfStoreLinks ".local/" "${dotfiles_dir}/" [
       "bin/recent"
       "bin/yt-txt"
+      "bin/bat"
     ])
     // (outOfStoreLinks ".config/" "${dotfiles_dir}/" [
       "doom"

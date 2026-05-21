@@ -72,7 +72,7 @@ _recent_pick() {
                          $IMG_VIEWER "${tmp}.png" 2>/dev/null || echo "Video preview unavailable"
 
                 elif command -v bat >/dev/null; then
-                        bat --color=always --style=numbers "$p" 2>/dev/null
+                        bat --color=always --style=numbers  "$p" 2>/dev/null
                 else
                         cat "$p" 2>/dev/null || highlight -O ansi "$p" 2>/dev/null || cat "$p"
                 fi

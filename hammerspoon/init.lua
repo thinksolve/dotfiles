@@ -125,6 +125,11 @@ local function runSilent(cmd)
 		hs.alert("That command doesnt work boss.", 3)
 	end
 end
+
+hs.hotkey.bind({ "command", "shift" }, "t", function()
+	runSilent("toggle_theme")
+end)
+
 hs.hotkey.bind({ "ctrl", "option" }, "x", function()
 	-- local cmd = "get_ocr"
 	-- hs.execute(string.format("/bin/zsh -i -c 'LC_ALL=en_US.UTF-8 %s'", cmd))

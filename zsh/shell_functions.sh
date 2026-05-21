@@ -1,5 +1,26 @@
 #!/usr/bin/env bash
 
+toggle_theme() {
+  local theme_file="$HOME/.colorscheme"
+  local current mode
+  mkdir -p "$(dirname "$theme_file")"
+
+  current=$(cat "$theme_file" 2>/dev/null || echo "dark") # default
+
+  case "$current" in
+  light | dark)
+    mode=$([ "$current" = "dark" ] && echo "light" || echo "dark")
+    ;;
+  *)
+    mode="dark" # fallback
+    ;;
+  esac
+
+  printf "%s\n" "$mode" >"$theme_file"
+
+  exec zsh
+}
+
 #rg filter .. first arugment is the char to be filered out``
 rgf() {
   local comment_char=$1
