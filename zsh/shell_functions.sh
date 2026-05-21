@@ -410,7 +410,7 @@ current_theme_ghostty() {
 #   rg '^\s*config\.color_scheme' ~/.wezterm.lua | rg -q 'light_themes' && echo light || echo dark
 # )"
 
-# export BAT_THEME=$(rg -q 'light' ~/.cache/theme.txt 2>/dev/null && echo "light" || echo "dark")
+# export BAT_THEME=$(rg -q 'light' ~/.colorscheme 2>/dev/null && echo "light" || echo "dark")
 # export BAT_THEME="$(detect_bg_universal)"
 # export BAT_THEME="$(detect_bg_ghostty)"
 
@@ -597,35 +597,6 @@ function editable_path() {
   esac
 
   return 1
-}
-
-fzd_shells_init_og() {
-  [[ -o interactive ]] || return
-
-  mkdir -p /tmp/fzd_sessions
-
-  # prune dead sessions first
-  find /tmp/fzd_sessions -mindepth 1 -maxdepth 1 -type f 2>/dev/null |
-    while IFS= read -r f; do
-      pid=${f##*/}
-
-      kill -0 "$pid" 2>/dev/null || command rm -f "$f"
-    done
-
-  touch "/tmp/fzd_sessions/$$"
-}
-
-fzd_shells_cleanup_og() {
-  [[ -o interactive ]] || return
-
-  command rm -f "/tmp/fzd_sessions/$$"
-
-  #subtle bug: find does not work with symlink and on macos '/tmp' is a symlink for '/private/tmp'
-  if [ -z "$(find /private/tmp/fzd_sessions -mindepth 1 -print -quit 2>/dev/null)" ]; then
-    command rm -f /tmp/deep-fzf-full-* 2>/dev/null
-    command rm -f /tmp/deep-fzf-file-* 2>/dev/null
-    echo 'cleanup'
-  fi
 }
 
 fzd_shells_init() {

@@ -3,10 +3,12 @@
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 
+local modeDark = not true
+
 local dark_themes = { "AdventureTime", "Catppuccin Mocha", "Tokyo Night Storm (Gogh)" }
 local light_themes = { "One Light (Gogh)", "Tokyo Night Day" }
--- config.color_scheme = light_themes[2]
-config.color_scheme = dark_themes[2]
+
+config.color_scheme = modeDark and dark_themes[2] or light_themes[1]
 config.debug_key_events = true
 config.font_size = 15.5
 config.hide_tab_bar_if_only_one_tab = true
@@ -54,11 +56,13 @@ config.keys = {
 		action = wezterm.action({ ActivatePaneDirection = "Right" }),
 	},
 }
-config.macos_window_background_blur = 5
+-- config.macos_window_background_blur = 5
+config.macos_window_background_blur = modeDark and 5 or 50
 config.send_composed_key_when_left_alt_is_pressed = false
 config.send_composed_key_when_right_alt_is_pressed = false
 config.use_fancy_tab_bar = false
 config.window_background_opacity = 0.85
+-- config.window_background_opacity = modeDark and 0.9 or 1.0
 config.window_close_confirmation = "NeverPrompt"
 config.window_decorations = "RESIZE"
 config.window_padding = {
@@ -86,29 +90,29 @@ local function get_mtime(filepath)
 end
 
 local wezterm_config = os.getenv("HOME") .. "/.dotfiles/wezterm/config.lua"
-local theme_file = os.getenv("HOME") .. "/.cache/theme.txt" -- alternate: wezterm.home_dir.. "/.cache/theme.txt"
+local colorscheme_file = os.getenv("HOME") .. "/.colorscheme" -- alternate: wezterm.home_dir.. "/.colorscheme"
 
 local wezterm_mtime = get_mtime(wezterm_config)
-local cache_mtime = get_mtime(theme_file)
+local cache_mtime = get_mtime(colorscheme_file)
 
 local should_recalculate = not cache_mtime or (wezterm_mtime and wezterm_mtime > cache_mtime)
 
 local function update_theme_cache()
-	-- only used by this function, so scoping it here
-	local function is_in_list(theme, themes)
-		for _, t in ipairs(themes) do
-			if t == theme then
-				return true
-			end
-		end
-		return false
-	end
-	local is_light = is_in_list(config.color_scheme, light_themes)
+	-- -- only used by this function, so scoping it here
+	-- local function is_in_list(theme, themes)
+	-- 	for _, t in ipairs(themes) do
+	-- 		if t == theme then
+	-- 			return true
+	-- 		end
+	-- 	end
+	-- 	return false
+	-- end
+	-- local is_light = is_in_list(config.color_scheme, light_themes)
 
 	-- Write to cache
-	local f = io.open(theme_file, "w")
+	local f = io.open(colorscheme_file, "w")
 	if f then
-		f:write(is_light and "light\n" or "dark\n")
+		f:write(modeDark and "dark\n" or "light\n")
 		f:close()
 	end
 
