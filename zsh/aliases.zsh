@@ -3,7 +3,8 @@
 # alias dev-lua="cd ~/.dotfiles/dev/lua"
 alias dotfiles="cd ~/.dotfiles/"
 alias dotdiff="cd ~/.dotfiles/ && git diff"
-alias v="recent"
+# alias v="recent"
+alias r="recent"
 alias wvim="$RECENT_NVIM"
 
 alias rm='trash-put' 

@@ -126,9 +126,11 @@ local function runSilent(cmd)
 	end
 end
 
-hs.hotkey.bind({ "command", "shift" }, "t", function()
-	runSilent("toggle_theme")
-end)
+-- hs.hotkey.bind({ "command", "shift" }, "t", function()
+-- 	-- runSilent("toggle_theme")
+-- 	-- hs.execute("~/bin/toggle_theme", true)
+-- 	runSilent("send_key control option command t")
+-- end)
 
 hs.hotkey.bind({ "ctrl", "option" }, "x", function()
 	-- local cmd = "get_ocr"

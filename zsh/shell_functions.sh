@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 toggle_theme() {
+  # [[ -o interactive ]] || return
   local theme_file="$HOME/.colorscheme"
   local current mode
   mkdir -p "$(dirname "$theme_file")"
@@ -17,8 +18,8 @@ toggle_theme() {
   esac
 
   printf "%s\n" "$mode" >"$theme_file"
-
-  exec zsh
+  # printf "\033]1337;SetUserVar=theme=$(echo -n $mode | base64)\007" #purely for wezterm
+  # exec zsh
 }
 
 #rg filter .. first arugment is the char to be filered out``

@@ -1,17 +1,15 @@
----
+--
 
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 
-local home_dir = wezterm.home_dir or os.getenv("HOME")
+local home_dir = wezterm.home_dir --or os.getenv("HOME")
 local theme_file = home_dir .. "/.colorscheme"
-
-wezterm.add_to_config_reload_watch_list(theme_file) -- wezterm reloads when ~/.colorscheme changes ..nice
 
 local function is_dark()
 	local f = io.open(theme_file, "r")
 	if not f then
-		return nil
+		return false
 	end
 	local mode = f:read("*l") --file only contains single line
 	-- local mode = f:read("*a"):gsub("[\r\n%s]", "")
@@ -22,7 +20,41 @@ local function is_dark()
 end
 
 local modeDark = is_dark()
--- local modeDark = true
+
+-- the final solution but requires `printf "\033]1337;SetUserVar=theme=$(echo -n dark | base64)\007"`
+-- say, to be fired form the terminal .. which works fine in hammerspoon as well
+-- EDIT: actually only possible when fired from a terminal directly, not via hs spawns a sub shell
+-- wezterm.on("user-var-changed", function(window, pane, name, value)
+-- 	if name == "theme" then
+-- 		window:set_config_overrides({
+-- 			-- color_scheme = value == "dark" and "Catppuccin Mocha" or "One Light (Gogh)",
+-- 			color_scheme = is_dark() and "Catppuccin Mocha" or "One Light (Gogh)",
+-- 		})
+-- 	end
+-- end)
+
+--NOTE: this reloads the entire config so its slow
+-- wezterm.add_to_config_reload_watch_list(theme_file)
+
+---- NOTE: works but 1) writes to ~/.colorscheme; 2) requires wezterm keybinding to activate
+wezterm.on("toggle-theme", function(window)
+	local overrides = window:get_config_overrides() or {}
+
+	local dark = (overrides.color_scheme ~= "Catppuccin Mocha")
+	-- local dark = is_dark()
+	-- dark = not dark
+
+	overrides.color_scheme = dark and "Catppuccin Mocha" or "One Light (Gogh)"
+
+	window:set_config_overrides(overrides)
+
+	-- mirror state outward
+	local f = io.open(theme_file, "w")
+	if f then
+		f:write(dark and "dark\n" or "light\n")
+		f:close()
+	end
+end)
 
 local dark_themes = { "AdventureTime", "Catppuccin Mocha", "Tokyo Night Storm (Gogh)" }
 local light_themes = { "One Light (Gogh)", "Tokyo Night Day" }
@@ -34,11 +66,12 @@ config.hide_tab_bar_if_only_one_tab = true
 config.initial_cols = 200 -- stty size yields '46 174'
 config.initial_rows = 50
 config.keys = {
-	-- {
-	-- 	key = "r",
-	-- 	mods = "CMD|SHIFT",
-	-- 	action = wezterm.action.ReloadConfiguration,
-	-- },
+	{
+		key = "t",
+		mods = "CTRL|ALT|CMD",
+		action = wezterm.action.EmitEvent("toggle-theme"),
+		-- action = wezterm.action.ReloadConfiguration,
+	},
 	{
 		key = "-",
 		mods = "ALT",

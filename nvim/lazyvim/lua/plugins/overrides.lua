@@ -9,41 +9,44 @@ local function disable_default_plugins(...)
   end, { ... })
 end
 
-local colorscheme_file = os.getenv("HOME") .. "/.colorscheme"
+local theme_file = os.getenv("HOME") .. "/.colorscheme"
 
--- Read cache file at load time
--- local handle = io.open(colorscheme_file, "r")
--- local mode = handle and handle:read("*a"):gsub("[\n\r%s]+", "") or "dark"
--- if handle then
---   handle:close()
--- end
---
-local function read_mode()
-  local handle = io.open(colorscheme_file, "r")
+local function is_dark()
+  local handle = io.open(theme_file, "r")
   if not handle then
-    return "dark"
+    return false
   end
-  local mode = handle:read("*a"):gsub("[\n\r%s]+", "")
+
+  local mode = handle:read("*l") --file only contains single line
+  -- local mode = handle:read("*a"):gsub("[\n\r%s]+", "")
+  -- local mode = handle:read("*a"):gsub("[\r\n%s]", "")
   handle:close()
-  if mode ~= "light" and mode ~= "dark" then
-    return "dark"
-  end -- guard partial read
-  return mode
+
+  return mode ~= "light" -- i.e. darkmode is default
 end
 
-local function apply_colorscheme()
-  local mode = read_mode()
-  vim.schedule(function()
-    vim.cmd.colorscheme(mode == "light" and "catppuccin-latte" or "tokyonight-moon")
-  end)
+local function get_colorscheme()
+  return is_dark() and "tokyonight-moon" or "catppuccin-latte"
 end
 
 if not _G._colorscheme_watcher then
   local w = vim.uv.new_fs_poll()
-  w:start(colorscheme_file, 500, function(err, _, _)
-    if not err then
-      apply_colorscheme()
+  if not w then
+    return
+  end
+  w:start(theme_file, 100, function(err, _, _)
+    if err then
+      return
     end
+    -- apply colorscheme
+    vim.schedule(function()
+      local current = get_colorscheme()
+
+      vim.o.background = is_dark() and "dark" or "light"
+      vim.cmd.colorscheme(current)
+      -- vim.cmd("redraw") -- force a full redraw; can help
+      -- vim.cmd("redrawstatus") -- redraw status lines
+    end)
   end)
   _G._colorscheme_watcher = w
 end
@@ -53,7 +56,7 @@ return {
   {
     "LazyVim/LazyVim",
     opts = {
-      colorscheme = (read_mode() == "light") and "catppuccin-latte" or "tokyonight-moon",
+      colorscheme = get_colorscheme(),
     },
   },
   {
