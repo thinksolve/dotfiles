@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 # ~/.dotfiles/bin/recent
 
 set -e
@@ -87,7 +88,7 @@ PREVIEW
       printf '\e[33mFILE\e[0m\t%s\n' "$path"
     fi
   done |
-    fzf --preview "bash -c '$FZF_PREVIEW' bash {2}" \
+    fzf --preview "printf 'refreshed: %s\n\n' \"\$(date +%H:%M:%S)\"; bash -c '$FZF_PREVIEW' bash {2}" \
       --preview-window=right:50%:wrap \
       --delimiter=$'\t' \
       --query="$filter" --prompt='recent> ' \

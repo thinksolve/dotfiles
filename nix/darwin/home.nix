@@ -101,6 +101,8 @@
       "bin/recent"
       "bin/yt-txt"
       "bin/bat"
+      "bin/fzf" # added a default binding for refresh, which currently wezterm targets during theme toggle
+      "bin/fzf-preview" # useful default --preview string for the wrapped fzf
     ])
     // (outOfStoreLinks ".config/" "${dotfiles_dir}/" [
       "doom"

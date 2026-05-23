@@ -1,5 +1,3 @@
---
-
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 
@@ -32,12 +30,19 @@ local modeDark = is_dark()
 -- 		})
 -- 	end
 -- end)
-
+local function in_fzf(pane)
+	local info = pane:get_foreground_process_info()
+	if not info then
+		return false
+	end
+	local name = info.executable and info.executable:match("([^/]+)$") or ""
+	return name == "fzf"
+end
 --NOTE: this reloads the entire config so its slow
 -- wezterm.add_to_config_reload_watch_list(theme_file)
 
 ---- NOTE: works but 1) writes to ~/.colorscheme; 2) requires wezterm keybinding to activate
-wezterm.on("toggle-theme", function(window)
+local function toggle_theme(window)
 	local overrides = window:get_config_overrides() or {}
 
 	local dark = (overrides.color_scheme ~= "Catppuccin Mocha")
@@ -54,7 +59,8 @@ wezterm.on("toggle-theme", function(window)
 		f:write(dark and "dark\n" or "light\n")
 		f:close()
 	end
-end)
+end
+-- wezterm.on("toggle-theme",toggle_theme)
 
 local dark_themes = { "AdventureTime", "Catppuccin Mocha", "Tokyo Night Storm (Gogh)" }
 local light_themes = { "One Light (Gogh)", "Tokyo Night Day" }
@@ -66,11 +72,35 @@ config.hide_tab_bar_if_only_one_tab = true
 config.initial_cols = 200 -- stty size yields '46 174'
 config.initial_rows = 50
 config.keys = {
+	-- {
+	-- 	key = "t",
+	-- 	mods = "ALT",
+	-- 	action = wezterm.action.EmitEvent("toggle-theme"),
+	-- 	-- action = wezterm.action.ReloadConfiguration,
+	-- },
 	{
 		key = "t",
-		mods = "CTRL|ALT|CMD",
-		action = wezterm.action.EmitEvent("toggle-theme"),
-		-- action = wezterm.action.ReloadConfiguration,
+		mods = "ALT",
+		action = wezterm.action_callback(function(window, pane)
+			-- -- wezterm.action.EmitEvent("toggle-theme")
+			-- wezterm.emit("toggle-theme")
+
+			----NOTE: debug block
+			--local info = pane:get_foreground_process_info()
+			--if info then
+			--	wezterm.log_info("pid=" .. tostring(info.pid))
+			--	wezterm.log_info("exe=" .. tostring(info.executable))
+			--	wezterm.log_info("argv=" .. table.concat(info.argv or {}, " "))
+			--else
+			--	wezterm.log_info("no foreground process info")
+			--end
+			----NOTE: debug block
+
+			toggle_theme(window)
+			-- if in_fzf(pane) then
+			window:perform_action(wezterm.action.SendString("\x1b`"), pane)
+			-- end
+		end),
 	},
 	{
 		key = "-",

@@ -34,11 +34,11 @@ path_prepend "$HOME/.config/emacs/bin"
 path_prepend "$HOME/bin"
 path_prepend "$HOMEBREW_BIN"
 path_prepend "/usr/local/bin"
+path_prepend "$HOME/.local/bin"
 path_prepend "$NIX_CURRENT_SYSTEM/bin"
 path_prepend "$NIX_CURRENT_USER/bin"
 path_prepend "$NPM_GLOBAL_BIN"
 path_prepend "$PNPM_HOME"
 path_prepend "$HOME/.local/bin"
-
 
 export PATH

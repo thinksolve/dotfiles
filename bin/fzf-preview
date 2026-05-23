@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+pixel_width=$((16 * $(tput cols)))
+_preview_width=$((pixel_width * 50 / 100))
+
+p=$1
+base_name=$(basename "$p")
+safe_name=${base_name//[^[:alnum:]._-]/_}
+hash=$(printf "%s" "$p" | md5sum | cut -d" " -f1)
+tmp="/tmp/preview-$safe_name-$hash"
+
+IMG_VIEWER="chafa"
+if [[ "$TERM_PROGRAM" == "ghostty" || "$TERM" == "xterm-kitty" ]]; then
+  IMG_VIEWER="kitten icat --silent --transfer-mode=file"
+fi
+
+if [[ -d "$p" ]]; then
+  echo -e "\033[1;34mDirectory:\033[0m $p\n"
+  tree -a -C -L 2 "$p" 2>/dev/null || eza --tree --level=2 --color=always "$p" 2>/dev/null || ls -la "$p"
+elif [[ $p =~ \.(jpe?g|png|gif|webp|tiff|bmp|avif|svg)$ ]]; then
+  $IMG_VIEWER "$p" 2>/dev/null || echo "Image preview unavailable"
+elif [[ $p =~ \.pdf$ ]]; then
+  [[ ! -f "${tmp}.png" ]] && pdftoppm -f 1 -l 1 -png -singlefile "$p" "$tmp"
+  $IMG_VIEWER "${tmp}.png" 2>/dev/null || echo "PDF preview unavailable"
+elif [[ $p =~ \.(mp4|mov|mkv|webm|avi|m4v)$ ]]; then
+  [[ ! -f "${tmp}.png" ]] && ffmpeg -loglevel error -y -ss 00:00:03 -i "$p" -vframes 1 -vf "scale=$_preview_width:-1" "${tmp}.png"
+  $IMG_VIEWER "${tmp}.png" 2>/dev/null || echo "Video preview unavailable"
+elif command -v bat >/dev/null; then
+  bat --color=always --style=numbers "$p" 2>/dev/null
+else
+  cat "$p" 2>/dev/null || highlight -O ansi "$p" 2>/dev/null || cat "$p"
+fi

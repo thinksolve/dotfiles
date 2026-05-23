@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+DEFAULT_FZF_OPTS=(
+  --bind 'alt-`:refresh-preview'
+  --preview-window 'right:50%:wrap'
+  --preview 'fzf-preview {}'
+
+)
+
+if [[ ${1:-} == --print-defaults ]]; then
+  printf '%s\n' "${DEFAULT_FZF_OPTS[@]}"
+  exit 0
+fi
+
+exec $HOME/.nix-profile/bin/fzf "${DEFAULT_FZF_OPTS[@]}" "$@"
