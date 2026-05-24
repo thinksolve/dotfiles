@@ -30,25 +30,52 @@ local modeDark = is_dark()
 -- 		})
 -- 	end
 -- end)
-local function in_fzf(pane)
+
+local function filter_programs(pane)
 	local info = pane:get_foreground_process_info()
 	if not info then
-		return false
+		wezterm.log_info("filter_programs: no process info, allowing")
+		return true
 	end
-	local name = info.executable and info.executable:match("([^/]+)$") or ""
-	return name == "fzf"
+
+	local pid = tostring(info.pid)
+	local exe = info.executable or "unknown"
+	local name = exe:match("([^/]+)$") or "unknown"
+	local argv = table.concat(info.argv or {}, " ")
+
+	-- magic sauce that uses pstree to walk the process tree, so even recent script launches nvim
+	-- then it can still be tracked
+	local ok, output, _ = wezterm.run_child_process({
+		"pstree",
+		"-p",
+		pid,
+	})
+
+	local has_nvim = ok and output:match("nvim") ~= nil
+	--
+	-- wezterm.log_info(
+	-- 	string.format(
+	-- 		"filter_programs: pid=%s exe=%s name=%s argv=%s pstree_ok=%s has_nvim=%s result=%s",
+	-- 		pid,
+	-- 		exe,
+	-- 		name,
+	-- 		argv,
+	-- 		tostring(ok),
+	-- 		tostring(has_nvim),
+	-- 		tostring(not has_nvim)
+	-- 	)
+	-- )
+
+	return not has_nvim
 end
+
 --NOTE: this reloads the entire config so its slow
 -- wezterm.add_to_config_reload_watch_list(theme_file)
 
----- NOTE: works but 1) writes to ~/.colorscheme; 2) requires wezterm keybinding to activate
 local function toggle_theme(window)
 	local overrides = window:get_config_overrides() or {}
 
 	local dark = (overrides.color_scheme ~= "Catppuccin Mocha")
-	-- local dark = is_dark()
-	-- dark = not dark
-
 	overrides.color_scheme = dark and "Catppuccin Mocha" or "One Light (Gogh)"
 
 	window:set_config_overrides(overrides)
@@ -60,7 +87,6 @@ local function toggle_theme(window)
 		f:close()
 	end
 end
--- wezterm.on("toggle-theme",toggle_theme)
 
 local dark_themes = { "AdventureTime", "Catppuccin Mocha", "Tokyo Night Storm (Gogh)" }
 local light_themes = { "One Light (Gogh)", "Tokyo Night Day" }
@@ -72,34 +98,20 @@ config.hide_tab_bar_if_only_one_tab = true
 config.initial_cols = 200 -- stty size yields '46 174'
 config.initial_rows = 50
 config.keys = {
-	-- {
-	-- 	key = "t",
-	-- 	mods = "ALT",
-	-- 	action = wezterm.action.EmitEvent("toggle-theme"),
-	-- 	-- action = wezterm.action.ReloadConfiguration,
-	-- },
+
 	{
 		key = "t",
 		mods = "ALT",
+		-- action = wezterm.action.ReloadConfiguration,
+		-- action = wezterm.action.EmitEvent("toggle-theme"), -- NOTE: need to define `wezterm.on("toggle-theme", toggle_theme)` first
 		action = wezterm.action_callback(function(window, pane)
-			-- -- wezterm.action.EmitEvent("toggle-theme")
-			-- wezterm.emit("toggle-theme")
-
-			----NOTE: debug block
-			--local info = pane:get_foreground_process_info()
-			--if info then
-			--	wezterm.log_info("pid=" .. tostring(info.pid))
-			--	wezterm.log_info("exe=" .. tostring(info.executable))
-			--	wezterm.log_info("argv=" .. table.concat(info.argv or {}, " "))
-			--else
-			--	wezterm.log_info("no foreground process info")
-			--end
-			----NOTE: debug block
-
 			toggle_theme(window)
-			-- if in_fzf(pane) then
-			window:perform_action(wezterm.action.SendString("\x1b`"), pane)
-			-- end
+
+			--NOTE: problem: wezterm cannot see if recent launched fzf or nvim .. and i want the filter to work
+			--whether nvim is foreground or not-foreground, where in the latter case recent is only visible frmo wezterm's perspective
+			if filter_programs(pane) then
+				window:perform_action(wezterm.action.SendString("\x1b`"), pane)
+			end
 		end),
 	},
 	{

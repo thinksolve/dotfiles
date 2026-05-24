@@ -79,7 +79,6 @@ _recent_pick() {
                 fi
 PREVIEW
   )
-
   tac "$recent_pick_db" 2>/dev/null | while IFS= read -r path; do
     [[ -e "$path" ]] || continue
     if [[ -d "$path" ]]; then
@@ -88,7 +87,7 @@ PREVIEW
       printf '\e[33mFILE\e[0m\t%s\n' "$path"
     fi
   done |
-    fzf --preview "printf 'refreshed: %s\n\n' \"\$(date +%H:%M:%S)\"; bash -c '$FZF_PREVIEW' bash {2}" \
+    fzf --preview " printf 'refreshed: %s\n\n' \"\$(date +%H:%M:%S)\" ; bash -c '$FZF_PREVIEW' bash {2}" \
       --preview-window=right:50%:wrap \
       --delimiter=$'\t' \
       --query="$filter" --prompt='recent> ' \

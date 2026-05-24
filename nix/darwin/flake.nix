@@ -77,6 +77,7 @@
               system_utilities = [
                 pkgs.blueutil
                 pkgs.hello
+                pkgs.pstree
                 pkgs.rsync
               ];
 
