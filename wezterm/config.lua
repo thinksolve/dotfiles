@@ -31,10 +31,31 @@ local modeDark = is_dark()
 -- 	end
 -- end)
 
-local function filter_programs(pane)
+local function is_running(program)
+	local ok, output, _ = wezterm.run_child_process({ "ps", "-o", "args" })
+	if not ok then
+		return false
+	end
+
+	local function matches(f)
+		return f and (f == program or f:match("/" .. program .. "$"))
+	end
+
+	for line in output:gmatch("[^\n]+") do
+		-- f1 = executable, f2 = first argument (e.g. script path when interpreter is f1, like `bash path/to/custom/script`)
+		local f1, f2 = line:match("^(%S+)%s*(%S*)") --> equivalent regex: ^(\S+)\s*(\S*) --> i.e. "1+ non-WS from start, then 0+ WS, then 0+ non-WS"
+
+		if matches(f1) or matches(f2) then
+			return true
+		end
+	end
+	return false
+end
+
+local function has_program(program, pane)
 	local info = pane:get_foreground_process_info()
 	if not info then
-		wezterm.log_info("filter_programs: no process info, allowing")
+		wezterm.log_info("has_program: no process info, allowing")
 		return true
 	end
 
@@ -43,30 +64,34 @@ local function filter_programs(pane)
 	local name = exe:match("([^/]+)$") or "unknown"
 	local argv = table.concat(info.argv or {}, " ")
 
-	-- magic sauce that uses pstree to walk the process tree, so even recent script launches nvim
-	-- then it can still be tracked
+	-- local ok, output, _ = wezterm.run_child_process({
+	-- 	"pstree",
+	-- 	"-p",
+	-- 	pid,
+	-- })
+
 	local ok, output, _ = wezterm.run_child_process({
-		"pstree",
-		"-p",
-		pid,
+		"ps",
+		"-eo",
+		"pid,ppid,comm",
 	})
 
-	local has_nvim = ok and output:match("nvim") ~= nil
-	--
-	-- wezterm.log_info(
-	-- 	string.format(
-	-- 		"filter_programs: pid=%s exe=%s name=%s argv=%s pstree_ok=%s has_nvim=%s result=%s",
-	-- 		pid,
-	-- 		exe,
-	-- 		name,
-	-- 		argv,
-	-- 		tostring(ok),
-	-- 		tostring(has_nvim),
-	-- 		tostring(not has_nvim)
-	-- 	)
-	-- )
+	local result = ok and output:match(tostring(program)) ~= nil
 
-	return not has_nvim
+	--debugging
+	wezterm.log_info(
+		string.format(
+			"has_program: pid=%s exe=%s name=%s argv=%s pstree_ok=%s result=%s",
+			pid,
+			exe,
+			name,
+			argv,
+			tostring(ok),
+			tostring(result)
+		)
+	)
+
+	return result
 end
 
 --NOTE: this reloads the entire config so its slow
@@ -109,7 +134,8 @@ config.keys = {
 
 			--NOTE: problem: wezterm cannot see if recent launched fzf or nvim .. and i want the filter to work
 			--whether nvim is foreground or not-foreground, where in the latter case recent is only visible frmo wezterm's perspective
-			if filter_programs(pane) then
+			if is_running("fzf") then
+				-- if has_program("fzf", pane) then
 				window:perform_action(wezterm.action.SendString("\x1b`"), pane)
 			end
 		end),
