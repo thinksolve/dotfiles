@@ -1,35 +1,40 @@
 local wezterm = require("wezterm")
-local config = wezterm.config_builder()
 
-local home_dir = wezterm.home_dir --or os.getenv("HOME")
-local theme_file = home_dir .. "/.colorscheme"
-
-local function is_dark()
-	local f = io.open(theme_file, "r")
-	if not f then
-		return false
+-- simple read/write helper
+local function handle_file(filepath)
+	local read = function(mode)
+		local f = io.open(filepath, "r")
+		if not f then
+			return nil
+		end
+		local contents = f:read(mode or "*l")
+		f:close()
+		return contents
 	end
-	local mode = f:read("*l") --file only contains single line
-	-- local mode = f:read("*a"):gsub("[\r\n%s]", "")
-	f:close()
 
-	-- i.e. darkmode is default
-	return mode ~= "light"
+	local write = function(contents)
+		local f = io.open(filepath, "w")
+		if not f then
+			return nil
+		end
+		f:write(contents)
+		f:close()
+		return true
+	end
+
+	return read, write
 end
 
-local modeDark = is_dark()
+-- local home_dir = wezterm.home_dir --or os.getenv("HOME")
+-- local theme_file = home_dir .. "/.colorscheme"
+-- wezterm.add_to_config_reload_watch_list(theme_file) --note: this reloads the entire config so its slow
 
--- the final solution but requires `printf "\033]1337;SetUserVar=theme=$(echo -n dark | base64)\007"`
--- say, to be fired form the terminal .. which works fine in hammerspoon as well
--- EDIT: actually only possible when fired from a terminal directly, not via hs spawns a sub shell
--- wezterm.on("user-var-changed", function(window, pane, name, value)
--- 	if name == "theme" then
--- 		window:set_config_overrides({
--- 			-- color_scheme = value == "dark" and "Catppuccin Mocha" or "One Light (Gogh)",
--- 			color_scheme = is_dark() and "Catppuccin Mocha" or "One Light (Gogh)",
--- 		})
--- 	end
--- end)
+local read_theme_file, write_theme_file = handle_file(wezterm.home_dir .. "/.colorscheme")
+
+local light_themes = { "One Light (Gogh)", "Tokyo Night Day" }
+local dark_themes = { "AdventureTime", "Catppuccin Mocha", "Tokyo Night Storm (Gogh)" }
+local default_light_theme = light_themes[2] or "One Light (Gogh)"
+local default_dark_theme = dark_themes[3] or "Catppuccin Mocha"
 
 local function is_running(program)
 	local ok, output, _ = wezterm.run_child_process({ "ps", "-o", "args" })
@@ -52,71 +57,20 @@ local function is_running(program)
 	return false
 end
 
-local function has_program(program, pane)
-	local info = pane:get_foreground_process_info()
-	if not info then
-		wezterm.log_info("has_program: no process info, allowing")
-		return true
-	end
-
-	local pid = tostring(info.pid)
-	local exe = info.executable or "unknown"
-	local name = exe:match("([^/]+)$") or "unknown"
-	local argv = table.concat(info.argv or {}, " ")
-
-	-- local ok, output, _ = wezterm.run_child_process({
-	-- 	"pstree",
-	-- 	"-p",
-	-- 	pid,
-	-- })
-
-	local ok, output, _ = wezterm.run_child_process({
-		"ps",
-		"-eo",
-		"pid,ppid,comm",
-	})
-
-	local result = ok and output:match(tostring(program)) ~= nil
-
-	--debugging
-	wezterm.log_info(
-		string.format(
-			"has_program: pid=%s exe=%s name=%s argv=%s pstree_ok=%s result=%s",
-			pid,
-			exe,
-			name,
-			argv,
-			tostring(ok),
-			tostring(result)
-		)
-	)
-
-	return result
-end
-
---NOTE: this reloads the entire config so its slow
--- wezterm.add_to_config_reload_watch_list(theme_file)
-
 local function toggle_theme(window)
+	local was_dark = read_theme_file("*l") == "dark"
+
+	write_theme_file(was_dark and "light\n" or "dark\n")
+
 	local overrides = window:get_config_overrides() or {}
-
-	local dark = (overrides.color_scheme ~= "Catppuccin Mocha")
-	overrides.color_scheme = dark and "Catppuccin Mocha" or "One Light (Gogh)"
-
+	overrides.color_scheme = was_dark and default_light_theme or default_dark_theme
 	window:set_config_overrides(overrides)
-
-	-- mirror state outward
-	local f = io.open(theme_file, "w")
-	if f then
-		f:write(dark and "dark\n" or "light\n")
-		f:close()
-	end
 end
 
-local dark_themes = { "AdventureTime", "Catppuccin Mocha", "Tokyo Night Storm (Gogh)" }
-local light_themes = { "One Light (Gogh)", "Tokyo Night Day" }
+local config = wezterm.config_builder()
+local modeDark = read_theme_file("*l") == "dark" --reads file on shell startup to initialize
 
-config.color_scheme = modeDark and dark_themes[2] or light_themes[1]
+config.color_scheme = modeDark and default_dark_theme or default_light_theme
 config.debug_key_events = true
 config.font_size = 15.5
 config.hide_tab_bar_if_only_one_tab = true
@@ -127,15 +81,13 @@ config.keys = {
 	{
 		key = "t",
 		mods = "ALT",
-		-- action = wezterm.action.ReloadConfiguration,
-		-- action = wezterm.action.EmitEvent("toggle-theme"), -- NOTE: need to define `wezterm.on("toggle-theme", toggle_theme)` first
+		-- action = wezterm.action.ReloadConfiguration
+		-- action = wezterm.action.EmitEvent("toggle-theme"), -- NOTE: need to define `wezterm.on("toggle-theme", toggle_theme)`
 		action = wezterm.action_callback(function(window, pane)
 			toggle_theme(window)
 
-			--NOTE: problem: wezterm cannot see if recent launched fzf or nvim .. and i want the filter to work
-			--whether nvim is foreground or not-foreground, where in the latter case recent is only visible frmo wezterm's perspective
 			if is_running("fzf") then
-				-- if has_program("fzf", pane) then
+				-- alt-` maps to refresh in my wrapped fzf (see ~/.local/bin/fzf)
 				window:perform_action(wezterm.action.SendString("\x1b`"), pane)
 			end
 		end),
