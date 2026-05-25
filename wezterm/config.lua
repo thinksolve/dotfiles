@@ -1,4 +1,7 @@
 local wezterm = require("wezterm")
+local config = wezterm.config_builder()
+local act = wezterm.action
+local act_callback = wezterm.action_callback
 
 -- simple read/write helper
 local function handle_file(filepath)
@@ -67,7 +70,6 @@ local function toggle_theme(window)
 	window:set_config_overrides(overrides)
 end
 
-local config = wezterm.config_builder()
 local modeDark = read_theme_file("*l") == "dark" --reads file on shell startup to initialize
 
 config.color_scheme = modeDark and default_dark_theme or default_light_theme
@@ -83,54 +85,54 @@ config.keys = {
 		mods = "ALT",
 		-- action = wezterm.action.ReloadConfiguration
 		-- action = wezterm.action.EmitEvent("toggle-theme"), -- NOTE: need to define `wezterm.on("toggle-theme", toggle_theme)`
-		action = wezterm.action_callback(function(window, pane)
+		action = act_callback(function(window, pane)
 			toggle_theme(window)
 
 			if is_running("fzf") then
 				-- alt-` maps to refresh in my wrapped fzf (see ~/.local/bin/fzf)
-				window:perform_action(wezterm.action.SendString("\x1b`"), pane)
+				window:perform_action(act.SendString("\x1b`"), pane)
 			end
 		end),
 	},
 	{
 		key = "-",
 		mods = "ALT",
-		action = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }),
+		action = act.SplitVertical({ domain = "CurrentPaneDomain" }),
 	},
 	{
 		key = "=",
 		mods = "ALT",
-		action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }),
+		action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }),
 	},
 	{
 		key = "]", -- closing bracket evokes 'close pane'
 		mods = "ALT",
-		action = wezterm.action.CloseCurrentPane({ confirm = true }),
+		action = act.CloseCurrentPane({ confirm = true }),
 	},
 	{
 		key = "w",
 		mods = "ALT",
-		action = wezterm.action.CloseCurrentPane({ confirm = true }),
+		action = act.CloseCurrentPane({ confirm = true }),
 	},
 	{
 		key = "LeftArrow",
 		mods = "ALT",
-		action = wezterm.action({ ActivatePaneDirection = "Left" }),
+		action = act({ ActivatePaneDirection = "Left" }),
 	},
 	{
 		key = "DownArrow",
 		mods = "ALT",
-		action = wezterm.action({ ActivatePaneDirection = "Down" }),
+		action = act({ ActivatePaneDirection = "Down" }),
 	},
 	{
 		key = "UpArrow",
 		mods = "ALT",
-		action = wezterm.action({ ActivatePaneDirection = "Up" }),
+		action = act({ ActivatePaneDirection = "Up" }),
 	},
 	{
 		key = "RightArrow",
 		mods = "ALT",
-		action = wezterm.action({ ActivatePaneDirection = "Right" }),
+		action = act({ ActivatePaneDirection = "Right" }),
 	},
 }
 -- config.macos_window_background_blur = 5

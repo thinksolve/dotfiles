@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
 
+# better ps grep
+psg() {
+  if [[ -z $1 ]]; then
+    echo "Usage: psg <pattern1> [pattern2...]"
+    return 1
+  fi
+  local pattern=""
+  for p in "$@"; do
+    pattern="${pattern:+$pattern|}[${p:0:1}]${p:1}"
+  done
+  ps aux | grep -E "$pattern"
+}
+
 toggle_theme() {
   # [[ -o interactive ]] || return
   local theme_file="$HOME/.colorscheme"

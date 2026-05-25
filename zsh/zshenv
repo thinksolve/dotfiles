@@ -3,7 +3,6 @@ export PKGS_ANTIDOTE=/nix/store/d05m1wv4pq6qv7bqs3qnf71iq6hc1g0i-antidote-1.10.3
 export PKGS_NVIM=/nix/store/wsqy7rcv5s3md14wmc1wj9nys8ra2xhj-neovim-0.12.2
 # ═══════════════════════ NIX-MANAGED-BLOCK-END  ═══════════════════════
 
-
 # Locale
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
@@ -20,25 +19,70 @@ export HOMEBREW_BIN="/opt/homebrew/bin"
 export PNPM_HOME=$HOME/Library/pnpm
 export NPM_GLOBAL_BIN=$HOME/.npm-global/bin
 
-# PATH
-# PATH="$HM_PROFILE/bin:$NIX_CURRENT_SYSTEM/bin:$NIX_CURRENT_USER/bin:$HOME/.local/bin:$PATH"
-# PATH="$HOME/.config/emacs/bin:$HOME/bin:/usr/local/bin:$PNPM_HOME:$HOMEBREW_BIN:$NPM_GLOBAL_BIN:$PATH"
-# export PATH
 
-path_prepend() {
-  [ -n "$1" ] && PATH="$1:$PATH"
-}
+#NOTE: PATH is now deduped with preference ordering since other processes like nix-darwin inject to $PATH _before_ ~/.zshenv
+# Check: `/usr/libexec/path_helper -s | tr ':' '\n'` and `cat /nix/store/y4iz9d1zsxb7rr9spn7r7zbkphw7p2za-set-environment`
+ 
+typeset -U path
+path=(
+  #these will now come before the pre-built $path, and maintain order
+  "$HOME/.local/bin"
+  "$NIX_CURRENT_SYSTEM/bin"
+  "$NIX_CURRENT_USER/bin"
+  "$HM_PROFILE/bin"
+  "$NPM_GLOBAL_BIN"
+  "$PNPM_HOME"
+  "$HOME/.config/emacs/bin"
+  "$HOME/bin"
+  "$HOMEBREW_BIN"
+  "/usr/local/bin"
 
-path_prepend "$HM_PROFILE/bin"
-path_prepend "$HOME/.config/emacs/bin"
-path_prepend "$HOME/bin"
-path_prepend "$HOMEBREW_BIN"
-path_prepend "/usr/local/bin"
-path_prepend "$HOME/.local/bin"
-path_prepend "$NIX_CURRENT_SYSTEM/bin"
-path_prepend "$NIX_CURRENT_USER/bin"
-path_prepend "$NPM_GLOBAL_BIN"
-path_prepend "$PNPM_HOME"
-path_prepend "$HOME/.local/bin"
+  #pre-existing $path
+  $path
+)
 
 export PATH
+
+## Backup way without zsh path array:
+# Clean & reliable PATH reconstruction
+# preferred=(
+#   "$HOME/.local/bin"
+#   "$HOME/bin"
+#   "$HOME/.config/emacs/bin"
+#   "$HOMEBREW_BIN"
+#   "/usr/local/bin"
+#   "$NPM_GLOBAL_BIN"
+#   "$PNPM_HOME"
+# )
+#
+# new_path=""
+#
+# for dir in "${preferred[@]}"; do
+#     case ":$new_path:" in
+#         *":$dir:"*) ;;
+#         *) [ -d "$dir" ] && new_path="${new_path:+$new_path:}$dir" ;;
+#     esac
+# done
+#
+# for dir in ${path[@]}; do
+#     case ":$new_path:" in
+#         *":$dir:"*) ;;
+#         *) new_path="${new_path:+$new_path:}$dir" ;;
+#     esac
+# done
+#
+# export PATH="$new_path"
+
+#
+# # FAILED example:
+#  path_prepend_failed() {
+#     [ -n "$1" ] || return
+#     case ":$PATH:" in
+#         *":$1:"*) ;;                    # already exists, do nothing
+#         *) PATH="$1${PATH:+:$PATH}" ;;  # prepend
+#     esac
+# }
+
+
+
+

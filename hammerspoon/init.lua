@@ -492,6 +492,10 @@ end
 local function open_term_and_run(opts)
 	local cmd = opts.cmd or error("cmd required")
 
+	if opts.exit == nil or opts.exit == true then
+		cmd = cmd .. "; exit"
+	end
+
 	local term_name = (opts.terminal or DEFAULT_TERM_NAME):lower():match("[^.]+$")
 	local app = hs.application.get(DEFAULT_TERM_ID or error("unsupported terminal"))
 
@@ -621,7 +625,7 @@ LSB.bind({ "ctrl", "option" }, "d", function()
 end)
 
 LSB.bind({ "option" }, "h", function()
-	open_term_and_run({ cmd = "send_key option h" })
+	open_term_and_run({ cmd = "send_key option h", exit = false })
 
 	-- open_term_and_run({
 	-- 	-- terminal = "terminal",

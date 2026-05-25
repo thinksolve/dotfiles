@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
+set -eo pipefail
 
-# ~/.dotfiles/bin/recent
-
-set -e
+# Clean exit even if killed abruptly. NOTE: added may24-2026
+# trap 'exit 0' EXIT INT TERM HUP
 
 SELF=$(realpath "$0")
 RECENT_OPEN="$SELF"
@@ -119,7 +119,7 @@ PREVIEW
       fi
     done
 
-    ((${#open_now[@]} + ${#edit_files[@]} + ${#edit_dirs[@]})) || return 0
+    # ((${#open_now[@]} + ${#edit_files[@]} + ${#edit_dirs[@]})) || return 0  #NOTE: commented out may24-2026
     # ((${#open_now[@]} + ${#edit_later[@]})) || return 0
 
     for p in "${open_now[@]}"; do open "$p"; done
@@ -149,7 +149,12 @@ PREVIEW
     #     nvim -p "${edit_later[@]}"
     # fi
 
-    (($? == 0)) && _recent_pick "$filter"
+    # (($? == 0)) && _recent_pick "$filter" #NOTE: commented out may24-2026
+    # <<< REPLACEMENT BLOCK >>>
+    if [[ ${#open_now[@]} -gt 0 || ${#edit_files[@]} -gt 0 || ${#edit_dirs[@]} -gt 0 ]]; then
+      clear
+      exec "$SELF" pick "$filter"
+    fi
   )
 }
 
