@@ -2,11 +2,11 @@ hs.alert.show("hs init.lua loaded")
 
 -- default terminal across hotkey binds below
 local TERM = {
-	ghostty = "com.mitchellh.ghostty",
-	kitty = "net.kovidgoyal.kitty", -- kinda broken when using hotkey and app already running
-	-- iterm2 = "com.googlecode.iterm2",
-	terminal = "com.apple.Terminal",
 	wezterm = "com.github.wez.wezterm",
+	ghostty = "com.mitchellh.ghostty",
+	kitty = "net.kovidgoyal.kitty",
+	terminal = "com.apple.Terminal",
+	-- iterm2 = "com.googlecode.iterm2",
 }
 local DEFAULT_TERM_ID = TERM.wezterm
 local DEFAULT_TERM_NAME = DEFAULT_TERM_ID:match("[^.]+$") -- e.g. print(("com.mitchellh.ghostty"):match("[^.]+$")) --> ghostty
@@ -442,54 +442,94 @@ hs.hotkey.bind({ "option", "cmd", "shift" }, "v", function()
 	end
 end)
 
---NOTE: replaced with open_term_and_run
-local function launchGhosttyWithCmd(opts)
-	opts = opts or {}
-	local cmd = opts.cmd or error("opts.cmd required")
-	local bundleID = opts.bundleID or "com.mitchellh.ghostty"
-	local terminalApp = "Ghostty"
+local aliases = {
+	alt = "option",
+	cmd = "command",
+	ctrl = "control",
+}
 
-	local app = hs.application.get(bundleID)
-	-- local app = hs.application.find(terminalApp)
-
-	if not (app and app:isRunning()) then
-		-- #NOTE: 'open -n ..' creates a _new instance_ with the new window (not a problem here since app is not started)
-		--  Previously this was an issue since i couldnt cycle through various windows with 'cmd + .' since that only works
-		--  for many windows beloning to the _same_ instance
-
-		hs.execute(string.format("open -a %s --args -e zsh -il -c '%s; exec zsh'", terminalApp, cmd), true)
-	-- elseif app:isHidden() then  -- why didnt this work
-	else
-		local applescript = string.format(
-			[[
-			    tell application "%s"
-				activate
-			    end tell
-			    -- delay 0.1
-			    tell application "System Events"
-				keystroke "n" using {command down}
-			    end tell
-			    -- delay 0.1
-			    tell application "System Events"
-				tell process "%s"
-				    keystroke "%s"
-				    keystroke return
-				end tell
-			    end tell
-			]],
-			terminalApp,
-			terminalApp,
-			cmd
-		)
-
-		local ok, result = hs.osascript.applescript(applescript)
-		if not ok then
-			hs.alert.show("Failed to open terminal window: " .. tostring(result))
-		end
+local function parse_key(str)
+	local mods_str, key = str:match("^(.+)-([^-]+)$")
+	if not mods_str then
+		return str, ""
 	end
+
+	local mods = {}
+	for mod in mods_str:gmatch("[^-]+") do
+		mod = aliases[mod] or mod
+		table.insert(mods, mod .. " down")
+	end
+
+	return key, table.concat(mods, ", ")
 end
 
 local function open_term_and_run(opts)
+	local app_id = opts.app_id or DEFAULT_TERM_ID
+	local app = hs.application.get(app_id)
+
+	if opts.cmd then
+		local cmd = opts.cmd
+		if opts.exit ~= false then
+			cmd = cmd .. "; exit"
+		end
+		local term_name = DEFAULT_TERM_NAME
+		local cmd_flag = (term_name == "wezterm") and "start --" or "-e" -- note: `-e` works for ghostty, not sure if for kitty
+		local launch_cmd = string.format("open -b %s --args %s zsh -il -c '%s; exec zsh'", app_id, cmd_flag, cmd)
+
+		if not (app and app:isRunning()) then
+			cmd = cmd:gsub("'", "'\\''")
+			hs.execute(launch_cmd, true)
+		else
+			-- focus wezterm then open new window and type command
+			hs.application.launchOrFocusByBundleID(app_id)
+			hs.timer.doAfter(0.3, function()
+				local ok, result = hs.osascript.applescript(string.format(
+					[[
+                    tell application "System Events"
+                        keystroke "n" using {command down}
+                    end tell
+                    delay 0.1
+                    tell application "System Events"
+                        tell process "%s"
+                            keystroke "%s"
+                            keystroke return
+                        end tell
+                    end tell
+                ]],
+					DEFAULT_TERM_NAME,
+					cmd
+				))
+				if not ok then
+					hs.alert.show("Failed: " .. tostring(result))
+				end
+			end)
+		end
+	elseif opts.key then
+		-- focus or open terminal, then send keystroke
+		if not (app and app:isRunning()) then
+			hs.execute("open -b " .. app_id, true)
+		else
+			hs.application.launchOrFocusByBundleID(app_id)
+		end
+		hs.timer.doAfter(0.1, function()
+			local key, mods = parse_key(opts.key)
+			local ok, result = hs.osascript.applescript(string.format(
+				[[
+                tell application "System Events"
+                    keystroke "%s" using {%s}
+                end tell
+            ]],
+				key,
+				mods
+			))
+			if not ok then
+				hs.alert.show("Failed: " .. tostring(result))
+			end
+		end)
+	end
+end
+
+function open_term_and_run_og(opts)
 	local cmd = opts.cmd or error("cmd required")
 
 	if opts.exit == nil or opts.exit == true then
@@ -517,16 +557,16 @@ local function open_term_and_run(opts)
 			    delay 0.1  -- this prevents an alternate app (notes, alfred) opening bug
 
 			    tell application "System Events"
-				keystroke "n" using {command down}
+			      keystroke "n" using {command down}
 			    end tell
 
 			    delay 0.1 -- this allows other LSBs to fire their cmd properly
 
 			    tell application "System Events"
-				tell process "{term}"
-				    keystroke "{cmd}"
-				    keystroke return
-				end tell
+            tell process "{term}"
+                keystroke "{cmd}"
+                keystroke return
+            end tell
 			    end tell
 			]]):gsub("{(%w+)}", {
 				term = term_name,
@@ -625,12 +665,25 @@ LSB.bind({ "ctrl", "option" }, "d", function()
 end)
 
 LSB.bind({ "option" }, "h", function()
-	open_term_and_run({ cmd = "send_key option h", exit = false })
+	open_term_and_run({ key = "option-h", exit = false })
 
-	-- open_term_and_run({
-	-- 	-- terminal = "terminal",
-	-- 	cmd = "send_key option h",
-	-- })
+	-- open_term_and_run({ cmd = "send_key option h", exit = false })
+	-- open_term_and_run({ terminal = "ghostty", cmd = "send_key option h", exit = false })
+
+	-- local app_id = "com.github.wez.wezterm"
+	-- local app = hs.application.get(app_id)
+	-- if not (app and app:isRunning()) then
+	-- 	hs.execute("open -b " .. app_id, true)
+	-- else
+	-- 	hs.application.launchOrFocusByBundleID(app_id)
+	-- end
+	-- hs.timer.doAfter(0.3, function()
+	-- 	hs.osascript.applescript([[
+	--            tell application "System Events"
+	--                keystroke "h" using {option down}
+	--            end tell
+	--        ]])
+	-- end)
 end)
 
 LSB.bind({ "option" }, "n", function()

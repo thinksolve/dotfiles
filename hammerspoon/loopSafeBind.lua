@@ -1,63 +1,54 @@
 local M = {}
-local log = hs.logger.new("loopSafe", "info")
+-- local log = hs.logger.new("loopSafe", "info")
 
 local termIDs = {
+	["com.github.wez.wezterm"] = true,
 	["com.mitchellh.ghostty"] = true,
 	["com.googlecode.iterm2"] = true,
 	["com.apple.Terminal"] = true,
 	["net.kovidgoyal.kitty"] = true,
-	["com.github.wez.wezterm"] = true,
 }
 
--- returns true  -> we are inside a terminal
--- returns false -> safe to let the hot-key fire
 local function insideTerm()
 	local app = hs.application.frontmostApplication()
 	return app and termIDs[app:bundleID()]
 end
 
-function M.bind(mods, key, launchCmd, bundleID)
-	bundleID = bundleID or "com.mitchellh.ghostty"
-
-	local hk
-	local function reEnable()
-		-- re-check every 250 ms until we are *outside* a terminal
-		if insideTerm() then
-			hs.timer.doAfter(0.25, reEnable)
-		else
-			hk:enable()
-		end
-	end
-
-	local function callback()
-		-- 1.  do not fire again while we are launching
-		hk:disable()
-
-		-- 2.  run the user command
-		launchCmd()
-
-		-- 3.  wait a little for the new window to register, then start polling
-		hs.timer.doAfter(0.2, reEnable)
-	end
-
-	hk = hs.hotkey.new(mods, key, callback)
-
-	-- initial state
-	if insideTerm() then
-		hk:disable()
-	end
-
-	-- keep state in sync when user switches apps manually
-	hs.application.watcher
-		.new(function()
-			if insideTerm() then
+-- update: single watcher for all bindings;
+local hotkeys = {}
+hs.application.watcher
+	.new(function()
+		local inTerm = insideTerm()
+		for _, hk in ipairs(hotkeys) do
+			if inTerm then
 				hk:disable()
 			else
 				hk:enable()
 			end
-		end)
-		:start()
+		end
+	end)
+	:start()
 
+function M.bind(mods, key, launchCmd)
+	local hk
+
+	hk = hs.hotkey.new(mods, key, function()
+		hk:disable()
+		launchCmd()
+
+		hs.timer.doAfter(0.3, function()
+			if not insideTerm() then
+				hk:enable()
+			end
+		end)
+	end)
+
+	if insideTerm() then
+		hk:disable()
+	end
+
+	-- register with shared, hoisted watcher
+	table.insert(hotkeys, hk)
 	return hk
 end
 

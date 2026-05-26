@@ -2,7 +2,7 @@
 set -eo pipefail
 
 # Clean exit even if killed abruptly. NOTE: added may24-2026
-# trap 'exit 0' EXIT INT TERM HUP
+trap 'exit 0' EXIT INT TERM HUP
 
 SELF=$(realpath "$0")
 RECENT_OPEN="$SELF"

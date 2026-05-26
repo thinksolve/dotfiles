@@ -1487,7 +1487,7 @@ function get_history() {
   # [[ -f $HISTFILE ]] && fc -R
 
   fc -R #alert: when calling function from hs/init.lua need to read history file in advance
-  fc -rl 1 | fzf --layout=reverse --height=~30 | sed 's/^[ *]*[0-9*]* *//'
+  fc -rl 1 | $HOME/.nix-profile/bin/fzf --layout=reverse --height=~30 | sed 's/^[ *]*[0-9*]* *//'
 }
 
 function recent_add() {
