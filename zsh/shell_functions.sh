@@ -1,5 +1,25 @@
 #!/usr/bin/env bash
 
+#better than fzf-rga provided on: https://github.com/phiresky/ripgrep-all/wiki/fzf-Integrations
+lrga() {
+  local rg_cmd="rga --files-with-matches"
+  local selected_file
+
+  [[ -n $1 ]] && export FZF_DEFAULT_COMMAND="$rg_cmd '$1'"
+
+  selected_file=$(fzf --ansi --disabled --query "$1" \
+    --bind "change:reload:$rg_cmd {q} || true" \
+    --delimiter : \
+    --preview-window 'right,60%,+{2}/3' \
+    --preview="[[ ! -z {} ]] && rga --pretty --context 5 {q} {}")
+
+  [[ -n $1 ]] && unset FZF_DEFAULT_COMMAND
+
+  [[ -z $selected_file ]] && return 0
+  echo "opening $selected_file"
+  open "$selected_file"
+}
+
 # better ps grep
 psg() {
   if [[ -z $1 ]]; then

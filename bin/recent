@@ -30,6 +30,77 @@ __log_to_recent() {
   rm -f "$tmp"
 }
 
+OPENERS=(
+  "nvim:nvim"
+  "yazi:yazi"
+  "marktext:open -a MarkText"
+  "default:open"
+  # "zed:open -a Zed"
+)
+
+_opener_allowed() {
+  local opener="$1"
+  local target="$2"
+
+  local mime
+  mime=$(file --mime-type -b -- "$target")
+
+  case "$opener" in
+  nvim)
+    [[ "$mime" == text/* || "$target" == *.md ]]
+    ;;
+
+  marktext)
+    [[ "$target" == *.md ]]
+    ;;
+
+  yazi)
+    return 0
+    ;;
+
+  default)
+    return 0
+    ;;
+
+  *)
+    return 1
+    ;;
+  esac
+}
+
+_choose_opener() {
+  local target="$1"
+
+  local choices=()
+
+  for opener in "${OPENERS[@]}"; do
+    local name="${opener%%:*}"
+
+    if _opener_allowed "$name" "$target"; then
+      choices+=("$name")
+    fi
+  done
+
+  local selection
+  selection=$(
+    printf '%s\n' "${choices[@]}" |
+      fzf --prompt="open with> "
+  )
+
+  [[ -z "$selection" ]] && return 0
+
+  local command
+
+  for opener in "${OPENERS[@]}"; do
+    if [[ "${opener%%:*}" == "$selection" ]]; then
+      command="${opener#*:}"
+      break
+    fi
+  done
+
+  eval "$command \"\$target\""
+}
+
 _recent_pick() {
   local recent_pick_db="${RECENT_DB:-${XDG_DATA_HOME:-$HOME/.local/share}/shell_recent}"
   local editor="${RECENT_OPEN:-nvim}"
@@ -95,6 +166,7 @@ PREVIEW
       --bind "right:accept" \
       --bind "left:execute(parent=\$(cut -f2 <<< {} | xargs dirname) && $editor \"\$parent\" ; \"$0\"'$filter')+abort" \
       --bind "ctrl-e:execute($editor \"$recent_pick_db\" >/dev/tty </dev/tty; \"$0\"'$filter')+abort" \
+      --bind "O:execute($SELF open-with {2})+abort" \
       --ansi -m |
     awk -F'\t' '{print $2}' | (
     open_now=()
@@ -210,6 +282,12 @@ _recent_open() {
 
 case "$1" in
 "" | pick) _recent_pick "${@:2}" ;; #NOTE: with 'pick' then the second argument is a filter on the pick list! nice
+
 open) _recent_open "${@:2}" ;;
+open-with)
+  _choose_opener "$2"
+  clear
+  exec "$SELF" pick "$filter"
+  ;;
 *) _recent_open "$@" ;;
 esac

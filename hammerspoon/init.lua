@@ -511,7 +511,7 @@ local function open_term_and_run(opts)
 		else
 			hs.application.launchOrFocusByBundleID(app_id)
 		end
-		hs.timer.doAfter(0.1, function()
+		hs.timer.doAfter(0.3, function()
 			local key, mods = parse_key(opts.key)
 			local ok, result = hs.osascript.applescript(string.format(
 				[[
@@ -660,8 +660,9 @@ LSB.bind({ "option" }, "d", function()
 	open_term_and_run({ cmd = "fzd dir" })
 end)
 
-LSB.bind({ "ctrl", "option" }, "d", function()
+LSB.bind({ "ctrl-option" }, "d", function()
 	open_term_and_run({ cmd = "fzd" })
+	-- open_term_and_run({ key = "ctrl-option-d" })
 end)
 
 LSB.bind({ "option" }, "h", function()
@@ -777,7 +778,8 @@ ks:bind(spoon_bind_mods, "g", {
 	})
 	:bind(spoon_bind_mods, "t", {
 		command_string = function(q)
-			return string.format("%s", q)
+			-- return string.format("%s", q)
+			return string.format("open -b com.github.wez.wezterm --args start -- zsh -ic '%s; echo; exec zsh'", q)
 		end,
 	})
 	:bind(spoon_bind_mods, "o", {

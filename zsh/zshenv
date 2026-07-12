@@ -31,7 +31,7 @@ path=(
   "$NIX_CURRENT_USER/bin"
   "$HM_PROFILE/bin"
   "$NPM_GLOBAL_BIN"
-  "$PNPM_HOME"
+  "$PNPM_HOME/bin"
   "$HOME/.config/emacs/bin"
   "$HOME/bin"
   "$HOMEBREW_BIN"

@@ -1,14 +1,23 @@
 [opener]
-markdown = [
-  { run = 'nvim "$@"', block = true, for = "unix" },
-  { run = "open -a MacDown.app \"$1\"", desc = "Open with MacDown" },
+edit = [
+  { run = 'nvim "$@"', block = true }
 ]
+
+markdown = [
+  # { run = 'nvim "$@"', block = true, for = "unix" },
+  # { run = "open -a MacDown.app \"$1\"", desc = "Open with MacDown" },
+  { run = 'open -a "MarkText" "$1"', desc = "Open with MarkText", for = "unix" },
+]
+
+
+
 video = [
   { run = "open \"$1\"", desc = "Open with default player" },
   { run = "open -a IINA.app \"$1\"", desc = "Open with IINA" },
   { run = "open -a VLC.app \"$1\"", desc = "Open with VLC" },
   { run = "open -a \"QuickTime Player\" \"$1\"", desc = "Open with QuickTime Player" },
 ]
+
 
 
 [open]
@@ -18,16 +27,16 @@ prepend_rules = [
   { mime = "text/markdown", use = "markdown" },
 ]
 
-[manager]
+[mgr]
 ratio = [1, 3, 4]
 show_symlink=true
-# show_hidden=true
+show_hidden=true
 
 [preview]
 wrap = "yes"
 
-[key]
-# Toggle hidden files
-"." = "toggle_hidden"
+
+
+
 
 

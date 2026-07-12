@@ -151,6 +151,7 @@
         pkgs.fzf
         pkgs.rename
         pkgs.ripgrep
+        pkgs.ripgrep-all
         pkgs.trash-cli
         pkgs.tree
         (unbreak pkgs.jp2a)

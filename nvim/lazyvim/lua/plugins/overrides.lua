@@ -54,6 +54,14 @@ end
 return {
   disable_default_plugins("folke/flash.nvim", "folke/noice.nvim"), -- lazyvim flattens this .. dont need to "spread"
   {
+    "saghen/blink.cmp",
+    opts = {
+      keymap = {
+        ["<C-y>"] = {}, -- unmap so Emmet can use <C-y>,
+      },
+    },
+  },
+  {
     "LazyVim/LazyVim",
     opts = {
       colorscheme = get_colorscheme(),
@@ -87,6 +95,8 @@ return {
         nix = { "nixfmt" },
         bash = { "shfmt" },
         sh = { "shfmt" },
+        html = { "prettier" },
+        css = { "prettier" },
       },
     },
   },

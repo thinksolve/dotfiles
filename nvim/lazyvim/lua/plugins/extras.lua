@@ -1,6 +1,13 @@
 return {
   -- useful for embedded code as strings in other files, such as in comment strings for nix writers scripts
   {
+    "mattn/emmet-vim",
+    ft = { "html", "css" },
+    init = function()
+      vim.g.user_emmet_leader_key = "<C-a>"
+    end,
+  },
+  {
     "jmbuhr/otter.nvim",
     event = { "BufReadPre *.nix", "BufNewFile *.nix" },
     opts = {

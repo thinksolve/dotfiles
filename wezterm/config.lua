@@ -35,7 +35,7 @@ end
 local read_theme_file, write_theme_file = handle_file(wezterm.home_dir .. "/.colorscheme")
 
 local light_themes = { "One Light (Gogh)", "Tokyo Night Day" }
-local dark_themes = { "AdventureTime", "Catppuccin Mocha", "Tokyo Night Storm (Gogh)" }
+local dark_themes = { "AdventureTime", "Catppuccin Mocha", "Tokyo Night Storm (Gogh)", "rose-pine-moon" }
 local default_light_theme = light_themes[2] or "One Light (Gogh)"
 local default_dark_theme = dark_themes[3] or "Catppuccin Mocha"
 
@@ -140,8 +140,8 @@ config.macos_window_background_blur = modeDark and 5 or 50
 config.send_composed_key_when_left_alt_is_pressed = false
 config.send_composed_key_when_right_alt_is_pressed = false
 config.use_fancy_tab_bar = false
-config.window_background_opacity = 0.85
--- config.window_background_opacity = modeDark and 0.9 or 1.0
+-- config.window_background_opacity = 0.85
+config.window_background_opacity = modeDark and 0.8 or 1.0
 config.window_close_confirmation = "NeverPrompt"
 config.window_decorations = "RESIZE"
 config.window_padding = {

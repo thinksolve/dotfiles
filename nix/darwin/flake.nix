@@ -99,9 +99,9 @@
               "keka"
               "krita"
               "libreoffice"
+              "mark-text"
               "shottr"
               "wezterm@nightly"
-
             ];
             taps = [
               "d12frosted/emacs-plus"
