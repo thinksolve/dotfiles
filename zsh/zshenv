@@ -1,7 +1,8 @@
 # ═══════════════════════ NIX-MANAGED-BLOCK-START  ═══════════════════════
-export PKGS_ANTIDOTE=/nix/store/d05m1wv4pq6qv7bqs3qnf71iq6hc1g0i-antidote-1.10.3
-export PKGS_NVIM=/nix/store/wsqy7rcv5s3md14wmc1wj9nys8ra2xhj-neovim-0.12.2
+export PKGS_ANTIDOTE=/nix/store/p4jhfv21xyb0k9pq94pfd39x91v2ccks-antidote-2.3.0
+export PKGS_NVIM=/nix/store/hyp90l41gvr4nkqaz842zzz6sd3w1ixx-neovim-0.12.5
 # ═══════════════════════ NIX-MANAGED-BLOCK-END  ═══════════════════════
+
 
 # Locale
 export LANG=en_US.UTF-8
@@ -22,6 +23,8 @@ export NPM_GLOBAL_BIN=$HOME/.npm-global/bin
 
 #NOTE: PATH is now deduped with preference ordering since other processes like nix-darwin inject to $PATH _before_ ~/.zshenv
 # Check: `/usr/libexec/path_helper -s | tr ':' '\n'` and `cat /nix/store/y4iz9d1zsxb7rr9spn7r7zbkphw7p2za-set-environment`
+#
+# PATH="$HOME/.local/bin:$NIX_CURRENT_SYSTEM/bin:$NIX_CURRENT_USER/bin:$PATH"
  
 typeset -U path
 path=(

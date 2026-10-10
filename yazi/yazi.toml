@@ -7,18 +7,25 @@ show_hidden = true
 wrap = "yes"
 
 [opener]
+edit = [
+  { run = 'nvim "$@"', block = true }
+]
+# currently needed since some text files like '.lua' defualt to emacs for some reason
+
 video = [
   { run = 'open -a IINA.app "$1"', desc = "Open with IINA" },
   { run = 'open -a VLC.app "$1"', desc = "Open with VLC" },
   { run = 'open -a "QuickTime Player" "$1"', desc = "Open with QuickTime Player" }
 ]
-marktext = [
-  { run = 'open -a "MarkText" "$1"', desc = "Open with MarkText" },
+markdown_viewer = [
+  { run = 'open -a "Zettlr" "$1"', desc = "Open with Zettlr" },
+  # { run = 'open -a "MarkText" "$1"', desc = "Open with MarkText" },
 ]
 
 
 [open]
 prepend_rules = [
   { mime = "video/*", use = [ "open", "video" ] },
-  { url = "*.md", use = [ "open", "edit", "marktext" ] },
+  { url = "*.md", use = [ "open", "edit", "markdown_viewer" ] },
+ 
 ]

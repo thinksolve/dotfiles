@@ -1,4 +1,5 @@
 
+source <("$NIX_CURRENT_USER/bin/fzf" --zsh) #i have fzf wrapped, but here i need the original for faster startup time
 # export BAT_THEME=$(rg -q 'light' ~/.colorscheme 2>/dev/null && echo "light" || echo "dark")
 # note ~/.dotfiles/bin/bat now wraps bat to assign theme based on ~/.colorscheme, so this survives
 # edge cases such as running toggle_theme within hammerspoon keybind

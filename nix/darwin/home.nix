@@ -204,6 +204,7 @@
         pkgs.carapace
         pkgs.difftastic
         pkgs.fastfetch
+        pkgs.hyperfine
         # pkgs.ghostty ## isnt supported??
         # pkgs.iterm2
         pkgs.kitty

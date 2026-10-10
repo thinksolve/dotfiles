@@ -22,6 +22,7 @@ __editable_path() {
 
 MAX=${MAX:-75}
 __log_to_recent() {
+  [[ -e "$1" ]] || return 0
   local target=$(realpath "$1")
   local tmp=$(mktemp)
   [[ -f $RECENT_DB ]] && grep -Fxv "$target" "$RECENT_DB" >"$tmp" || true
@@ -285,6 +286,7 @@ case "$1" in
 
 open) _recent_open "${@:2}" ;;
 open-with)
+  __log_to_recent "$2"
   _choose_opener "$2"
   clear
   exec "$SELF" pick "$filter"

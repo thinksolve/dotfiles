@@ -7,11 +7,13 @@
 
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable/";
     home-manager = {
-      url = "github:nix-community/home-manager/";
+      # url = "github:nix-community/home-manager/";
+      url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-darwin = {
-      url = "github:LnL7/nix-darwin/";
+      # url = "github:LnL7/nix-darwin/";
+      url = "github:nix-darwin/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -99,9 +101,12 @@
               "keka"
               "krita"
               "libreoffice"
+              "localsend"
               "mark-text"
+              "obsidian"
               "shottr"
               "wezterm@nightly"
+              "zettlr"
             ];
             taps = [
               "d12frosted/emacs-plus"
